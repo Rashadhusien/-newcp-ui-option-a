@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.env*
+!.env.example
+.handoff/
+*.log
+*.docx
+3DDX_PostgreSQL_V2_Primary_Design_Check_Pack/
+NewCP_PostgreSQL_V2_Schema_Review_Package_20261015/
+New_CP_TEAM_Selected_Sharing_Package_2026-10-19/
+AAA New_CP_October_2026_Demo_Meeting_Guide_*.md
