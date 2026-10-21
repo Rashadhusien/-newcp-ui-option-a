@@ -20,7 +20,7 @@ Goal: an empty-but-correct New CP frontend whose `npm run verify` passes, in the
 Done when: `npm run verify` is green; the app starts on a login placeholder with the shell; light and dark both render; no unused feature code remains; DEVIATIONS lists every deviation.
 
 ## Task A2: OpenAPI review, typed client, contract-shaped mocks
-Branch: feat/fe-a-a02-api-client-mocks | Gate: D1 | Date: Tue 20 Oct | Estimate: 1.5 h | Depends on: A1; OpenAPI draft | Status: in progress (A2.4 done; A2.1 to A2.3 blocked on the contract, D-12)
+Branch: feat/fe-a-a02-api-client-mocks | Gate: D1 | Date: Tue 20 Oct | Estimate: 1.5 h | Depends on: A1; OpenAPI draft | Status: in progress (A2.4 done; A2.1 pre-contract questions B1-B10 from the V3 docs recorded, D-16 to D-20; A2.1 contract review, A2.2, A2.3 blocked on the contract, D-12)
 - [ ] A2.1 Read the contract in `docs/openapi/`; write the question list for Bishoy in `docs/DEVIATIONS.md` (missing fields, statuses, error shapes, pagination, auth). Verify: list reviewed by the developer.
 - [ ] A2.2 `src/shared/api/`: typed client (fetch wrapper, base URL, auth header from session, error normalisation into one `ApiError` with kind: validation, transition, invoiced, locked, forbidden, unauthorized, server, network), types matching the contract. Verify: `npm run typecheck`.
 - [ ] A2.3 `src/mocks/`: handlers and fixtures from the contract examples, including every error kind and a duplicate-instances order; `VITE_USE_MOCKS` switch; latency and failure injection (`?fail=1`). Verify: a dev page or console check shows each error kind.
@@ -94,6 +94,6 @@ Branch: fix/fe-a-a14-stabilize-rc | Gate: D6 | Date: Tue 27 Oct | Estimate: 2.5 
 | Task | Status | Notes |
 |---|---|---|
 | A1 | ready for review | verify green; awaiting developer commit and PR |
-| A2 | in progress | A2.4 done; A2.1 to A2.3 blocked: no OpenAPI draft |
+| A2 | in progress | A2.4 done; V3 findings + questions B1-B10 recorded (part 2a); contract review, client and mocks blocked: no OpenAPI draft |
 | A5 | ready for review | built on provisional fixtures (D-13); swap to mocks when A2 resumes |
 | A3, A4, A6 to A14 | not started | status only; hours are written by the developer |
