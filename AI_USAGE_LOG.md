@@ -1,0 +1,11 @@
+# AI_USAGE_LOG: New CP frontend, UI Option A
+
+One row per subtask group. Time is filled in by the developer.
+
+| Date | Task | What Claude did | What the developer changed or corrected | Time | Issues |
+|---|---|---|---|---|---|
+| 2026-10-20 | A1.1 | Inventoried both POCs read-only (files, imports, locked versions); wrote the reuse map and deviations D-1 to D-6 in `docs/DEVIATIONS.md`. | | | jsx-a11y needs ESLint ≤ 9 (D-1); POCs are outside the repo; PLAN.md at root. |
+| 2026-10-20 | A1.2 | Wrote package.json (exact versions from the mui lockfile, unused packages removed, ESLint 9 + jsx-a11y), copied tsconfigs, wrote vite and eslint configs and index.html with the pre-paint theme script; npm install and lint pass. | Approved the reuse map and D-1. | | npm warns ESLint 9.39.5 is unsupported (noted in D-1). |
+| 2026-10-20 | A1.3 | Copied and re-homed the mapped mui files into app/theme/shared; converted them to named exports; rewrote router (lazy pages), routes, nav, user menu, session, login placeholder, status (provisional); removed search, notifications, breadcrumbs and data-store badges; added 5 feature placeholder pages. typecheck, build and lint pass; checked login, guard, 404, light/dark and 390 px in the browser. | | | jsx-a11y flagged AppTextField autoFocus (removed); POC brand text in AuthLayout replaced; ThemeModeSelect dropped as unused. |
+| 2026-10-20 | A1.4 | Copied check-tokens.mjs (already targets src/theme/tokens.ts) and contrast.mjs from poc-mui; moved the one literal it found (`#FFFFFF` in palette.ts) into `colorTokens.text.onFillLight`. check-tokens and typecheck pass. | | | None. |
+| 2026-10-20 | A1.5 | Wrote README, .env.example (placeholders only), docs/EVIDENCE.md; added a trailing newline to .gitignore; marked D-4 resolved; ran `npm run verify` (green) and a scan for real emails/secrets (clean); wrote the commit message. | Moved PLAN.md to docs/ with git mv; applied .gitignore. | | 768 and 1440 px not checked yet (placeholder pages only). |

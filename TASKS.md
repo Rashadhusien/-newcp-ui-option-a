@@ -5,18 +5,18 @@ Sources of truth: `docs/PLAN.md`, the OpenAPI contract in `docs/openapi/` (when 
 Total estimate: **24 h** (4 h/day, 20-27 Oct 2026).
 
 ## Task A1: Bootstrap the repo from the existing mui POC
-Branch: build/fe-a-a01-bootstrap | Gate: D1 | Date: Tue 20 Oct | Estimate: 2.0 h | Depends on: sources available | Status: not started
+Branch: build/fe-a-a01-bootstrap | Gate: D1 | Date: Tue 20 Oct | Estimate: 2.0 h | Depends on: sources available | Status: ready for review
 Goal: an empty-but-correct New CP frontend whose `npm run verify` passes, in the New CP folder layout, with only the features the demo needs.
-- [ ] A1.1 Inventory the sources read-only and write `docs/DEVIATIONS.md` section "Reuse map": for every file copied say source path, destination, and why. Do not copy anything not listed in PLAN section 6 without writing the reason. Verify: the file exists and every copied file appears in it.
-  - [ ] AI_USAGE_LOG.md updated
-- [ ] A1.2 Create the project: `package.json` (name `newcp-frontend-a`, Node engine, scripts per CLAUDE.md except `test`), Vite + React + TS strict config, `@/` path alias, `index.html` with the pre-paint theme script, eslint flat config with jsx-a11y and react-hooks. Take versions from `sources/mui/package.json` and remove unused packages (react-odontogram, x-charts, fontsource families not used). No new dependency. Verify: `npm install && npm run lint`.
-  - [ ] AI_USAGE_LOG.md updated
-- [ ] A1.3 Copy and re-home the base code into `src/app`, `src/theme`, `src/shared/{components,hooks,lib,status}` and an empty `src/features/{auth,orders,models,conversion,reporting,settings}` (each with a placeholder route page). Fix imports to `@/shared/...`. Delete the unused features, seed JSON, teeth chart, kanban and charts from the copy (never from the sources). Keep a minimal AppShell, Sidebar, Header, theme (light/dark/system) and the 404 page. Verify: `npm run typecheck && npm run build`.
-  - [ ] AI_USAGE_LOG.md updated
-- [ ] A1.4 Port `scripts/check-tokens.mjs` (adapt to `src/theme/tokens.ts`) and `scripts/contrast.mjs`; fix any colour literal found outside tokens. Verify: `npm run check-tokens`.
-  - [ ] AI_USAGE_LOG.md updated
-- [ ] A1.5 Write `README.md` (what it is, requirements, run, scripts, folder map, how to switch mocks/live), `.env.example` (`VITE_API_BASE_URL`, `VITE_USE_MOCKS`, `VITE_GOOGLE_CLIENT_ID` with placeholders only), `.gitignore` per GIT_WORKFLOW, `docs/EVIDENCE.md` and `AI_USAGE_LOG.md` templates. Verify: `npm run verify`.
-  - [ ] AI_USAGE_LOG.md updated
+- [x] A1.1 Inventory the sources read-only and write `docs/DEVIATIONS.md` section "Reuse map": for every file copied say source path, destination, and why. Do not copy anything not listed in PLAN section 6 without writing the reason. Verify: the file exists and every copied file appears in it.
+  - [x] AI_USAGE_LOG.md updated
+- [x] A1.2 Create the project: `package.json` (name `newcp-frontend-a`, Node engine, scripts per CLAUDE.md except `test`), Vite + React + TS strict config, `@/` path alias, `index.html` with the pre-paint theme script, eslint flat config with jsx-a11y and react-hooks. Take versions from `sources/mui/package.json` and remove unused packages (react-odontogram, x-charts, fontsource families not used). No new dependency. Verify: `npm install && npm run lint`.
+  - [x] AI_USAGE_LOG.md updated
+- [x] A1.3 Copy and re-home the base code into `src/app`, `src/theme`, `src/shared/{components,hooks,lib,status}` and an empty `src/features/{auth,orders,models,conversion,reporting,settings}` (each with a placeholder route page). Fix imports to `@/shared/...`. Delete the unused features, seed JSON, teeth chart, kanban and charts from the copy (never from the sources). Keep a minimal AppShell, Sidebar, Header, theme (light/dark/system) and the 404 page. Verify: `npm run typecheck && npm run build`.
+  - [x] AI_USAGE_LOG.md updated
+- [x] A1.4 Port `scripts/check-tokens.mjs` (adapt to `src/theme/tokens.ts`) and `scripts/contrast.mjs`; fix any colour literal found outside tokens. Verify: `npm run check-tokens`.
+  - [x] AI_USAGE_LOG.md updated
+- [x] A1.5 Write `README.md` (what it is, requirements, run, scripts, folder map, how to switch mocks/live), `.env.example` (`VITE_API_BASE_URL`, `VITE_USE_MOCKS`, `VITE_GOOGLE_CLIENT_ID` with placeholders only), `.gitignore` per GIT_WORKFLOW, `docs/EVIDENCE.md` and `AI_USAGE_LOG.md` templates. Verify: `npm run verify`.
+  - [x] AI_USAGE_LOG.md updated
 Done when: `npm run verify` is green; the app starts on a login placeholder with the shell; light and dark both render; no unused feature code remains; DEVIATIONS lists every deviation.
 
 ## Task A2: OpenAPI review, typed client, contract-shaped mocks
@@ -93,4 +93,5 @@ Branch: fix/fe-a-a14-stabilize-rc | Gate: D6 | Date: Tue 27 Oct | Estimate: 2.5 
 ## Phase log
 | Task | Status | Notes |
 |---|---|---|
-| A1 to A14 | not started | status only; hours are written by the developer |
+| A1 | ready for review | verify green; awaiting developer commit and PR |
+| A2 to A14 | not started | status only; hours are written by the developer |

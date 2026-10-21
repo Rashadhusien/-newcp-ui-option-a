@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New CP</title>
+    <script>
+      // Pre-paint theme: apply the saved light/dark choice (MUI's default
+      // "mui-mode" key) before React mounts, so dark mode never flashes light.
+      (function () {
+        var mode = 'system';
+        try {
+          mode = localStorage.getItem('mui-mode') || 'system';
+        } catch (e) {
+          // Storage blocked: fall back to the system preference.
+        }
+        if (mode === 'system') {
+          mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-mui-color-scheme', mode);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
