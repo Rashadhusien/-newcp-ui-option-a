@@ -28,4 +28,5 @@ export {
   MuiTab,
   MuiToggleButton,
   MuiOutlinedInput,
+  MuiPaginationItem,
 } from './data';

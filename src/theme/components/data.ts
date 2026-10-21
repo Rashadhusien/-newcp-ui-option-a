@@ -8,6 +8,7 @@
 
 import type { Components, Theme } from '@mui/material/styles';
 import { colorTokens, radiusTokens, tableTokens, typographyTokens } from '../tokens';
+import { touchMinHeight, touchMinSize } from './touch';
 
 type Overrides = Components<Omit<Theme, 'components'>>;
 
@@ -118,10 +119,17 @@ export const MuiOutlinedInput: Overrides['MuiOutlinedInput'] = {
   styleOverrides: {
     root: {
       borderRadius: radiusTokens.sm,
+      ...touchMinHeight,
     },
     notchedOutline: ({ theme }) => ({
       borderColor: colorTokens.inputBorder.light,
       ...theme.applyStyles('dark', { borderColor: colorTokens.inputBorder.dark }),
     }),
+  },
+};
+
+export const MuiPaginationItem: Overrides['MuiPaginationItem'] = {
+  styleOverrides: {
+    root: touchMinSize,
   },
 };

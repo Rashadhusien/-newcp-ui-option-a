@@ -270,6 +270,8 @@ export const focusTokens = {
 
 export const touchTargetTokens = {
   minSize: 44, // px (project target; WCAG 2.2 AA minimum is 24px)
+  // Below this width every control gets minSize (CLAUDE.md: >= 40 px under 768).
+  coarseBelow: 768, // px
 } as const;
 
 // ============================================================================

@@ -5,6 +5,7 @@
  */
 
 import { radiusTokens } from '../tokens';
+import { touchMinHeight } from './touch';
 
 export const MuiButton = {
   defaultProps: {
@@ -15,6 +16,7 @@ export const MuiButton = {
       textTransform: 'none' as const,
       borderRadius: radiusTokens.sm,
       fontWeight: 500,
+      ...touchMinHeight,
     },
   },
 };

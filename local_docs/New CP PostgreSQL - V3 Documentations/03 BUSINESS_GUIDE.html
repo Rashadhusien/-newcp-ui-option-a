@@ -1,0 +1,1016 @@
+<title>3DDX Business Guide</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  color-scheme: light dark;
+
+  /* light palette — complete, defined here so the un-stamped state resolves */
+  --ground:      #f2f5f3;
+  --surface:     #ffffff;
+  --surface-2:   #e9efec;
+  --ink:         #0f1a1b;
+  --ink-2:       #2c3f41;
+  --muted:       #62767a;
+  --hairline:    #d7e0dd;
+  --hairline-2:  #c3cfcb;
+
+  --pg:          #00706a;   /* PostgreSQL / v3 */
+  --pg-soft:     #d5eae7;
+  --pg-ink:      #00534e;
+  --legacy:      #8f6014;   /* legacy MySQL */
+  --legacy-soft: #f6ecd8;
+  --legacy-ink:  #6d4a10;
+
+  --ok:          #2c7a4e;
+  --warn:        #a9541c;
+  --crit:        #9c2f2c;
+  --ok-soft:     #dcecdf;
+  --warn-soft:   #f7e7d8;
+  --crit-soft:   #f6dedd;
+
+  --rail-w: 16.5rem;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #0a1112;
+    --surface:     #111a1b;
+    --surface-2:   #182425;
+    --ink:         #e3ebe9;
+    --ink-2:       #b6c6c4;
+    --muted:       #7f9593;
+    --hairline:    #22312f;
+    --hairline-2:  #2e403e;
+
+    --pg:          #4ec9bd;
+    --pg-soft:     #0d3330;
+    --pg-ink:      #7fdbd1;
+    --legacy:      #d7a53f;
+    --legacy-soft: #33280f;
+    --legacy-ink:  #e5bd6b;
+
+    --ok:          #62b884;
+    --warn:        #d68b4e;
+    --crit:        #d97370;
+    --ok-soft:     #14301f;
+    --warn-soft:   #331f10;
+    --crit-soft:   #331616;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground:      #0a1112;
+  --surface:     #111a1b;
+  --surface-2:   #182425;
+  --ink:         #e3ebe9;
+  --ink-2:       #b6c6c4;
+  --muted:       #7f9593;
+  --hairline:    #22312f;
+  --hairline-2:  #2e403e;
+
+  --pg:          #4ec9bd;
+  --pg-soft:     #0d3330;
+  --pg-ink:      #7fdbd1;
+  --legacy:      #d7a53f;
+  --legacy-soft: #33280f;
+  --legacy-ink:  #e5bd6b;
+
+  --ok:          #62b884;
+  --warn:        #d68b4e;
+  --crit:        #d97370;
+  --ok-soft:     #14301f;
+  --warn-soft:   #331f10;
+  --crit-soft:   #331616;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- structure */
+.wrap { display: flex; align-items: flex-start; gap: 0; min-height: 100vh; }
+
+.rail {
+  position: sticky; top: 0; align-self: flex-start;
+  width: var(--rail-w); flex: 0 0 var(--rail-w);
+  height: 100vh; overflow-y: auto;
+  padding: 1.75rem 1.25rem 3rem;
+  background: var(--surface);
+  border-right: 1px solid var(--hairline);
+}
+.rail-title {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--muted);
+  margin: 0 0 .9rem;
+}
+.rail nav { display: flex; flex-direction: column; gap: 1px; }
+.rail a {
+  display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
+  padding: .3rem .5rem; border-radius: 4px;
+  font-family: var(--mono); font-size: 12.5px;
+  color: var(--ink-2); text-decoration: none;
+}
+.rail a:hover { background: var(--surface-2); color: var(--pg); }
+.rail a .n { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rail .group {
+  margin-top: 1.4rem; padding-top: .8rem; border-top: 1px solid var(--hairline);
+}
+
+.main { flex: 1 1 auto; min-width: 0; padding: 2.5rem clamp(1.25rem, 4vw, 3.5rem) 6rem; }
+.col { max-width: 74ch; }
+
+/* -------------------------------------------------------------- masthead */
+.masthead { margin-bottom: 3rem; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--pg); margin: 0 0 .6rem;
+}
+h1 {
+  font-size: clamp(1.9rem, 3.4vw, 2.7rem); line-height: 1.1;
+  letter-spacing: -0.022em; font-weight: 640; margin: 0 0 .7rem;
+  text-wrap: balance;
+}
+.lede { font-size: 1.06rem; color: var(--ink-2); max-width: 68ch; margin: 0; }
+
+h2 {
+  font-size: 1.35rem; letter-spacing: -0.014em; font-weight: 640;
+  margin: 3.2rem 0 .4rem; padding-top: 1.1rem;
+  border-top: 2px solid var(--ink); text-wrap: balance;
+}
+h3 {
+  font-size: 1.02rem; font-weight: 620; margin: 2rem 0 .4rem;
+  letter-spacing: -0.008em;
+}
+h4 { font-size: .95rem; font-weight: 620; margin: 1.4rem 0 .3rem; }
+p { margin: 0 0 .85rem; }
+a { color: var(--pg); }
+
+/* ------------------------------------------------------------------ chips */
+.chip {
+  display: inline-flex; align-items: center; gap: .3em;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em;
+  text-transform: uppercase; padding: .18em .5em; border-radius: 3px;
+  background: var(--surface-2); color: var(--muted); white-space: nowrap;
+  border: 1px solid var(--hairline);
+}
+.chip.pg     { background: var(--pg-soft);     color: var(--pg-ink);     border-color: transparent; }
+.chip.legacy { background: var(--legacy-soft); color: var(--legacy-ink); border-color: transparent; }
+.chip.ok     { background: var(--ok-soft);     color: var(--ok);         border-color: transparent; }
+.chip.warn   { background: var(--warn-soft);   color: var(--warn);       border-color: transparent; }
+.chip.crit   { background: var(--crit-soft);   color: var(--crit);       border-color: transparent; }
+
+code, .mono { font-family: var(--mono); font-size: .88em; }
+p code, li code, td code {
+  background: var(--surface-2); padding: .1em .35em; border-radius: 3px;
+  color: var(--ink);
+}
+
+/* ----------------------------------------------------------------- tables */
+.scroller { overflow-x: auto; margin: .9rem 0 1.6rem; border-radius: 6px;
+            border: 1px solid var(--hairline); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface-2); color: var(--muted);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+  text-transform: uppercase; font-weight: 500;
+  text-align: left; padding: .55rem .7rem; white-space: nowrap;
+  border-bottom: 1px solid var(--hairline-2);
+}
+tbody td {
+  padding: .45rem .7rem; border-bottom: 1px solid var(--hairline);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--surface-2); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.name { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+td.type { font-family: var(--mono); font-size: 12px; color: var(--pg); white-space: nowrap; }
+td.note { color: var(--muted); font-size: 12.5px; min-width: 18rem; }
+
+/* ------------------------------------------------------------ table cards */
+.entity {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 8px; margin: 1.5rem 0; overflow: hidden;
+  scroll-margin-top: 1rem;
+}
+.entity > header {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem;
+  padding: .8rem 1rem; border-bottom: 1px solid var(--hairline);
+  background: linear-gradient(to bottom, var(--surface-2), var(--surface));
+}
+.entity > header h3 {
+  margin: 0; font-family: var(--mono); font-size: 14px; font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.entity > header h3 .sch { color: var(--muted); font-weight: 400; }
+.entity .desc { padding: .7rem 1rem 0; color: var(--ink-2); font-size: 13.5px; max-width: 78ch; }
+.entity .scroller { margin: .7rem 0 0; border: none; border-radius: 0;
+                    border-top: 1px solid var(--hairline); }
+
+/* ------------------------------------------------------------------ notes */
+.note-box {
+  border-left: 3px solid var(--pg); background: var(--surface);
+  padding: .8rem 1rem; margin: 1.2rem 0; border-radius: 0 6px 6px 0;
+  font-size: 14px;
+}
+.note-box.legacy { border-left-color: var(--legacy); }
+.note-box.warn   { border-left-color: var(--warn); }
+.note-box h4 { margin: 0 0 .3rem; font-family: var(--mono); font-size: 11px;
+               letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.note-box p:last-child { margin-bottom: 0; }
+
+/* ------------------------------------------------------------------- misc */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+         gap: 1px; background: var(--hairline); border: 1px solid var(--hairline);
+         border-radius: 8px; overflow: hidden; margin: 1.5rem 0 2rem; }
+.stat { background: var(--surface); padding: .85rem 1rem; }
+.stat .v { font-family: var(--mono); font-size: 1.5rem; font-weight: 600;
+           letter-spacing: -0.02em; font-variant-numeric: tabular-nums; display: block; }
+.stat .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+           text-transform: uppercase; color: var(--muted); }
+
+pre {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 6px; padding: .85rem 1rem; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.55; margin: .9rem 0 1.4rem;
+}
+pre code { background: none; padding: 0; }
+
+ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+li { margin-bottom: .3rem; }
+
+.foot { margin-top: 4rem; padding-top: 1.2rem; border-top: 1px solid var(--hairline);
+        color: var(--muted); font-size: 12.5px; font-family: var(--mono); }
+
+.toggle {
+  position: fixed; right: 1rem; bottom: 1rem; z-index: 20;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+  text-transform: uppercase; padding: .5rem .75rem; border-radius: 999px;
+  background: var(--surface); color: var(--ink-2);
+  border: 1px solid var(--hairline-2); cursor: pointer;
+}
+.toggle:hover { color: var(--pg); border-color: var(--pg); }
+:focus-visible { outline: 2px solid var(--pg); outline-offset: 2px; }
+
+@media (max-width: 900px) {
+  .wrap { flex-direction: column; }
+  .rail { position: static; width: 100%; flex: none; height: auto;
+          border-right: none; border-bottom: 1px solid var(--hairline); }
+  .rail nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+  .main { padding: 1.75rem 1.1rem 4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* classification tags quoted from v3 comments: [PHI] [PHI-RISK] [PII] [FINANCIAL] … */
+.tag { display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 650;
+       letter-spacing: .04em; padding: 0 .35rem; border-radius: 3px; margin-right: .2rem;
+       border: 1px solid var(--hairline); color: var(--muted); vertical-align: 1px; }
+.tag.t-phi        { background: var(--crit-soft); color: var(--crit); border-color: var(--crit); }
+.tag.t-phi-risk   { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.tag.t-pii        { background: var(--legacy-soft); color: var(--legacy-ink); border-color: transparent; }
+.tag.t-financial  { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.tag.t-secret-ref { background: var(--crit-soft); color: var(--crit); border-color: transparent; }
+.tag.t-audit, .tag.t-snapshot { background: var(--pg-soft); color: var(--pg-ink); border-color: transparent; }
+tr.row-phi td.name { box-shadow: inset 3px 0 0 var(--crit); }
+tr.row-phi-risk td.name { box-shadow: inset 3px 0 0 var(--warn); }
+
+@media print {
+  .rail, .toggle { display: none; }
+  body { background: #fff; }
+  .entity { break-inside: avoid; }
+}
+
+.flow { counter-reset: fstep; margin: 1.4rem 0 2rem; }
+.fstep { position: relative; padding: 0 0 1.25rem 2.6rem; border-left: 2px solid var(--hairline); }
+.fstep:last-child { border-left-color: transparent; padding-bottom: 0; }
+.fstep::before {
+  counter-increment: fstep; content: counter(fstep);
+  position: absolute; left: -0.85rem; top: 0;
+  width: 1.6rem; height: 1.6rem; border-radius: 50%;
+  background: var(--pg-soft); color: var(--pg-ink);
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  display: grid; place-items: center;
+}
+.fstep h4 { margin: .05rem 0 .3rem; font-size: .98rem; }
+.fstep .who { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em;
+              text-transform: uppercase; color: var(--muted); }
+.fstep p { font-size: 14px; margin-bottom: .5rem; }
+.fstep p:last-child { margin-bottom: 0; }
+
+.branch { border: 1px solid var(--hairline); border-left: 3px solid var(--legacy);
+          border-radius: 0 6px 6px 0; background: var(--surface);
+          padding: .75rem 1rem; margin: 1rem 0; font-size: 14px; }
+.branch .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em;
+               text-transform: uppercase; color: var(--legacy-ink); display: block;
+               margin-bottom: .25rem; }
+.branch p:last-child { margin-bottom: 0; }
+
+.gloss { display: grid; grid-template-columns: minmax(9rem, 13rem) 1fr;
+         gap: .1rem 1.2rem; margin: 1rem 0 1.8rem; font-size: 14px; }
+.gloss dt { font-family: var(--mono); font-size: 12.5px; color: var(--pg);
+            padding: .35rem 0; border-top: 1px solid var(--hairline); }
+.gloss dd { margin: 0; padding: .35rem 0; border-top: 1px solid var(--hairline);
+            color: var(--ink-2); }
+
+.lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+         gap: 1px; background: var(--hairline); border: 1px solid var(--hairline);
+         border-radius: 8px; overflow: hidden; margin: 1.4rem 0 2rem; }
+.lane { background: var(--surface); padding: .9rem 1rem; }
+.lane h4 { margin: 0 0 .35rem; font-family: var(--mono); font-size: 12px; color: var(--pg); }
+.lane ul { margin: 0; padding-left: 1.1rem; font-size: 13px; color: var(--ink-2); }
+.lane li { margin-bottom: .2rem; }
+</style>
+
+<div class="wrap">
+<aside class="rail">
+  <p class="rail-title">Contents</p>
+  <nav>
+    <a href="#what"><span>1 · what we sell</span></a>
+    <a href="#who"><span>2 · who does what</span></a>
+    <a href="#words"><span>3 · the vocabulary</span></a>
+    <a href="#shape"><span>4 · shape of a case</span></a>
+    <a href="#journey"><span>5 · the guide journey</span></a>
+    <a href="#branches"><span>6 · where it branches</span></a>
+    <a href="#others"><span>7 · the other lines</span></a>
+    <a href="#money"><span>8 · money</span></a>
+    <a href="#physical"><span>9 · the physical side</span></a>
+    <a href="#service"><span>10 · customer service</span></a>
+    <a href="#rules"><span>11 · rules to encode</span></a>
+    <a href="#status"><span>12 · status vocabulary</span></a>
+    <a href="#v3"><span>13 · how threeddx3 records it</span></a>
+    <a href="#sources"><span>sources</span></a>
+  </nav>
+  <div class="group">
+    <p class="rail-title">Also in this set</p>
+    <nav>
+      <a href="README_FIRST.html"><span>start here</span></a>
+      <a href="TECHNICAL_GUIDE.html"><span>technical guide</span></a>
+      <a href="SCHEMA_ONBOARDING.html"><span>schema guide</span></a>
+      <a href="ERD_DIAGRAM_V3.html"><span>entity diagrams</span></a>
+      <a href="MYSQL_TO_POSTGRES_MAPPING.html"><span>mysql to postgresql mapping</span></a>
+      <a href="SAMPLE_QUERIES.html"><span>sample queries</span></a>
+      <a href="RUNBOOK.html"><span>runbook</span></a>
+      <a href="OPEN_QUESTIONS.html"><span>open questions</span></a>
+      <a href="DECISIONS_LOG.html"><span>decisions log</span></a>
+      <a href="V2_TO_V3_CHANGES.html"><span>v2 to v3 changes</span></a>
+      <a href="DB_REVIEW_ASSESSMENT3.html"><span>review form (third review)</span></a>
+      <a href="COMPLIANCE_CHECKLIST.html"><span>compliance checklist</span></a>
+    </nav>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="masthead col">
+    <p class="eyebrow">Reference · business</p>
+    <h1>How 3D Diagnostix Works</h1>
+    <p class="lede">A dentist sends us a 3D X-ray of a patient's jaw. Days later a printed
+      plastic template arrives that steers their drill to within a fraction of a millimetre
+      of where a clinician planned it. Everything in this document is what has to happen in
+      between — and what the software has to know to make it happen.</p>
+  </header>
+
+  <div class="col">
+
+  <div class="note-box">
+    <h4>Who this is for</h4>
+    <p>Someone new to 3DDX — an engineer, an analyst, or a model reading the codebase —
+      who needs the business before the tables make sense. Read it top to bottom once. It
+      builds: products, then people, then words, then one case end to end, then everything
+      that makes a case different from that one.</p>
+  </div>
+
+  <!-- ============================================================ 1 -->
+  <h2 id="what">1 · What we sell</h2>
+
+  <p>3DDX sells <strong>guided implant surgery</strong> and the services around it. The
+    centre of the business is the surgical guide: a printed template, custom to one patient,
+    that constrains the surgeon's drill to a planned position. Everything else either feeds
+    the guide, extends it, or is sold to the same doctors on the same account.</p>
+
+  <p>Two things follow from that, and they explain most of the system's design.</p>
+
+  <p><strong>First, a case is not one product.</strong> A doctor who wants a guide usually
+    also needs the scan converted, the model registered, the case planned, and often a
+    crown to go on the implant afterwards. Each of those is separately priced, separately
+    scheduled, separately staffed, and separately charged — but they share one patient, one
+    set of files, and one clinical intent. So an order is a container, and the billable
+    things live inside it.</p>
+
+  <p><strong>Second, the work is partly physical.</strong> Design happens in Cairo; printing,
+    inspection, packing and shipping happen in Boston. Stone models arrive by courier and
+    have to be found again weeks later. A guide is not done when the file is done.</p>
+
+  <h3>The product lines</h3>
+  <p>Row counts are from the production database as documented in the handover data
+    dictionary (12 Feb 2026), and are the honest measure of what the business actually
+    does rather than what it talks about.</p>
+
+  <div class="scroller"><table><thead><tr><th>Line</th><th>Legacy table</th><th>Rows</th><th>What it is</th></tr></thead><tbody><tr><td class="">Surgical guide</td><td class="name"><code>OrderSG</code></td><td class="num">181,022</td><td class="note">Guide design and manufacture. The most complex line: 208 columns, extra components, sleeve articles, printer allocation, loaner kits, shipping.</td></tr><tr><td class="">Radiology report</td><td class="name"><code>OrderRep</code></td><td class="num">242,700</td><td class="note">A radiologist reads the CBCT and writes findings. Topics are billed separately: rule-out pathology, implant planning, existing implants, sinus, TMJ, airway.</td></tr><tr><td class="">Appliance / model work</td><td class="name"><code>OrderAppliance</code></td><td class="num">198,889</td><td class="note">Laser scanning and model work — the physical intake side. Poured impressions, scanned models, mold-received reporting.</td></tr><tr><td class="">Treatment plan</td><td class="name"><code>OrderTP</code></td><td class="num">177,825</td><td class="note">Planning, replication, review and consultation. Feeds every guide.</td></tr><tr><td class="">Simulation / conversion</td><td class="name"><code>OrderSim</code></td><td class="num">101,139</td><td class="note">3D conversion work, basic and custom, quadrant and full arch.</td></tr><tr><td class="">Miscellaneous</td><td class="name"><code>OrderMisc</code></td><td class="num">37,074</td><td class="note">Kits, sleeves, drills, sure markers, Dualine, TriadGel, shipping labels, printers.</td></tr><tr><td class="">Voucher</td><td class="name"><code>OrderVoucher</code></td><td class="num">25,913</td><td class="note">A prepaid credit purchase. It is an order because it is charged like one.</td></tr><tr><td class="">Restoration</td><td class="name"><code>OrderRestoration</code></td><td class="num">13,137</td><td class="note">Crowns, abutments, bridges, GFMR. Materials, shades, retention, chairside assistance.</td></tr><tr><td class="">iSmile</td><td class="name"><code>IsmileOrder</code></td><td class="num">3,255</td><td class="note">Aligners. Header plus per-stage sub-orders (model, planning, fabrication). threeddx3 keeps the hierarchy: one primary item, its stages as child items.</td></tr><tr><td class="">Software</td><td class="name"><code>OrderSoftware</code></td><td class="num">2,169</td><td class="note">CoDiagnostiX licences: client, producer, renewal, upgrade, clicks. Dongle numbers.</td></tr><tr><td class="">Training</td><td class="name"><code>OrderTrn</code></td><td class="num">119</td><td class="note">Paid training sessions. Retired: excluded from threeddx3 by owner decision (Q21).</td></tr><tr><td class="">Other</td><td class="name"><code>OrderOther</code></td><td class="num">595</td><td class="note">Shipping-only records for things that do not fit a line.</td></tr></tbody></table></div>
+
+  <div class="note-box legacy">
+    <h4>Read the counts carefully</h4>
+    <p>Reports outnumber guides. Appliance/model work outnumbers treatment plans. The
+      surgical guide is the strategic product and the hardest to build, but it is not the
+      most frequent one — and a system tuned only for guides will be wrong about most of
+      its own traffic.</p>
+  </div>
+
+  <!-- ============================================================ 2 -->
+  <h2 id="who">2 · Who does what</h2>
+
+  <p>Six operational groups touch a case. Knowing which one owns a case at a given moment
+    is most of what the workflow pages exist to answer.</p>
+
+  <div class="lanes">
+    <div class="lane"><h4>Customer Support</h4>
+      <ul><li>Owns the client relationship</li><li>Works from a task list, not a queue</li>
+      <li>Chases confirmations, models, surgery dates</li><li>Phone, tickets, live chat</li>
+      <li>Collections and account suspension</li></ul></div>
+    <div class="lane"><h4>Treatment Planning</h4>
+      <ul><li>Planners plan and replicate</li><li>Fine-tuners run the doctor calls</li>
+      <li>Sleeve design and the instruction sheet</li><li>Its own QC team, after sleeve design</li>
+      <li>Coordinators handle CaseXchange and the calendar</li></ul></div>
+    <div class="lane"><h4>Operations</h4>
+      <ul><li>3D conversion</li><li>STL and dual-scan registration</li>
+      <li>Guide design</li><li>Assigns parts to printers</li>
+      <li>Works by locking one order at a time</li></ul></div>
+    <div class="lane"><h4>Boston</h4>
+      <ul><li>Receives and archives packages</li><li>Scans and pours models</li>
+      <li>Prints, post-processes, sleeves</li><li>Final QC and photographs</li>
+      <li>Packs, labels and ships</li></ul></div>
+    <div class="lane"><h4>Sales</h4>
+      <ul><li>Opens and owns accounts</li><li>Price lists and vouchers</li>
+      <li>Closes and commission</li><li>Follow-up rules on lapsing clients</li></ul></div>
+    <div class="lane"><h4>Finance</h4>
+      <ul><li>Charging cycles</li><li>Invoices, payments, refunds</li>
+      <li>Extra charges after a price change</li><li>Radiologist payment sheets</li></ul></div>
+  </div>
+
+  <p>Radiologists are a seventh group and sit slightly outside: they are contractors with
+    their own queues, daily limits, state restrictions, vacation calendars and per-report
+    fees, and they read reports rather than build guides.</p>
+
+  <h3>The client side</h3>
+  <p>An account is one of five types, and the type is not cosmetic.</p>
+
+  <div class="scroller"><table><thead><tr><th>Account type</th><th>What it means</th><th>Consequence</th></tr></thead><tbody><tr><td class="name">Doctor</td><td class="">The treating clinician. A specialisation is recorded.</td><td class="note">The default payer and the default recipient.</td></tr><tr><td class="name">Scanner</td><td class="">A scanning centre or a mobile imaging unit.</td><td class="note">Submits for doctors. <strong>Its pricing is never visible to any other account on the same order.</strong></td></tr><tr><td class="name">Company</td><td class="">A distributor, partner or corporate buyer.</td><td class="note">Contact is an admin, a rep or a distributor.</td></tr><tr><td class="name">Lab</td><td class="">A dental laboratory.</td><td class="note">Contact is an admin or a rep.</td></tr><tr><td class="name">Other</td><td class="">Anything else, with a free-text description.</td><td class="note">Includes the finance-only accounts used to invoice one-off work.</td></tr></tbody></table></div>
+
+  <!-- ============================================================ 3 -->
+  <h2 id="words">3 · The vocabulary</h2>
+
+  <p>This is the part that cannot be guessed. These terms appear in column names, status
+    labels, email templates and conversation, and using them loosely produces wrong
+    software. Definitions are from the Master Glossary and the departmental requirements.</p>
+
+  <dl class="gloss"><dt>Client</dt><dd>The account that sends us work. Almost always a dentist, oral surgeon or periodontist — but a scanning centre, a lab or a distributor can also hold an account. Account type changes what the account can see and be charged for.</dd><dt>Scanning centre</dt><dd>An imaging facility that takes the CBCT scan and submits the case on the doctor's behalf. It sees its own pricing, never the doctor's.</dd><dt>Patient</dt><dd>Never our customer, and never billed. In legacy a patient exists only as a name, date of birth and gender typed onto an order. In threeddx3 the patient is a pseudonymous <code>patient_code</code>; the name and date of birth sit in a separate, access-logged identity record.</dd><dt>Case</dt><dd>One patient, one clinical intent — <em>above</em> the orders. Usually one order; a double-arch request split into one order per arch is two orders under one case. Legacy has no case identifier (owner answer Q3); threeddx3 adds one.</dd><dt>Order</dt><dd>One submission from the client: one legacy <code>Orders</code> row. It belongs to exactly one case and carries one or more order items.</dd><dt>Order item / service line</dt><dd>One billable line: a 3D conversion, a treatment plan, a surgical guide, a report, a restoration. An order usually has several, and each runs its own workflow at its own speed. Legacy calls these sub-orders.</dd><dt>CBCT / DICOM</dt><dd>The 3D X-ray of the patient's jaw, and the file format it arrives in. Everything downstream depends on its quality.</dd><dt>STL</dt><dd>A surface mesh. Either an intra-oral scan or a scan of a stone model. Needed to know where the soft tissue and teeth surfaces are — the CBCT alone cannot show them.</dd><dt>3D conversion</dt><dd>Turning the raw DICOM into a planning file. <em>Basic</em> is a straight conversion; <em>custom</em> includes nerve mapping and segmentation. Priced per arch: <em>quadrant</em> or <em>full arch</em>.</dd><dt>Registration</dt><dd>Merging the STL onto the CBCT so the two coordinate systems line up. <em>STL registration</em> uses a model or intra-oral scan; <em>dual scan</em> uses a denture scanned separately with radiographic markers.</dd><dt>Treatment plan (TP)</dt><dd>Where the implants go. Produced by a planner in CoDiagnostiX. <em>Planning</em> is us deciding; <em>replication</em> is us re-drawing the doctor's own plan in our software; <em>review</em> and <em>consultation</em> are discussion sessions.</dd><dt>Fine-tuning (FT)</dt><dd>A scheduled video call where a 3DDX clinician walks the doctor through the plan and adjusts it live. 45 min for a quadrant, 60 for a full arch.</dd><dt>Fter</dt><dd>A fine-tuner: the clinician who runs those sessions.</dd><dt>Confirmation email</dt><dd>The moment the doctor approves the plan. Nothing is manufactured before it. Verbal approval during a fine-tuning session counts.</dd><dt>Sleeve design (S.D)</dt><dd>Choosing and placing the metal sleeves the drills pass through, and producing the instruction sheet. Done by the planning team, not operations.</dd><dt>Guide design</dt><dd>Building the physical body of the guide around those sleeves. Done by operations.</dd><dt>Surgical guide (SG)</dt><dd>The printed template that sits in the patient's mouth and steers the drill. Our flagship product.</dd><dt>Guide support</dt><dd>What the guide rests on: <em>teeth</em>, <em>tissue</em> or <em>bone</em>. It decides which registration must finish first — tooth-supported needs STL registration, tissue-supported needs dual scan, bone-supported needs neither.</dd><dt>Fitting surface (FS)</dt><dd>A printed replica of the anatomy, used to test that the guide seats without rocking before it ships.</dd><dt>PPG</dt><dd>Pre-positioning guide. Used when the guide has to be located before the osteotomy is cut. Forces the case through registration even when the support type would not otherwise require it.</dd><dt>Instruction sheet (IS)</dt><dd>The printed drilling protocol that ships with the guide.</dd><dt>Print plan (PP)</dt><dd>The build layout for the printer.</dd><dt>PSI</dt><dd>Pre-shipping instruction. A note that must be read and acted on in Boston before the box is closed.</dd><dt>Loaner kit</dt><dd>Our surgical drill kit, lent for one surgery and returned. Tracked by kit number, with an outbound and a return label created together.</dd><dt>Restoration</dt><dd>Crowns, abutments and bridges. <em>Temporary</em> or <em>final</em> — two separate lines, so one case can carry both.</dd><dt>Final AoX</dt><dd>Final full-arch restoration (renamed from <em>Final Full Arch Restoration including temp</em>). Thirteen solutions (Ti bar, Zirconia, PMMA, try-in …), each with its own status flow, parallel tracks and client approval gates.</dd><dt>FMP / GFMP</dt><dd>Full-mouth prosthetic design services; GFMP always bundles a treatment plan and a guide. They run last on a multi-service case, ahead of final restorations only. Whether each is a service, a form or both is still open (digest G16).</dd><dt>Relu</dt><dd>The AI implant-planning partner. A doctor may choose AI planning on a treatment plan; planners then review the AI's plan instead of planning by hand.</dd><dt>GFMR</dt><dd>Guided Full-Mouth Rehabilitation. The largest package we sell: treatment plan, guide and restoration bought together, with the voucher split across the three.</dd><dt>iSmile</dt><dd>The clear-aligner product line — aligners, retainers, night guards. Sold in tiers (Design, Esthetic, Smart, Unlimited), each capping aligner count, refinements and validity.</dd><dt>Voucher</dt><dd>Prepaid credit. The doctor pays up front for a block of work at a discount; each qualifying case draws it down. Every movement is a row in the voucher ledger.</dd><dt>Placeholder client</dt><dd>One &ldquo;Unknown client&rdquo; contact per tenant that owns legacy orders whose doctor account no longer exists (user decision U7), so no order is lost and none is attached to a guessed doctor.</dd><dt>Close</dt><dd>A commissionable sale, claimed by a sales rep. New client, activation, up-sell or follow-up — each has its own rules.</dd><dt>Option 1 / 2 / 3 / 4</dt><dd>The registration verdict. 1 = clean. 2 = clean but the doctor should be told something. 3 = usable with compromise, doctor must choose. 4 = unusable, we cannot proceed.</dd><dt>CaseXchange (CX)</dt><dd>CoDiagnostiX's own file exchange. Cases can arrive through it instead of through the portal, planned or unplanned.</dd><dt>Boston</dt><dd>The US site. Everything physical happens there: receiving, scanning models, printing, post-processing, QC, packing, shipping, archiving.</dd><dt>Archived package</dt><dd>The physical envelope a doctor sent — models, impressions, discs. Barcoded, linked to an order, stored in a bin, and pulled when the case ships.</dd><dt>Redo</dt><dd>A remake at our cost after a defect. Flagged so it is excluded from revenue and from radiologist payment.</dd><dt>DSO</dt><dd>Dental Support Organisation — a group practice buying on one price plan.</dd></dl>
+
+  <!-- ============================================================ 4 -->
+  <h2 id="shape">4 · The shape of a case</h2>
+
+  <p>Six entities carry almost everything. If you understand these and how they nest, the
+    rest of the schema is detail.</p>
+
+  <pre><code>Account  (the doctor, the scanning centre, the lab)
+  └── Case                    one patient, one clinical intent
+        └── Order             one submission (two for a split double-arch request)
+              ├── Service line      3D conversion          ─┐
+              ├── Service line      treatment plan          │ each priced,
+              ├── Service line      surgical guide          │ scheduled and
+              └── Service line      restoration            ─┘ charged separately
+                    ├── Child lines   iSmile stages, the services under a restoration
+                    ├── Files         DICOM in, CAF/PDF/STL out (one file may serve several lines)
+                    ├── Field values  the answers to that service's form
+                    ├── Status history  every state it passed through
+                    └── Charge        what was billed, and against which voucher</code></pre>
+
+  <p>The case level is new in threeddx3. Legacy has no case identifier: when a doctor
+    orders both arches, the portal splits the request into one order per arch and nothing
+    records that the two belong together (owner answer Q3). Section 13 explains how the
+    database now represents it.</p>
+
+  <p>Three details about that picture matter more than they look.</p>
+
+  <p><strong>The service lines run independently.</strong> A conversion can be finished
+    while the guide is still waiting for a model. Each has its own status, its own owner,
+    its own due date. There is no single "order status" that means anything precise —
+    which is why the workflow pages are per-service, not per-order.</p>
+
+  <p><strong>Each service asks different questions.</strong> A guide order needs support
+    type, kit brand, sleeve diameter, extra components. A report order needs date of birth,
+    gender and which topics to evaluate. A restoration needs shade, material and retention.
+    These are configured per service rather than hard-coded, which is why the answers live
+    as field values rather than as columns.</p>
+
+  <p><strong>Teeth are data.</strong> Missing teeth, teeth to extract, implant sites,
+    abutment sites and crown sites are recorded per tooth, and drive both clinical work and
+    price — a guide is priced per implant site, on a scale that runs from one site to
+    sixteen.</p>
+
+  <!-- ============================================================ 5 -->
+  <h2 id="journey">5 · The journey of a guided case</h2>
+
+  <p>This is the canonical path: a doctor wants a surgical guide, sends a CBCT, and gets a
+    printed guide in the post. Read it once as the spine; section 6 is everything that
+    deviates from it.</p>
+
+  <div class="flow">
+    <div class="fstep"><span class="who">Client · portal or sender tool</span><h4>The case arrives</h4><p>The doctor uploads the CBCT and marks the teeth chart: what is missing, what will be extracted, where the implants go. They pick the services they want and any extras — biomodel, loaner kit, fixation pins, bone reduction guide.</p><p>If the account has default services configured, the missing ones are added automatically and a note is written to the order history saying so. If a service is unchecked on the price list, the portal does not offer it at all.</p></div>
+
+    <div class="fstep"><span class="who">System</span><h4>Intake checks</h4><p>Rush is applied if the account always rushes. If the account is flagged as needing approval for this order type, the case is put on hold immediately and a CS task is raised. If the scans failed to upload, a task and an email go out the same day with a link straight back to the upload page.</p></div>
+
+    <div class="fstep"><span class="who">Operations</span><h4>3D conversion</h4><p>An operator locks the conversion order, works it in CoDiagnostiX or Simplant, and uploads the result — a CAF file if the doctor owns the software, otherwise a PDF or screenshots. A checklist runs before it can be closed: patient name matches the scan and the file, file extension matches the client's configured format, nerve mapping done if the case is mandibular.</p></div>
+
+    <div class="fstep"><span class="who">Boston · in parallel</span><h4>The physical package arrives</h4><p>Stone models or impressions come by courier. Boston scans the shipping label, links the package to an order, records the contents, scans or pours the models, uploads the STL, and files the package in a bin under a QR label. It stays there until the case ships.</p></div>
+
+    <div class="fstep"><span class="who">Operations</span><h4>Registration — and its verdict</h4><p>The STL is registered onto the CBCT. The operator returns one of four options. Option&nbsp;1 or 2 and the file is uploaded and the case moves on. Option&nbsp;3 or 4 and the case stops: the operator picks findings from a fixed list, picks the options to offer the doctor, uploads screenshots, and an email goes out with a clickable link per option.</p></div>
+
+    <div class="fstep"><span class="who">Treatment planning</span><h4>Planning</h4><p>A planner locks the case and plans the implants in CoDiagnostiX — or replicates a plan the doctor made in another package. Bad scans stop here: field of view cut off, low quality, old scan date, patient-name mismatch. Each reason sends its own email and raises its own CS task.</p></div>
+
+    <div class="fstep"><span class="who">Fine-tuner + client</span><h4>The conversation</h4><p>Unless the account says otherwise, a session is booked and a clinician walks the doctor through the plan on a call, adjusting live. The doctor's approval is taken on the call or by the confirmation email that follows.</p></div>
+
+    <div class="fstep"><span class="who">Client</span><h4>Confirmation</h4><p>The doctor approves. This is the gate: nothing physical is made before it. The confirmation records remarks — rush terms, disclaimers about scan quality, whether a flap or crestal incision is needed, implant engagement notes, grafting notes. Those remarks are carried forward into the after-confirmation email and onto the paperwork that ships with the guide.</p></div>
+
+    <div class="fstep"><span class="who">Treatment planning</span><h4>Sleeve design</h4><p>Sleeves are chosen and placed, the instruction sheet is generated, and the after-confirmation email goes out — including a link for the doctor to set the surgery date if we do not have one.</p></div>
+
+    <div class="fstep"><span class="who">Treatment planning · QC</span><h4>Design review</h4><p>A QC reviewer checks the case after sleeve design. They may update the documents, log a mistake against the designer, change the status, or send it back. Mistakes are classified major or minor and roll up into the designer's statistics.</p></div>
+
+    <div class="fstep"><span class="who">Operations</span><h4>Guide design</h4><p>The guide body is built around the sleeves. The case only appears on this page once the right registration has closed for its support type. Another checklist runs: guide offset, guide span, undercuts eliminated, build file correct for the printer.</p></div>
+
+    <div class="fstep"><span class="who">Operations · Boston</span><h4>Printing</h4><p>Parts are assigned to a printer and a build. Builds run early or overnight; overnight builds ship the next business day. A build report lists every part, and Boston prints the paperwork from it — shipping label, box label, print plan, instruction sheet, QC form. One shipping label per client, not per case, unless the practices differ.</p></div>
+
+    <div class="fstep"><span class="who">Boston</span><h4>Post-processing and final QC</h4><p>Industrial prints get a steam bath, an oil bath and a wash; desktop prints get alcohol and a UV oven. Sleeves are fitted per the paperwork. Then the inspection: the guide is seated on the model or the fitting surface and must not rock, a drill is passed through each sleeve, the pre-shipping instruction is read and acted on, and the surgery date is checked against the shipping service chosen.</p></div>
+
+    <div class="fstep"><span class="who">Boston</span><h4>Ship</h4><p>Photographs are taken of the label and of the guide on its model with the QC form behind it. The tracking number is attached, the order closes, and the archived package is released from its bin.</p></div>
+
+    <div class="fstep"><span class="who">Finance</span><h4>Charge</h4><p>Closed and not yet charged makes the order eligible. When it is actually charged depends on the account: immediately, biweekly or monthly. Voucher credit is drawn down first; the remainder goes to the card, cheque or wire on file.</p></div>
+  </div>
+
+  <!-- ============================================================ 6 -->
+  <h2 id="branches">6 · Where it branches</h2>
+
+  <p>Almost no case runs section 5 exactly. These are the deviations that the system has to
+    support as first-class paths, not as exceptions.</p>
+
+  <div class="branch"><span class="lbl">Special requests</span>
+    <p>Each account carries standing instructions, grouped by the department that must obey
+      them. When an operator or planner locks an order, the requests for <em>their</em> stage
+      pop up and must be acknowledged one by one before the order opens. Changing a special
+      request notifies the department and writes an entry on the account history naming the
+      agent and the change.</p></div>
+
+  <div class="branch"><span class="lbl">Skipping the session</span>
+    <p>A standing request can say <em>send the confirmation email directly</em>, skipping
+      the call, or <em>switch to sleeve design directly</em>, skipping both the call and the
+      email. A per-case note overrides the standing request in either direction.</p></div>
+
+  <div class="branch"><span class="lbl">CaseXchange</span>
+    <p>The case arrives as a CoDiagnostiX file rather than through the portal. If it is
+      already planned, it goes straight to confirmation or to a review session. If it is
+      unplanned, it joins the planning queue. Coordinators archive the file against the order
+      and read the doctor's annotations to decide which.</p></div>
+
+  <div class="branch"><span class="lbl">Replication instead of planning</span>
+    <p>The doctor planned it themselves — in Vatech, Planmeca, or with screenshots — and we
+      redraw it in CoDiagnostiX. Without burnt-in implants or adequate screenshots the case
+      is held and the doctor is asked to send screenshots or switch to a planning order.</p></div>
+
+  <div class="branch"><span class="lbl">Digital delivery</span>
+    <p>Some clients print in-house. The guide is designed and the STL is delivered instead
+      of a printed part. Nothing goes to Boston, the status sequence ends at
+      <em>Done</em> rather than <em>Shipped</em>, and the price is the digital one — the
+      price book carries a digital and a manufacturing price for every option.</p></div>
+
+  <div class="branch"><span class="lbl">Registration option 3 or 4</span>
+    <p>The doctor is emailed a numbered list of findings and a numbered list of options,
+      each a link. Whatever they click comes back as a CS task. The case cannot move until
+      it is answered. Option 4 additionally means the file is never uploaded, so downstream
+      stages never see the case at all.</p></div>
+
+  <div class="branch"><span class="lbl">Redo</span>
+    <p>Something was wrong and we remake it at our cost. The redo flag excludes the order
+      from revenue reporting; for reports there is a separate switch that excludes it from
+      the radiologist's payment sheet. A redo guide can skip sleeve design entirely and go
+      straight back to guide design when only the model or support type changed.</p></div>
+
+  <div class="branch"><span class="lbl">Bone-supported guides</span>
+    <p>No registration is required — the guide rests on bone, so no soft-tissue surface is
+      needed. The case goes to guide design as soon as sleeve design closes. Unless a PPG is
+      involved, in which case registration is mandatory again.</p></div>
+
+  <div class="branch"><span class="lbl">GFMR</span>
+    <p>Treatment plan, guide and restoration sold as one package, with the prepaid credit
+      split across the three by ratio and drawn down independently. It has its own status
+      set, its own rejection state, and its own fabrication forms.</p></div>
+
+  <!-- ============================================================ 7 -->
+  <h2 id="others">7 · The other product lines</h2>
+
+  <h3>Radiology report</h3>
+  <p>The doctor uploads a CBCT and picks topics: rule-out pathology, implant planning,
+    evaluate existing implants, sinus, TMJ, airway. TMJ needs open and closed bite scans.
+    The report is auto-assigned to a radiologist — the account's own if it has one and they
+    are available, otherwise anyone under their daily limit who reads for that state.
+    Radiologists are paid per report by topic, monthly, from a sheet that excludes anything
+    marked <em>exclude from radiologist payment</em>.</p>
+
+  <h3>Model registration and laser scan</h3>
+  <p>The physical intake path. A package arrives, Boston links it to an order, records what
+    is inside — maxilla and mandible models, maxilla and mandible impressions, anything else
+    — and marks each as used the same day or stored for later. Impressions poured in house
+    add a fee to the order. Everything scanned that day appears on the Molds Received Report,
+    which is saved so any department can answer "did it arrive?".</p>
+
+  <h3>Restoration</h3>
+  <p>Crowns and abutments, temporary or final. The order carries material, retention type,
+    shade system and shade value, and can be per-site rather than uniform. Costs are itemised
+    — abutment, crown, implant analog, impression, shipping, rush, arch, chairside
+    assistance. A digital wax-up is often produced before a fine-tuning session so the doctor
+    can see the end state while the implants are still being placed on screen.</p>
+
+  <h3>iSmile aligners</h3>
+  <p>A header order holds the patient and the arch; sub-orders hold the chargeable stages —
+    model, planning, fabrication. The tier bought caps aligner count, refinements and
+    validity, and the tier applied is recorded per order so later price changes do not rewrite
+    history. Production is Boston: print the models, thermoform the sheets, trim, wash, label
+    each tray <em>n of N</em>, and count sheets used so waste is measurable.</p>
+
+  <h3>Software licences</h3>
+  <p>CoDiagnostiX client and producer licences, renewals, upgrades and click packs. Each
+    carries a dongle number, a licence number and an expiry. Boston verifies that the number
+    on the box matches the number on the dongle before shipping.</p>
+
+  <h3>Vouchers</h3>
+  <p>A voucher is created as an order because it is charged like one. It names the account
+    billed, the accounts allowed to consume it, an amount, an expiry, and either a credit
+    value or a number of cases — and it can be restricted to one service type or left
+    general. Installments are supported: the voucher leaves the automatic charging cycle and
+    re-enters on the dates agreed.</p>
+
+  <!-- ============================================================ 8 -->
+  <h2 id="money">8 · Money</h2>
+
+  <h3>Price is per client, per option, per currency</h3>
+  <p>There is no single price list. Every client can have their own price for every option
+    of every service, in USD, EUR or GBP, with separate digital and manufacturing prices. A
+    guide is priced as a base plus a per-implant-site increment on a sixteen-step scale, plus
+    each extra component, plus shipping and rush. That structure is why the legacy client
+    table has 627 columns.</p>
+
+  <h3>The voucher ledger</h3>
+  <p>Credit is drawn down in a defined order — general first, then oldest first, then cases
+    before additional credit before original credit. A deduction can be edited, in which case
+    the original amount is refunded to the voucher and the new one taken. An order can be
+    excluded from voucher use entirely, which refunds the credit and puts the amount back on
+    the invoice.</p>
+
+  <h3>Charging and invoicing</h3>
+  <p>Charging is a daily cycle over everything closed and not yet charged, filtered by each
+    account's setting. Card charges go through the payment gateway; cheques and wires are
+    recorded when they land. Invoices are generated on the account's own schedule — per
+    closed order, per shipped order, weekly, biweekly, monthly, on named dates, or not at
+    all. A failed card is emailed to the client at most once a week, no matter how many
+    times the cycle retries.</p>
+
+  <h3>Closes and commission</h3>
+  <p>A close is a commissionable sale, categorised as new client, activation, up-sell or
+    follow-up, each with its own qualifying rules. Closes are added when the order arrives
+    and move to their month when it is charged. The rules are specific enough to be worth
+    encoding rather than judging: lead source must be set, vouchers must be at least half
+    paid, only one close per batch for a brand-new client, consultation never counts.</p>
+
+  <!-- ============================================================ 9 -->
+  <h2 id="physical">9 · The physical side</h2>
+
+  <h3>Locking</h3>
+  <p>Design work is done by locking an order. A locked order disappears from everyone else's
+    list, and unlocks automatically when the file is uploaded. Unlocking by hand demands a
+    reason and notifies management with how long the lock was held. Lock duration is the raw
+    material for turnaround time, productivity and the investigation of anything that went
+    wrong.</p>
+
+  <h3>Checklists and quality</h3>
+  <p>Every hand-off has a checklist, and the checklists are configurable rather than coded.
+    Operations has one per stage; Boston has one per product; QC scores are weighted per
+    section and per item, and deleting an item deprecates it rather than removing it so
+    historical analysis stays comparable.</p>
+
+  <h3>Batch records</h3>
+  <p>Regulated products carry a full production record: when scans and models arrived, who
+    poured, scanned and archived them, who converted, planned, designed and reviewed, which
+    printer and which resin, the temperature and duration of every bath and the UV oven,
+    which sleeve article went into which site, who inspected, and when it shipped. This is
+    the traceability that lets a complaint be traced back to a specific build.</p>
+
+  <h3>Inventory and loaner kits</h3>
+  <p>Consumables are decremented as they are used or sold — resins, thermoforming sheets,
+    drills, fixation pins, sleeves by article number. Loaner kits are tracked individually:
+    available, out, or on hold pending a replacement part. Sending one creates both the
+    outbound and the return label at once, and the return is chased from the day after
+    surgery.</p>
+
+  <h3>Archiving</h3>
+  <p>Physical packages are barcoded on arrival, linked to an order, and stored in a numbered
+    bin. They are pulled when the case ships. The link between an order and a physical shelf
+    location is the only way to answer "where is the doctor's model?" — and that question is
+    asked constantly.</p>
+
+  <!-- ============================================================ 10 -->
+  <h2 id="service">10 · Customer service is a task engine</h2>
+
+  <p>CS does not work a queue of cases; it works a list of tasks, grouped by account. Most
+    tasks are raised by the system, not by a person, and each has a due date derived from
+    what triggered it.</p>
+
+  <div class="scroller"><table><thead><tr><th>Trigger</th><th>Task</th><th>Due</th></tr></thead><tbody><tr><td class="">A treatment plan review or consultation is created</td><td class="">Schedule the fine-tuning session</td><td class="note">Same day</td></tr><tr><td class="">A confirmation is sent and we still need a model</td><td class="">Chase confirmation and model</td><td class="note">2 days — or sooner if surgery is within 5</td></tr><tr><td class="">A confirmation is sent and the model is already here</td><td class="">Chase confirmation</td><td class="note">2 days</td></tr><tr><td class="">A case moves to sleeve design without a model</td><td class="">Chase the model or intra-oral scan</td><td class="note">Same day</td></tr><tr><td class="">A guide with a loaner kit has no surgery date</td><td class="">Get the surgery date</td><td class="note">Same day</td></tr><tr><td class="">A loaner kit is shipped</td><td class="">Chase its return</td><td class="note">Day after surgery</td></tr><tr><td class="">Registration comes back option 3 or 4</td><td class="">Get the doctor's decision</td><td class="note">Day after the email</td></tr><tr><td class="">Scans arrive missing or corrupt</td><td class="">Chase the upload</td><td class="note">Same day</td></tr><tr><td class="">Planning raises concerns and there is no session</td><td class="">Get the doctor's decision</td><td class="note">Day after the email</td></tr><tr><td class="">A name or date on the scan does not match</td><td class="">Get a disclaimer signed or new scans</td><td class="note">Next day</td></tr><tr><td class="">Planning needs new scans</td><td class="">Explain and chase</td><td class="note">Next day</td></tr><tr><td class="">The client requests a refund in the portal</td><td class="">Handle the refund request</td><td class="note">On creation</td></tr></tbody></table></div>
+
+  <p>Due dates can be moved, but only forward, and only with a reason chosen from a
+    configured list — and QC audits exactly that: tasks that hit their due date with no
+    attempt, and tasks whose due date moved without a call or an email attached.</p>
+
+  <p>The same shape repeats elsewhere. Technical support runs tickets through open, in
+    progress and closed. Collections runs a task list generated from unpaid invoices, with
+    the power to suspend an account — which pulls its orders off every workflow page without
+    deleting them, and puts them back on unsuspend.</p>
+
+  <!-- ============================================================ 11 -->
+  <h2 id="rules">11 · The rules worth encoding</h2>
+
+  <p>These are the decisions the business makes constantly. Each is a rule with a definite
+    answer, and each is currently spread across page code, email templates and habit.</p>
+
+  <div class="scroller"><table><thead><tr><th>Question</th><th>The rule</th><th>Where it is written</th></tr></thead><tbody><tr><td class="">Which registration must finish before guide design?</td><td class="note">Guide support type. Teeth &rarr; STL registration closed. Tissue &rarr; dual scan closed. Bone &rarr; neither. Exception: if the case needs a PPG it must pass registration regardless.</td><td class="note">Operations requirements, <em>Guide Design</em></td></tr><tr><td class="">Does this case need a fine-tuning session?</td><td class="note">The client's special request decides. Default is yes. Alternatives are <em>send confirmation email directly</em> or <em>switch to sleeve design directly</em>. A per-case note overrides the account default.</td><td class="note">TP requirements, <em>Post-planning</em></td></tr><tr><td class="">How long is the session?</td><td class="note">45 min single quadrant, 60 min single full arch; 30 and 45 respectively for each case when several are discussed together. Only a case whose plan is ready may be scheduled.</td><td class="note">TP requirements, <em>Calendar features</em></td></tr><tr><td class="">When may anything be manufactured?</td><td class="note">Only after the doctor's approval — the confirmation email, the portal button, or a verbal approval recorded during a fine-tuning session.</td><td class="note">TP requirements, <em>Sleeve design</em></td></tr><tr><td class="">What happens when registration is not clean?</td><td class="note">Option 2: proceed, but a note goes to the client through CS. Option 3: the case is held, an email lists the findings and the options, and a CS task is raised. Option 4: the case is held and cannot proceed; the file is not uploaded.</td><td class="note">Operations requirements, <em>STL and Dual Scan Registration</em></td></tr><tr><td class="">Who is billed?</td><td class="note">The <em>client to be billed</em> on the order, which is not always the submitter. A scanning centre may submit for a doctor who is billed. Changing it re-runs voucher deduction against the new payer, and is only allowed while the order is uncharged.</td><td class="note">CS requirements, <em>Moving orders</em></td></tr><tr><td class="">Which voucher is drawn down first?</td><td class="note">General credit first; then oldest first; and where a client holds both a by-case and a by-credit voucher, cases first, then additional credit, then original credit.</td><td class="note">CS requirements, <em>Multiple vouchers</em></td></tr><tr><td class="">When is an order ready to charge?</td><td class="note">It is closed with a timestamp, and it has no charge timestamp. Then the account's setting decides when: immediately, biweekly or monthly.</td><td class="note">Finance requirements, <em>Ready for charging</em></td></tr><tr><td class="">What if the price changes after charging?</td><td class="note">The difference is computed. Positive becomes an extra charge on a new invoice line with a reason; negative follows the refund path. Either way an automatic history entry records amount, type and reason.</td><td class="note">Finance requirements, <em>Extra charge</em></td></tr><tr><td class="">Which orders may the client cancel themselves?</td><td class="note">Reports, conversions and treatment plans while in progress or on hold; guides only before they reach the printer; restorations only while awaiting confirmation. Anything else needs CS.</td><td class="note">Customer Portal requirements, <em>Cancel button</em></td></tr><tr><td class="">Which report goes to which radiologist?</td><td class="note">The account's assigned radiologist if it has one and they are available; otherwise any radiologist under their daily limit who reads for that state. Vacations block assignment from 6pm the day before.</td><td class="note">CS requirements, <em>CP auto-assigning</em></td></tr><tr><td class="">Is this a claimable close?</td><td class="note">Lead source must be set on the account. Vouchers must be at least half paid. When a new client sends several orders at once, only one is claimable. Consultation never counts.</td><td class="note">Sales requirements, <em>Close sheet</em></td></tr></tbody></table></div>
+
+  <!-- ============================================================ 12 -->
+  <h2 id="status">12 · The status vocabulary, verbatim</h2>
+
+  <p>Status is per service line, and the same integer means different things in different
+    lines — 39 is <em>Guide Design</em> on a surgical guide and <em>In production</em> on an
+    appliance. The list below is transcribed from the portal's own decoder, and is the
+    authority for what a status means.</p>
+
+  <div class="scroller"><table><thead><tr><th>Line</th><th>Codes and labels</th></tr></thead><tbody><tr><td class="name">Model registration</td><td class="note">1 Awaiting Models · 2 On its way to 3DDX · 3 In Progress · 4 Done<br>90 No Scans · 91 In Progress · 92 Done <span class='chip'>intra-oral</span></td></tr><tr><td class="name">3D conversion</td><td class="note">6 No Scans · 7 In Progress · 8 Download</td></tr><tr><td class="name">Treatment plan</td><td class="note">10 Waiting Conversion · 11 No Scans · 12 In Progress · 13 Download</td></tr><tr><td class="name">Radiology report</td><td class="note">21 No Scans · 22 In Progress · 23 Download</td></tr><tr><td class="name">Surgical guide</td><td class="note">36 Reviewing Order · 37 Waiting Confirmation · 38 Sleeve Design · 47 TP-QC · 39 Guide Design · 46 Awaiting Guide Design Modifications · 42 Guide Printing · 40 Shipped · 41 On Hold</td></tr><tr><td class="name">Appliance</td><td class="note">37 Waiting Confirmation · 38 In Design · 39 In production · 40 Shipped · 41 On Hold</td></tr><tr><td class="name">Restoration / GFMR</td><td class="note">130 Pending Approval · 131 GFMR Rejected · 132 Awaiting Uploads · 133 Wax-Up In Progress · 134 Waiting Review · 150 Wax-Up Adjustment · 135 Awaiting Guide Confirmation · 136 Awaiting Guide Design · 137 Modifying Guide Design · 141 Processing · 138 Printing · 139 Shipped · 140 On Hold</td></tr><tr><td class="name">Ortho / restoration variants</td><td class="note">120 Awaiting IO Scans · 121 Awaiting Package · 122 On its way to 3DDX · 123 Awaiting SG Design · 124 In Design · 125 In production / Done · 126 Shipped<br>142–149 the same sequence, renumbered for a second variant</td></tr></tbody></table></div>
+
+  <div class="note-box warn">
+    <h4>Why this matters for the migration</h4>
+    <p>These integers cannot be decoded without knowing which product line the row belongs
+      to. Any mapping that treats status as a single global lookup will assign a plausible
+      but wrong status to a large share of the order book — and row-count reconciliation will
+      not catch it, because every row still migrates. The threeddx3 ETL gives every item the
+      workflow definition of its own (order type, digital, service) coordinates — the
+      legacy <code>OrdersFlow</code> table distinguishes eighteen service dimensions, which
+      v2 collapsed (review finding F05) — and maps the legacy status id to a state of that
+      definition through <code>workflow.legacy_status_codes</code>.</p>
+  </div>
+
+
+  <!-- ============================================================ 13 -->
+  <h2 id="v3">13 · How threeddx3 records it</h2>
+
+  <p>Sections 1–12 describe the business. This section describes how the third and final
+    PostgreSQL schema, <strong>threeddx3</strong>, represents the parts of it that changed
+    since v2 — because the owners answered the open questions, because the review found
+    defects, or because new requirements arrived (Final AoX, FMP, Relu AI planning,
+    uploads, notifications). Tables link to the <a href="SCHEMA_ONBOARDING.html">schema
+    guide</a>; value lists are quoted from the database's own column comments.</p>
+
+  <h3 id="v3-cases">13.1 · Cases above orders</h3>
+  <p>A case is the clinical container; orders hang under it. Every order belongs to exactly
+    one case (<a href="SCHEMA_ONBOARDING.html#orders.cases"><code>orders.cases</code></a>). When a doctor orders both arches the portal splits the
+    request into one order per arch; those two orders should be one case. Legacy never
+    recorded the link, so it has to be inferred from the same patient, doctor and scanning
+    centre and a close creation time (owner answer Q3).</p>
+  <div class="branch"><span class="lbl">database comment · orders.cases</span><p>Clinical case above one or more orders (Q3: no legacy case id exists). One row per case: a single order is a one-order case; a split-arch submission (one order per arch) becomes two orders under one case.</p></div>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>single</code></td><td class="note">one order, no pairing</td></tr><tr><td class="name"><code>auto_split_arch</code></td><td class="note">two or more orders linked automatically as one split-arch submission because the evidence was unambiguous</td></tr><tr><td class="name"><code>manual</code></td><td class="note">linked by a person (accepted candidate in case_pairing_candidates or created together in the portal)</td></tr></tbody></table></div>
+  <p>The rule the owners set (U8): historical pairs are linked automatically only when the
+    evidence is unambiguous; anything else stays as separate one-order cases and is listed
+    for a person to decide in <a href="SCHEMA_ONBOARDING.html#orders.case_pairing_candidates"><code>orders.case_pairing_candidates</code></a>, with the evidence
+    and the score kept. The migration today creates one <code>single</code> case per legacy
+    order and writes every candidate pair as <code>pending</code>; nobody's history is merged
+    by a guess.</p>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>pending</code></td><td class="note">not yet reviewed</td></tr><tr><td class="name"><code>accepted</code></td><td class="note">the reviewer confirmed one case and the orders were merged under one case</td></tr><tr><td class="name"><code>rejected</code></td><td class="note">the orders are separate cases</td></tr></tbody></table></div>
+
+  <h3 id="v3-items">13.2 · Item hierarchy: iSmile stages, temporary and final restorations</h3>
+  <p>A line can now sit under another line. <a href="SCHEMA_ONBOARDING.html#orders.order_items"><code>orders.order_items</code></a> carries a parent
+    item and a role:</p>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>primary</code></td><td class="note">a top-level service or product ordered on its own</td></tr><tr><td class="name"><code>ismile_suborder</code></td><td class="note">one aligner stage under an iSmile treatment item</td></tr><tr><td class="name"><code>refinement</code></td><td class="note">an iSmile refinement of an earlier treatment</td></tr><tr><td class="name"><code>temp_restoration</code></td><td class="note">the temporary restoration of a restoration pair</td></tr><tr><td class="name"><code>final_restoration</code></td><td class="note">the final restoration of a restoration pair</td></tr><tr><td class="name"><code>addon</code></td><td class="note">an extra service attached to another item (e.g. IOS model auto-created with an SG)</td></tr></tbody></table></div>
+  <ul>
+    <li><strong>iSmile.</strong> A legacy order points to one iSmile order, which owns one to
+      three stage rows. In threeddx3 the iSmile order is the <code>primary</code> item and
+      each stage is an <code>ismile_suborder</code> child; a refinement points at the
+      treatment it refines.</li>
+    <li><strong>Temporary and final restorations.</strong> Legacy keeps them as two pointers
+      from the order to the same restoration table — one for the temporary, one for the
+      final. Each becomes its own item with the matching stage, so a case can carry both and
+      each runs, ships and is charged on its own.</li>
+  </ul>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>temporary</code></td><td class="note">interim prosthesis</td></tr><tr><td class="name"><code>final</code></td><td class="note">definitive prosthesis</td></tr></tbody></table></div>
+  <div class="note-box warn">
+    <h4>A correction found while building v3</h4>
+    <p>The per-service records under a restoration or an &ldquo;other services&rdquo; line
+      (legacy <code>SubOrderServices</code>) point at the <em>line</em>, not at the order.
+      v2 joined them to the order number and attached them to unrelated orders. v3 hangs each
+      service under its own line. The consequence for the business: the count of
+      &ldquo;children whose parent order was deleted&rdquo; reported in the v2 validation
+      (1,394) came from that wrong join; with the correct join it is roughly 168. The owners'
+      decision (Q21) still applies — true parentless children are excluded and listed in the
+      exclusion ledger — but the number changes. The technical guide has the detail.</p>
+  </div>
+  <p>Two legacy line tables are retired by owner decision (Q21): training orders
+    (<code>OrderTrn</code>) and the old ortho table (<code>OrderOrtho</code>). Their rows are
+    not migrated; each is recorded in <a href="SCHEMA_ONBOARDING.html#audit.migration_exclusions"><code>audit.migration_exclusions</code></a> with its reason,
+    so the reconciliation can prove nothing was lost silently.</p>
+
+  <h3 id="v3-vouchers">13.3 · The voucher ledger</h3>
+  <p>A voucher's balance is never typed in. Every movement — the purchase, each service it
+    paid for, each refund, each correction — is a row in <a href="SCHEMA_ONBOARDING.html#vouchers.voucher_transactions"><code>vouchers.voucher_transactions</code></a>,
+    and the balance on <a href="SCHEMA_ONBOARDING.html#vouchers.vouchers"><code>vouchers.vouchers</code></a> is maintained from those rows by the
+    database. A movement is never edited or deleted; a correction is a new row.</p>
+  <p>Legacy recorded consumption late and partly, so the owners named
+    <code>voucher_fill.php</code> — the script 3DDX already uses to rebuild a voucher's
+    history — as the authoritative rule (Q19). threeddx3 runs the same rule, deterministically,
+    for every voucher:</p>
+  <div class="flow">
+    <div class="fstep"><span class="who">Opening</span><h4>The purchase</h4><p>One <em>issue</em> row for the voucher's cost, dated when it was bought.</p></div>
+    <div class="fstep"><span class="who">Consumption</span><h4>Each service it paid for</h4><p>One <em>redeem</em> row per consuming service, with the amount recorded on that service and the time the service completed. Which services count depends on what the voucher was for (conversion, report, plan, guide, general, restorations, GFMR, iSmile).</p></div>
+    <div class="fstep"><span class="who">Manual edits</span><h4>What staff changed by hand</h4><p>Deductions and refunds made on the edit-voucher page are kept as recorded.</p></div>
+    <div class="fstep"><span class="who">Reconciliation</span><h4>Match the balance the client sees</h4><p>If the rebuilt history does not end at the balance the application shows today, one adjustment row closes the gap — a deduction for missing consumption, a credit for extra. Every voucher therefore ends exactly at its current balance, and the adjustment says how far the legacy record was off.</p></div>
+  </div>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>recorded</code></td><td class="note">written when the movement happened (live threeddx3 rows, and legacy rows copied as stored, e.g. manual deductions/refunds and EngelVoucherTransactions)</td></tr><tr><td class="name"><code>voucher_fill_v1</code></td><td class="note">reconstructed by version 1 of the PostgreSQL port of voucher_fill.php fillVoucherRows() from consuming-service evidence (Q19), including its opening, extra-credit and missing-amount rows</td></tr><tr><td class="name"><code>opening_balance</code></td><td class="note">one synthetic row setting the balance where no movement history can be reconstructed</td></tr></tbody></table></div>
+  <p>Three programmes stay as separate streams and are never mixed in one balance:</p>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>main</code></td><td class="note">OrderVoucher prepaid/general credit (legacy voucher_transaction, reconstructed by voucher_fill.php)</td></tr><tr><td class="name"><code>engel</code></td><td class="note">Engel programme case vouchers (legacy EngelVoucherTransactions)</td></tr><tr><td class="name"><code>service</code></td><td class="note">per-sub-order service voucher deductions (legacy ServiceVouchers)</td></tr></tbody></table></div>
+  <p>The Engel programme's case counters are kept exactly as legacy stored them; what they
+    mean is still open (Q17), so no balance is derived from them.</p>
+
+  <h3 id="v3-relu">13.4 · Relu AI planning</h3>
+  <p>On a treatment plan the doctor chooses AI or manual planning. With AI, the scans go to
+    Relu, Relu plans, and the planners review its plan; if the AI fails or times out the item
+    falls back to manual planning. The item's own status stays the manual planning status;
+    the AI side is tracked next to it in <a href="SCHEMA_ONBOARDING.html#orders.order_item_ai_plans"><code>orders.order_item_ai_plans</code></a>.</p>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>ai</code></td><td class="note">Relu AI plans, planners review</td></tr><tr><td class="name"><code>manual</code></td><td class="note">planners plan by hand (default)</td></tr></tbody></table></div>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>not_applicable</code></td><td class="note">AI not offered for this item</td></tr><tr><td class="name"><code>eligible</code></td><td class="note">AI can be or was chosen, job not started (stays so after submit until upload completes)</td></tr><tr><td class="name"><code>queued</code></td><td class="note">upload done, job requested</td></tr><tr><td class="name"><code>processing</code></td><td class="note">Relu is planning</td></tr><tr><td class="name"><code>ready</code></td><td class="note">plan ready (Done webhook), charging trigger fires</td></tr><tr><td class="name"><code>failed</code></td><td class="note">job failed or timed out (&gt;1 h), falls back to manual</td></tr><tr><td class="name"><code>archived</code></td><td class="note">clinic chose FT session or amendment, AI plan closed</td></tr></tbody></table></div>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>undecided</code></td><td class="note">no choice yet</td></tr><tr><td class="name"><code>ai_not_in_scope</code></td><td class="note">not eligible for AI</td></tr><tr><td class="name"><code>ai_selected</code></td><td class="note">doctor chose AI</td></tr><tr><td class="name"><code>manual_selected</code></td><td class="note">doctor chose manual</td></tr><tr><td class="name"><code>ai_rejected_clinic</code></td><td class="note">clinic rejected the AI plan (FT session or amendment)</td></tr><tr><td class="name"><code>ai_failed_fallback</code></td><td class="note">AI failed, manual planning took over</td></tr><tr><td class="name"><code>ai_ready</code></td><td class="note">TO CONFIRM: appears in the Relu decision state machine but not in the aiDecision enum (digest 03 A4), allowed until the business decides</td></tr></tbody></table></div>
+  <p>Long transfers (scans up, plans down, the AI job itself) are tracked in
+    <a href="SCHEMA_ONBOARDING.html#integration.transfer_tasks"><code>integration.transfer_tasks</code></a> — the &ldquo;task dock&rdquo; the portal shows on
+    every device. Relu's own ids live in <a href="SCHEMA_ONBOARDING.html#integration.external_references"><code>integration.external_references</code></a> and its
+    callbacks in <a href="SCHEMA_ONBOARDING.html#integration.webhook_events"><code>integration.webhook_events</code></a>.</p>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>uploading</code></td><td class="note">upload in progress (also after a retry)</td></tr><tr><td class="name"><code>downloading</code></td><td class="note">download in progress</td></tr><tr><td class="name"><code>processing</code></td><td class="note">Relu AI job running</td></tr><tr><td class="name"><code>ready</code></td><td class="note">AI plan ready to view</td></tr><tr><td class="name"><code>completed</code></td><td class="note">upload or download finished (progress 100)</td></tr><tr><td class="name"><code>cancelled</code></td><td class="note">stopped by the user</td></tr><tr><td class="name"><code>failed</code></td><td class="note">gave up after retries, or AI failed / timed out after 1 h (the TP falls back to manual planning)</td></tr><tr><td class="name"><code>archived</code></td><td class="note">AI plan set aside after the clinic chose FT session or amendment</td></tr></tbody></table></div>
+
+  <h3 id="v3-aox">13.5 · Final AoX and FMP / GFMP</h3>
+  <p>Final AoX (thirteen full-arch solutions) and the FMP / GFMP services introduced three
+    ideas the earlier schema did not have.</p>
+  <ul>
+    <li><strong>Parallel tracks.</strong> One item can run several flows at once — try-in,
+      Ti bar and Zirconia — each a <a href="SCHEMA_ONBOARDING.html#workflow.workflow_instances"><code>workflow.workflow_instances</code></a> row with its own
+      track and state.</li>
+    <li><strong>Approval gates and client decisions.</strong> Some states stop until the
+      doctor approves. The doctor answers through a single-use emailed link
+      (<a href="SCHEMA_ONBOARDING.html#orders.confirmation_links"><code>orders.confirmation_links</code></a>, only the hash of the token is stored) or in
+      Connect, and every answer is an append-only row in
+      <a href="SCHEMA_ONBOARDING.html#orders.order_item_decisions"><code>orders.order_item_decisions</code></a> — a regulated design-approval record.</li>
+    <li><strong>Holds, zero-price lines, assignment and sequencing.</strong> A hold is either
+      the customer's or internal; a line priced at zero must say why; who is assigned to an
+      item has a history (<a href="SCHEMA_ONBOARDING.html#orders.order_item_assignments"><code>orders.order_item_assignments</code></a>); and the order in which a
+      case's items may progress (FMP last, Ti bar before Zirconia, GFMR before GFMP) is
+      recorded in <a href="SCHEMA_ONBOARDING.html#orders.order_item_dependencies"><code>orders.order_item_dependencies</code></a>.</li>
+  </ul>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>confirmed</code></td><td class="note">client approves the design/try-in/product/plan as sent</td></tr><tr><td class="name"><code>amendment_requested</code></td><td class="note">client asks for changes (notes required)</td></tr><tr><td class="name"><code>redo_try_in</code></td><td class="note">try-in must be remade (AoX)</td></tr><tr><td class="name"><code>proceed_with_minor_adjustments</code></td><td class="note">proceed to Ti bar/Zirconia with minor adjustments (AoX)</td></tr><tr><td class="name"><code>post_ship_adjustment_requested</code></td><td class="note">adjustment requested after shipping, item returns to QC (AoX)</td></tr><tr><td class="name"><code>ft_session_requested</code></td><td class="note">fine-tuning session booked on the Relu AI plan</td></tr><tr><td class="name"><code>proceed_guide_fabrication</code></td><td class="note">proceed with guide fabrication from the Relu AI plan</td></tr></tbody></table></div>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>customer</code></td><td class="note">On Hold - Due to Customer (waiting on the client)</td></tr><tr><td class="name"><code>internal</code></td><td class="note">On Hold - Internal (3DDX-side reason)</td></tr></tbody></table></div>
+  <p>Whether GFMP and FMP are services, forms or both is not yet defined by the business
+    (see the <a href="OPEN_QUESTIONS.html">open questions</a>); the workflow family
+    <code>fmp</code> covers both until it is.</p>
+
+  <h3 id="v3-uploads">13.6 · Uploads</h3>
+  <p>An uploaded file is a first-class record in <a href="SCHEMA_ONBOARDING.html#docs.documents"><code>docs.documents</code></a>: what it is for,
+    where it came from, whether the transfer finished, and a SHA-256 fingerprint that proves
+    the bytes were not altered. One upload can serve several items — one CBCT for both the
+    guide and the plan — through <a href="SCHEMA_ONBOARDING.html#docs.document_links"><code>docs.document_links</code></a>. Which files each product
+    requires, in which formats and sizes, is configuration in
+    <a href="SCHEMA_ONBOARDING.html#catalog.item_upload_requirements"><code>catalog.item_upload_requirements</code></a>, not code.</p>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>pending</code></td><td class="note">upload slot created, no bytes yet</td></tr><tr><td class="name"><code>uploading</code></td><td class="note">transfer in progress</td></tr><tr><td class="name"><code>received</code></td><td class="note">bytes stored, not yet checked</td></tr><tr><td class="name"><code>validated</code></td><td class="note">checksum/format checks passed</td></tr><tr><td class="name"><code>completed</code></td><td class="note">accepted and attached to its order(s)</td></tr><tr><td class="name"><code>failed</code></td><td class="note">transfer failed</td></tr><tr><td class="name"><code>cancelled</code></td><td class="note">abandoned by the user</td></tr><tr><td class="name"><code>expired</code></td><td class="note">slot timed out before completion</td></tr><tr><td class="name"><code>integrity_failed</code></td><td class="note">bytes do not match the expected checksum or are empty/truncated</td></tr></tbody></table></div>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>connect</code></td><td class="note">client portal (Connect / iSmileOn)</td></tr><tr><td class="name"><code>cp</code></td><td class="note">staff control panel</td></tr><tr><td class="name"><code>integration</code></td><td class="note">partner system or API (Relu, Medit, iSmile)</td></tr><tr><td class="name"><code>migration</code></td><td class="note">loaded from the legacy database by the ETL</td></tr></tbody></table></div>
+
+  <h3 id="v3-notify">13.7 · Notifications</h3>
+  <p>Which event sends which message to whom is configuration:
+    <a href="SCHEMA_ONBOARDING.html#comms.notification_rules"><code>comms.notification_rules</code></a> ties one trigger (an application event, entering a
+    workflow state, or taking a transition), optionally narrowed to one product or one
+    client or DSO, to one template on one channel; the recipients are rows in
+    <a href="SCHEMA_ONBOARDING.html#comms.notification_rule_recipients"><code>comms.notification_rule_recipients</code></a>. Before anything is emailed the
+    suppression list <a href="SCHEMA_ONBOARDING.html#comms.email_suppressions"><code>comms.email_suppressions</code></a> is consulted, and the signature
+    comes from <a href="SCHEMA_ONBOARDING.html#comms.mail_signatures"><code>comms.mail_signatures</code></a>.</p>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>email</code></td><td class="note">email via the mail provider</td></tr><tr><td class="name"><code>in_app</code></td><td class="note">CP/portal notification (comms.notifications)</td></tr><tr><td class="name"><code>push</code></td><td class="note">mobile push (comms.push_devices)</td></tr><tr><td class="name"><code>sms</code></td><td class="note">text message</td></tr><tr><td class="name"><code>chat</code></td><td class="note">team chat message</td></tr></tbody></table></div>
+  <div class="scroller"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody><tr><td class="name"><code>deliverable</code></td><td class="note">known good, not suppressed</td></tr><tr><td class="name"><code>bounced</code></td><td class="note">hard bounce, do not send</td></tr><tr><td class="name"><code>complained</code></td><td class="note">recipient marked as spam, do not send</td></tr><tr><td class="name"><code>unsubscribed</code></td><td class="note">recipient opted out of non-transactional mail</td></tr><tr><td class="name"><code>invalid</code></td><td class="note">address does not exist / syntactically unusable</td></tr></tbody></table></div>
+
+  <h3 id="v3-people">13.8 · Clients and staff</h3>
+  <p>What the client record now holds that it did not:</p>
+  <ul>
+    <li><strong>Door types</strong> — the legacy bitmask is decoded into five yes/no facts on
+      <a href="SCHEMA_ONBOARDING.html#crm.contacts"><code>crm.contacts</code></a>: registered, CBCT door, sales door, contract door, scan-centre
+      lead.</li>
+    <li><strong>Tooth numbering</strong> the client works in (storage is always FDI) and the
+      best time to call; pilot users of new features.</li>
+    <li><strong>Typed phones</strong> (<a href="SCHEMA_ONBOARDING.html#crm.contact_phones"><code>crm.contact_phones</code></a>), the
+      <strong>equipment</strong> a client owns (<a href="SCHEMA_ONBOARDING.html#crm.contact_equipment"><code>crm.contact_equipment</code></a>),
+      <strong>competitors</strong> they also use (<a href="SCHEMA_ONBOARDING.html#crm.contact_competitors"><code>crm.contact_competitors</code></a>),
+      <strong>feedback</strong> (<a href="SCHEMA_ONBOARDING.html#crm.feedback"><code>crm.feedback</code></a>) and <strong>sales targets</strong>
+      (<a href="SCHEMA_ONBOARDING.html#crm.sales_targets"><code>crm.sales_targets</code></a>).</li>
+    <li><strong>Special requests by department</strong>, with who may see each category
+      (<a href="SCHEMA_ONBOARDING.html#crm.special_request_categories"><code>crm.special_request_categories</code></a>).</li>
+    <li>The single <strong>placeholder client</strong> per tenant for orders whose doctor
+      account no longer exists (U7).</li>
+  </ul>
+  <p>And for staff:</p>
+  <ul>
+    <li><strong>No legacy password is carried over</strong> (U3). Legacy passwords were
+      reversibly encrypted; every migrated user must set a new password through a reset at
+      first sign-in, and recent passwords cannot be re-used (<a href="SCHEMA_ONBOARDING.html#iam.password_history"><code>iam.password_history</code></a>).</li>
+    <li><strong>Sales pairs</strong> — the 21 opener/closer pairs — are an internal staff
+      relationship (<a href="SCHEMA_ONBOARDING.html#iam.staff_relationships"><code>iam.staff_relationships</code></a>); what a pair means in practice is
+      still to be confirmed by Sales (Q20).</li>
+    <li><strong>Working hours</strong> per person or team (<a href="SCHEMA_ONBOARDING.html#iam.work_schedules"><code>iam.work_schedules</code></a>),
+      used with the team's business calendar for assignment and SLAs.</li>
+  </ul>
+
+  <h3 id="v3-patients">13.9 · Patients and privacy</h3>
+  <p>The patient record everyone works with (<a href="SCHEMA_ONBOARDING.html#clinical.patients"><code>clinical.patients</code></a>) is a code, the
+    owning client and the legacy key — no name, no date of birth. The identity sits in
+    <a href="SCHEMA_ONBOARDING.html#clinical.patient_identities"><code>clinical.patient_identities</code></a>, which no application or reporting login can read
+    directly: the application asks for it through a function that requires a stated purpose
+    and writes an access-log row each time, and reporting users see only initials and birth
+    year. Dates of birth that legacy stored encrypted are decoded during the migration;
+    values that cannot be decoded are quarantined for manual resolution rather than guessed.
+    The technical guide and the <a href="COMPLIANCE_CHECKLIST.html">compliance
+    checklist</a> describe the controls.</p>
+
+
+  <!-- ============================================================ -->
+  <h2 id="sources">Sources</h2>
+  <p>Everything above comes from documents supplied by 3DDX, read in full:</p>
+  <ul>
+    <li><strong>Master Glossary</strong> — <code>New System - Master Glossary -
+      Requirements 200614 v1.0</code>, the definitions in section 3.</li>
+    <li><strong>Departmental requirements</strong>, all dated 20 June 2020 — Customer
+      Support v1.3, Treatment Planning v1.4, Operations v1.2, Boston v1.4, QMS v1.2,
+      Sales v1.3, Finance v1.2, Marketing v1.3, Customer Portal v1.2.</li>
+    <li><strong>CP Main Business Components</strong> — Hala Grant, 31 March 2020: the
+      inventory of what the current system actually does, page by page.</li>
+    <li><strong>Production Data Dictionary</strong> and <strong>Additional Tables</strong> —
+      Khalid Helaly, Feb and Mar 2026: row counts, column meanings, and the enumerations
+      behind the coded columns.</li>
+    <li><strong><code>CP-master/connect/Enums.php</code></strong> — the status vocabulary in
+      section 12, copied rather than interpreted.</li>
+    <li><strong>threeddx3 design record</strong> — <code>analysis/V3_DESIGN.md</code>, the
+      schema notes per bounded context, the four input digests (2026 JSON catalogue,
+      OpenAPI, new requirements including Final AoX, FMP and Relu, core functions), and the
+      owner answers of 12 Oct 2026: section 13. Value lists in section 13 are quoted from the
+      live database comments.</li>
+  </ul>
+
+  <div class="note-box">
+    <h4>What this document does not cover</h4>
+    <p>The 2020 requirements describe a system 3DDX intended to build, not one that exists.
+      Where they describe capability the current software does not have — VOIP integration,
+      gamification, the loyalty programme, referral rewards, the KPI engine — this document
+      treats them as intent, not as fact, and says so. The technical guide describes what is
+      actually running.</p>
+  </div>
+
+  </div>
+
+  <p class="foot">3D Diagnostix &middot; business reference &middot;
+    generated by tools/gen_business_guide.py</p>
+</main>
+</div>
+
+<button class="toggle" id="themeToggle" type="button" aria-label="Switch colour theme">Theme</button>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('threeddx-theme'); } catch (e) {}
+  if (saved) root.setAttribute('data-theme', saved);
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var isDark = root.getAttribute('data-theme') === 'dark'
+      || (!root.getAttribute('data-theme')
+          && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('threeddx-theme', next); } catch (e) {}
+  });
+})();
+</script>
+

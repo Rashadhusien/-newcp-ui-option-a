@@ -1,0 +1,1300 @@
+<title>threeddx3 Query Cookbook</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  color-scheme: light dark;
+
+  /* light palette — complete, defined here so the un-stamped state resolves */
+  --ground:      #f2f5f3;
+  --surface:     #ffffff;
+  --surface-2:   #e9efec;
+  --ink:         #0f1a1b;
+  --ink-2:       #2c3f41;
+  --muted:       #62767a;
+  --hairline:    #d7e0dd;
+  --hairline-2:  #c3cfcb;
+
+  --pg:          #00706a;   /* PostgreSQL / v3 */
+  --pg-soft:     #d5eae7;
+  --pg-ink:      #00534e;
+  --legacy:      #8f6014;   /* legacy MySQL */
+  --legacy-soft: #f6ecd8;
+  --legacy-ink:  #6d4a10;
+
+  --ok:          #2c7a4e;
+  --warn:        #a9541c;
+  --crit:        #9c2f2c;
+  --ok-soft:     #dcecdf;
+  --warn-soft:   #f7e7d8;
+  --crit-soft:   #f6dedd;
+
+  --rail-w: 16.5rem;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #0a1112;
+    --surface:     #111a1b;
+    --surface-2:   #182425;
+    --ink:         #e3ebe9;
+    --ink-2:       #b6c6c4;
+    --muted:       #7f9593;
+    --hairline:    #22312f;
+    --hairline-2:  #2e403e;
+
+    --pg:          #4ec9bd;
+    --pg-soft:     #0d3330;
+    --pg-ink:      #7fdbd1;
+    --legacy:      #d7a53f;
+    --legacy-soft: #33280f;
+    --legacy-ink:  #e5bd6b;
+
+    --ok:          #62b884;
+    --warn:        #d68b4e;
+    --crit:        #d97370;
+    --ok-soft:     #14301f;
+    --warn-soft:   #331f10;
+    --crit-soft:   #331616;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground:      #0a1112;
+  --surface:     #111a1b;
+  --surface-2:   #182425;
+  --ink:         #e3ebe9;
+  --ink-2:       #b6c6c4;
+  --muted:       #7f9593;
+  --hairline:    #22312f;
+  --hairline-2:  #2e403e;
+
+  --pg:          #4ec9bd;
+  --pg-soft:     #0d3330;
+  --pg-ink:      #7fdbd1;
+  --legacy:      #d7a53f;
+  --legacy-soft: #33280f;
+  --legacy-ink:  #e5bd6b;
+
+  --ok:          #62b884;
+  --warn:        #d68b4e;
+  --crit:        #d97370;
+  --ok-soft:     #14301f;
+  --warn-soft:   #331f10;
+  --crit-soft:   #331616;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- structure */
+.wrap { display: flex; align-items: flex-start; gap: 0; min-height: 100vh; }
+
+.rail {
+  position: sticky; top: 0; align-self: flex-start;
+  width: var(--rail-w); flex: 0 0 var(--rail-w);
+  height: 100vh; overflow-y: auto;
+  padding: 1.75rem 1.25rem 3rem;
+  background: var(--surface);
+  border-right: 1px solid var(--hairline);
+}
+.rail-title {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--muted);
+  margin: 0 0 .9rem;
+}
+.rail nav { display: flex; flex-direction: column; gap: 1px; }
+.rail a {
+  display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
+  padding: .3rem .5rem; border-radius: 4px;
+  font-family: var(--mono); font-size: 12.5px;
+  color: var(--ink-2); text-decoration: none;
+}
+.rail a:hover { background: var(--surface-2); color: var(--pg); }
+.rail a .n { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rail .group {
+  margin-top: 1.4rem; padding-top: .8rem; border-top: 1px solid var(--hairline);
+}
+
+.main { flex: 1 1 auto; min-width: 0; padding: 2.5rem clamp(1.25rem, 4vw, 3.5rem) 6rem; }
+.col { max-width: 74ch; }
+
+/* -------------------------------------------------------------- masthead */
+.masthead { margin-bottom: 3rem; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--pg); margin: 0 0 .6rem;
+}
+h1 {
+  font-size: clamp(1.9rem, 3.4vw, 2.7rem); line-height: 1.1;
+  letter-spacing: -0.022em; font-weight: 640; margin: 0 0 .7rem;
+  text-wrap: balance;
+}
+.lede { font-size: 1.06rem; color: var(--ink-2); max-width: 68ch; margin: 0; }
+
+h2 {
+  font-size: 1.35rem; letter-spacing: -0.014em; font-weight: 640;
+  margin: 3.2rem 0 .4rem; padding-top: 1.1rem;
+  border-top: 2px solid var(--ink); text-wrap: balance;
+}
+h3 {
+  font-size: 1.02rem; font-weight: 620; margin: 2rem 0 .4rem;
+  letter-spacing: -0.008em;
+}
+h4 { font-size: .95rem; font-weight: 620; margin: 1.4rem 0 .3rem; }
+p { margin: 0 0 .85rem; }
+a { color: var(--pg); }
+
+/* ------------------------------------------------------------------ chips */
+.chip {
+  display: inline-flex; align-items: center; gap: .3em;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em;
+  text-transform: uppercase; padding: .18em .5em; border-radius: 3px;
+  background: var(--surface-2); color: var(--muted); white-space: nowrap;
+  border: 1px solid var(--hairline);
+}
+.chip.pg     { background: var(--pg-soft);     color: var(--pg-ink);     border-color: transparent; }
+.chip.legacy { background: var(--legacy-soft); color: var(--legacy-ink); border-color: transparent; }
+.chip.ok     { background: var(--ok-soft);     color: var(--ok);         border-color: transparent; }
+.chip.warn   { background: var(--warn-soft);   color: var(--warn);       border-color: transparent; }
+.chip.crit   { background: var(--crit-soft);   color: var(--crit);       border-color: transparent; }
+
+code, .mono { font-family: var(--mono); font-size: .88em; }
+p code, li code, td code {
+  background: var(--surface-2); padding: .1em .35em; border-radius: 3px;
+  color: var(--ink);
+}
+
+/* ----------------------------------------------------------------- tables */
+.scroller { overflow-x: auto; margin: .9rem 0 1.6rem; border-radius: 6px;
+            border: 1px solid var(--hairline); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface-2); color: var(--muted);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+  text-transform: uppercase; font-weight: 500;
+  text-align: left; padding: .55rem .7rem; white-space: nowrap;
+  border-bottom: 1px solid var(--hairline-2);
+}
+tbody td {
+  padding: .45rem .7rem; border-bottom: 1px solid var(--hairline);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--surface-2); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.name { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+td.type { font-family: var(--mono); font-size: 12px; color: var(--pg); white-space: nowrap; }
+td.note { color: var(--muted); font-size: 12.5px; min-width: 18rem; }
+
+/* ------------------------------------------------------------ table cards */
+.entity {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 8px; margin: 1.5rem 0; overflow: hidden;
+  scroll-margin-top: 1rem;
+}
+.entity > header {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem;
+  padding: .8rem 1rem; border-bottom: 1px solid var(--hairline);
+  background: linear-gradient(to bottom, var(--surface-2), var(--surface));
+}
+.entity > header h3 {
+  margin: 0; font-family: var(--mono); font-size: 14px; font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.entity > header h3 .sch { color: var(--muted); font-weight: 400; }
+.entity .desc { padding: .7rem 1rem 0; color: var(--ink-2); font-size: 13.5px; max-width: 78ch; }
+.entity .scroller { margin: .7rem 0 0; border: none; border-radius: 0;
+                    border-top: 1px solid var(--hairline); }
+
+/* ------------------------------------------------------------------ notes */
+.note-box {
+  border-left: 3px solid var(--pg); background: var(--surface);
+  padding: .8rem 1rem; margin: 1.2rem 0; border-radius: 0 6px 6px 0;
+  font-size: 14px;
+}
+.note-box.legacy { border-left-color: var(--legacy); }
+.note-box.warn   { border-left-color: var(--warn); }
+.note-box h4 { margin: 0 0 .3rem; font-family: var(--mono); font-size: 11px;
+               letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.note-box p:last-child { margin-bottom: 0; }
+
+/* ------------------------------------------------------------------- misc */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+         gap: 1px; background: var(--hairline); border: 1px solid var(--hairline);
+         border-radius: 8px; overflow: hidden; margin: 1.5rem 0 2rem; }
+.stat { background: var(--surface); padding: .85rem 1rem; }
+.stat .v { font-family: var(--mono); font-size: 1.5rem; font-weight: 600;
+           letter-spacing: -0.02em; font-variant-numeric: tabular-nums; display: block; }
+.stat .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+           text-transform: uppercase; color: var(--muted); }
+
+pre {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 6px; padding: .85rem 1rem; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.55; margin: .9rem 0 1.4rem;
+}
+pre code { background: none; padding: 0; }
+
+ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+li { margin-bottom: .3rem; }
+
+.foot { margin-top: 4rem; padding-top: 1.2rem; border-top: 1px solid var(--hairline);
+        color: var(--muted); font-size: 12.5px; font-family: var(--mono); }
+
+.toggle {
+  position: fixed; right: 1rem; bottom: 1rem; z-index: 20;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+  text-transform: uppercase; padding: .5rem .75rem; border-radius: 999px;
+  background: var(--surface); color: var(--ink-2);
+  border: 1px solid var(--hairline-2); cursor: pointer;
+}
+.toggle:hover { color: var(--pg); border-color: var(--pg); }
+:focus-visible { outline: 2px solid var(--pg); outline-offset: 2px; }
+
+@media (max-width: 900px) {
+  .wrap { flex-direction: column; }
+  .rail { position: static; width: 100%; flex: none; height: auto;
+          border-right: none; border-bottom: 1px solid var(--hairline); }
+  .rail nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+  .main { padding: 1.75rem 1.1rem 4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* classification tags quoted from v3 comments: [PHI] [PHI-RISK] [PII] [FINANCIAL] … */
+.tag { display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 650;
+       letter-spacing: .04em; padding: 0 .35rem; border-radius: 3px; margin-right: .2rem;
+       border: 1px solid var(--hairline); color: var(--muted); vertical-align: 1px; }
+.tag.t-phi        { background: var(--crit-soft); color: var(--crit); border-color: var(--crit); }
+.tag.t-phi-risk   { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.tag.t-pii        { background: var(--legacy-soft); color: var(--legacy-ink); border-color: transparent; }
+.tag.t-financial  { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.tag.t-secret-ref { background: var(--crit-soft); color: var(--crit); border-color: transparent; }
+.tag.t-audit, .tag.t-snapshot { background: var(--pg-soft); color: var(--pg-ink); border-color: transparent; }
+tr.row-phi td.name { box-shadow: inset 3px 0 0 var(--crit); }
+tr.row-phi-risk td.name { box-shadow: inset 3px 0 0 var(--warn); }
+
+@media print {
+  .rail, .toggle { display: none; }
+  body { background: #fff; }
+  .entity { break-inside: avoid; }
+}
+
+.query { background: var(--surface); border: 1px solid var(--hairline);
+         border-radius: 8px; margin: 1.2rem 0; overflow: hidden;
+         scroll-margin-top: 1rem; }
+.query > header { display: flex; gap: .7rem; align-items: baseline; flex-wrap: wrap;
+                  padding: .8rem 1rem; border-bottom: 1px solid var(--hairline);
+                  background: linear-gradient(to bottom, var(--surface-2), var(--surface)); }
+.query .qid { font-family: var(--mono); font-size: 12px; font-weight: 600;
+              color: var(--pg); }
+.query h3 { margin: 0; font-size: 1rem; font-weight: 550; flex: 1 1 20rem; }
+.query .why { padding: .7rem 1rem 0; color: var(--muted); font-size: 13px;
+              max-width: 78ch; }
+.query pre { margin: .7rem 0 0; border: none; border-top: 1px solid var(--hairline);
+             border-radius: 0; background: var(--surface); }
+.kw  { color: var(--pg); font-weight: 600; }
+.tbl { color: var(--ink); }
+.str { color: var(--legacy); }
+.cmt { color: var(--muted); font-style: italic; }
+.num { color: var(--warn); }
+</style>
+
+<div class="wrap">
+<aside class="rail">
+  <p class="rail-title">Sections</p>
+  <nav><a href="#before-you-run"><span>before you run</span></a><a href="#clients-and-growth"><span>Clients And Growth</span><span class="n">7</span></a><a href="#orders-and-revenue"><span>Orders And Revenue</span><span class="n">5</span></a><a href="#production-pipeline"><span>Production Pipeline</span><span class="n">6</span></a><a href="#vouchers"><span>Vouchers</span><span class="n">5</span></a><a href="#shipping-and-archive"><span>Shipping And Archive</span><span class="n">4</span></a><a href="#clinical-quality-and-operations"><span>Clinical, Quality And Operations</span><span class="n">3</span></a><a href="#cases-ismile-restorations-and-ai-plans"><span>Cases, Ismile, Restorations And Ai Plans</span><span class="n">5</span></a><a href="#patient-identity-audit-and-migration-evidence"><span>Patient Identity, Audit And Migration Evidence</span><span class="n">8</span></a></nav>
+  <div class="group">
+    <p class="rail-title">Also in this set</p>
+    <nav><a href="README_FIRST.html"><span>start here</span></a><a href="BUSINESS_GUIDE.html"><span>business guide</span></a><a href="TECHNICAL_GUIDE.html"><span>technical guide</span></a><a href="SCHEMA_ONBOARDING.html"><span>schema guide</span></a><a href="ERD_DIAGRAM_V3.html"><span>entity diagrams</span></a><a href="MYSQL_TO_POSTGRES_MAPPING.html"><span>mysql to postgresql mapping</span></a><a href="RUNBOOK.html"><span>runbook</span></a><a href="OPEN_QUESTIONS.html"><span>open questions</span></a><a href="DECISIONS_LOG.html"><span>decisions log</span></a><a href="V2_TO_V3_CHANGES.html"><span>v2 to v3 changes</span></a><a href="DB_REVIEW_ASSESSMENT3.html"><span>review form (third review)</span></a><a href="COMPLIANCE_CHECKLIST.html"><span>compliance checklist</span></a></nav>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="masthead col">
+    <p class="eyebrow">3D Diagnostix &middot; threeddx3</p>
+    <h1>43 questions the business asks</h1>
+    <p class="lede">Taken from the migration workbook's FAQ sheet and the July review,
+      ported to the v3 schema. Every statement on this page is planned (EXPLAIN) against a
+      fully migrated threeddx3 scratch database by <code>tools/check_sample_queries.py</code>,
+      as the role its card names. 8 were impossible or unreliable in v1, and
+      11 need structures that are new in v3 (cases, iSmile sub-orders, temporary and
+      final restorations, Relu AI plans, the PHI gateway, the audit hash chain, the
+      migration ledger) &mdash; those are marked, with the reason.</p>
+  </div>
+
+  <div class="col">
+    <div class="note-box">
+      <h4>Before you run anything</h4>
+      <p>Row-level security is fail-closed. Run
+        <code>SELECT core.fn_set_tenant('3ddx');</code> first, or every query returns
+        nothing. Queries with a <code>:parameter</code> expect a bind value.</p>
+    </div>
+  </div>
+
+  
+<h2 id="before-you-run">Before you run anything: set the tenant</h2>
+<p>Run this once per session, then paste any query on this page as-is:</p>
+<pre><code>SELECT core.fn_set_tenant('3ddx');
+SELECT * FROM core.v_session_context;   -- confirms what you will see</code></pre>
+
+<div class="note-box warn">
+  <h4>Fail-closed: an unset tenant sees nothing</h4>
+  <p>Row-level security in threeddx3 is
+    <code>USING (tenant_id = core.fn_current_tenant())</code>, enabled and
+    <strong>forced</strong> on every tenant-scoped table. When
+    <code>app.tenant_id</code> is not set, <code>core.fn_current_tenant()</code>
+    is NULL, the comparison is NULL and the session sees <strong>no rows</strong>:
+    counts come back 0 and lists come back empty, without an error. (v2 had an
+    <code>OR &hellip; IS NULL</code> branch that let an unset session see every
+    tenant; v3 removed it &mdash; review finding F01.)</p>
+  <p><code>core.fn_set_tenant</code> raises on an unknown slug, so a typo fails
+    loudly. The human read login <code>user1_r</code> has the tenant preset
+    (<code>ALTER ROLE &hellip; IN DATABASE threeddx3 SET app.tenant_id</code>).</p>
+</div>
+
+<h3 id="who-can-run-what">Who can run what</h3>
+<div class="scroller"><table>
+<thead><tr><th>Login</th><th>Group role</th><th>Can run</th></tr></thead>
+<tbody>
+<tr><td class="name">user1_r</td><td class="type">threeddx3_read</td>
+    <td class="note">every query except the PHI identity lookup (Q36, first two statements) and the
+    audit-schema queries (Q37&ndash;Q40). Patient identity is available only as
+    <code>clinical.v_patients_masked</code> (initials and birth year).</td></tr>
+<tr><td class="name">app, user2_rw</td><td class="type">threeddx3_app_rw</td>
+    <td class="note">as read, plus Q36: identity only through
+    <code>clinical.fn_get_patient_identity</code> / <code>fn_list_patient_identities</code>,
+    which require a stated purpose and write <code>audit.phi_access_log</code> for every patient
+    returned.</td></tr>
+<tr><td class="name">aya, kyousry</td><td class="type">threeddx3_admin</td>
+    <td class="note">everything, including the audit schema. Admin is BYPASSRLS &mdash; set the
+    tenant anyway so the answers match what the application sees.</td></tr>
+</tbody></table></div>
+
+<p>A PostgreSQL <strong>superuser</strong> bypasses RLS entirely; do not use one for
+  reporting. Each card below names the role it was planned as.</p>
+
+<p>Equivalent forms, if you prefer them:</p>
+<pre><code>SET app.tenant_id = '1';                      -- whole session
+SET LOCAL app.tenant_id = '1';                -- current transaction only
+PGOPTIONS="-c app.tenant_id=1" psql -d threeddx3</code></pre>
+
+<p>The queries carry no tenant filter of their own. That is deliberate: the filter
+  belongs in one place, and duplicating it across forty queries is how the two
+  drift apart. Queries with a <code>:parameter</code> expect a bind value.</p>
+<h2 id="clients-and-growth">Clients And Growth</h2>
+<section class="query" id="Q1">
+  <header>
+    <span class="qid">Q1</span>
+    <h3>How many users registered last year?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> <span class="kw">count</span>(*) <span class="kw">AS</span> registered_last_year
+<span class="kw">FROM</span> crm.contacts
+<span class="kw">WHERE</span> deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> <span class="kw">NOT</span> is_testing
+  <span class="kw">AND</span> registered_at &gt;= <span class="kw">date_trunc</span>(<span class="str">'year'</span>, <span class="kw">now</span>()) - <span class="kw">INTERVAL</span> <span class="str">'1 year'</span>
+  <span class="kw">AND</span> registered_at &lt;  <span class="kw">date_trunc</span>(<span class="str">'year'</span>, <span class="kw">now</span>());</code></pre>
+</section>
+<section class="query" id="Q2">
+  <header>
+    <span class="qid">Q2</span>
+    <h3>How many users registered last year and have never created an order? The review asked for this one explicitly.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> <span class="kw">count</span>(*) <span class="kw">AS</span> registered_but_never_ordered
+<span class="kw">FROM</span> crm.contacts c
+<span class="kw">WHERE</span> c.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> <span class="kw">NOT</span> c.is_testing
+  <span class="kw">AND</span> c.registered_at &gt;= <span class="kw">date_trunc</span>(<span class="str">'year'</span>, <span class="kw">now</span>()) - <span class="kw">INTERVAL</span> <span class="str">'1 year'</span>
+  <span class="kw">AND</span> c.registered_at &lt;  <span class="kw">date_trunc</span>(<span class="str">'year'</span>, <span class="kw">now</span>())
+  <span class="kw">AND</span> c.first_order_at <span class="kw">IS</span> <span class="kw">NULL</span>;
+<span class="cmt">-- crm.contacts.first_order_at is maintained by trigger, so this is an index</span>
+<span class="cmt">-- scan rather than a NOT EXISTS against 600k orders.</span></code></pre>
+</section>
+<section class="query" id="Q3">
+  <header>
+    <span class="qid">Q3</span>
+    <h3>How many new users registered this year and HAVE created orders, and what did they spend?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> <span class="kw">count</span>(*)                     <span class="kw">AS</span> activated_clients,
+       <span class="kw">sum</span>(a.order_count)           <span class="kw">AS</span> orders_placed,
+       <span class="kw">sum</span>(a.lifetime_value)        <span class="kw">AS</span> lifetime_value
+<span class="kw">FROM</span> reporting.v_client_activity a
+<span class="kw">WHERE</span> a.registered_at &gt;= <span class="kw">date_trunc</span>(<span class="str">'year'</span>, <span class="kw">now</span>())
+  <span class="kw">AND</span> a.order_count &gt; 0;</code></pre>
+</section>
+<section class="query" id="Q4">
+  <header>
+    <span class="qid">Q4</span>
+    <h3>How many inactive clients — no order in the last 12 months?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> never_ordered)          <span class="kw">AS</span> never_ordered,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> dormant)                <span class="kw">AS</span> dormant_over_12m,
+       <span class="kw">count</span>(*)                                       <span class="kw">AS</span> total_inactive
+<span class="kw">FROM</span> reporting.v_client_activity
+<span class="kw">WHERE</span> never_ordered <span class="kw">OR</span> dormant;</code></pre>
+</section>
+<section class="query" id="Q5">
+  <header>
+    <span class="qid">Q5</span>
+    <h3>Which clients have surgical-guide orders, and how many?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> c.display_name                <span class="kw">AS</span> client,
+       c.contact_type,
+       rep.display_name              <span class="kw">AS</span> sales_rep,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> oi.order_id)   <span class="kw">AS</span> sg_orders,
+       <span class="kw">sum</span>(oi.line_total)            <span class="kw">AS</span> sg_value,
+       <span class="kw">max</span>(oi.created_at)            <span class="kw">AS</span> most_recent
+<span class="kw">FROM</span> orders.order_items oi
+<span class="kw">JOIN</span> catalog.sellable_items si <span class="kw">ON</span> si.id = oi.sellable_item_id
+<span class="kw">JOIN</span> catalog.categories    cat <span class="kw">ON</span> cat.id = si.category_id
+<span class="kw">JOIN</span> orders.orders           o <span class="kw">ON</span> o.id = oi.order_id
+<span class="kw">JOIN</span> crm.contacts            c <span class="kw">ON</span> c.id = o.contact_id
+<span class="kw">LEFT JOIN</span> iam.users        rep <span class="kw">ON</span> rep.id = c.sales_rep_user_id
+<span class="kw">WHERE</span> cat.code = <span class="str">'surgical_guide'</span>
+  <span class="kw">AND</span> oi.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> o.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">GROUP BY</span> c.display_name, c.contact_type, rep.display_name
+<span class="kw">ORDER BY</span> sg_orders <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q6">
+  <header>
+    <span class="qid">Q6</span>
+    <h3>Which scanning centre submitted the most cases, and for which doctors?  Review #7.</h3>
+    <span class="chip pg">new in v2</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v1: an order had no link to the scanning centre.</p>
+  <pre><code><span class="kw">SELECT</span> sc.display_name          <span class="kw">AS</span> scan_center,
+       <span class="kw">count</span>(*)                 <span class="kw">AS</span> cases_submitted,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> o.contact_id) <span class="kw">AS</span> distinct_doctors,
+       <span class="kw">sum</span>(o.total_amount)      <span class="kw">AS</span> value
+<span class="kw">FROM</span> orders.orders o
+<span class="kw">JOIN</span> crm.contacts sc <span class="kw">ON</span> sc.id = o.scan_center_contact_id
+<span class="kw">WHERE</span> o.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> o.created_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'12 months'</span>
+<span class="kw">GROUP BY</span> sc.display_name
+<span class="kw">ORDER BY</span> cases_submitted <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 25;</code></pre>
+</section>
+<section class="query" id="Q7">
+  <header>
+    <span class="qid">Q7</span>
+    <h3>How is each sales representative performing?  Review #9.</h3>
+    <span class="chip pg">new in v2</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v1: there was no client-to-rep relationship.</p>
+  <pre><code><span class="kw">SELECT</span> rep.display_name                          <span class="kw">AS</span> sales_rep,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> c.id)                      <span class="kw">AS</span> clients,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> c.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> c.last_order_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'90 days'</span>)
+                                                 <span class="kw">AS</span> active_clients,
+       <span class="kw">count</span>(o.id)                               <span class="kw">AS</span> orders_12m,
+       <span class="kw">coalesce</span>(<span class="kw">sum</span>(o.total_amount), 0)          <span class="kw">AS</span> value_12m
+<span class="kw">FROM</span> crm.contacts c
+<span class="kw">JOIN</span> iam.users rep <span class="kw">ON</span> rep.id = c.sales_rep_user_id
+<span class="kw">LEFT JOIN</span> orders.orders o
+       <span class="kw">ON</span> o.contact_id = c.id
+      <span class="kw">AND</span> o.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+      <span class="kw">AND</span> o.created_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'12 months'</span>
+<span class="kw">WHERE</span> c.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span> <span class="kw">AND</span> <span class="kw">NOT</span> c.is_testing
+<span class="kw">GROUP BY</span> rep.display_name
+<span class="kw">ORDER BY</span> value_12m <span class="kw">DESC</span>;</code></pre>
+</section><h2 id="orders-and-revenue">Orders And Revenue</h2>
+<section class="query" id="Q8">
+  <header>
+    <span class="qid">Q8</span>
+    <h3>What were the total charges yesterday?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> ch.currency_code,
+       ch.charge_kind,
+       <span class="kw">count</span>(*)         <span class="kw">AS</span> charge_count,
+       <span class="kw">sum</span>(ch.amount)   <span class="kw">AS</span> total
+<span class="kw">FROM</span> billing.charges ch
+<span class="kw">WHERE</span> ch.charged_on = <span class="kw">CURRENT_DATE</span> - 1
+<span class="kw">GROUP BY</span> <span class="kw">ROLLUP</span> (ch.currency_code, ch.charge_kind)
+<span class="kw">ORDER BY</span> ch.currency_code <span class="kw">NULLS</span> <span class="kw">LAST</span>, ch.charge_kind <span class="kw">NULLS</span> <span class="kw">LAST</span>;</code></pre>
+</section>
+<section class="query" id="Q9">
+  <header>
+    <span class="qid">Q9</span>
+    <h3>How many orders of each kind were created last month, and what did they cost?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> cat.name                          <span class="kw">AS</span> category,
+       si.item_kind,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> o.id)              <span class="kw">AS</span> orders,
+       <span class="kw">count</span>(oi.id)                      <span class="kw">AS</span> items,
+       oi.currency_code,
+       <span class="kw">sum</span>(oi.line_total)                <span class="kw">AS</span> total_value,
+       <span class="kw">round</span>(<span class="kw">avg</span>(oi.line_total), 2)      <span class="kw">AS</span> average_item_value
+<span class="kw">FROM</span> orders.orders o
+<span class="kw">JOIN</span> orders.order_items oi     <span class="kw">ON</span> oi.order_id = o.id <span class="kw">AND</span> oi.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">JOIN</span> catalog.sellable_items si <span class="kw">ON</span> si.id = oi.sellable_item_id
+<span class="kw">LEFT JOIN</span> catalog.categories cat <span class="kw">ON</span> cat.id = si.category_id
+<span class="kw">WHERE</span> o.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> <span class="kw">NOT</span> o.is_testing
+  <span class="kw">AND</span> o.created_at &gt;= <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">now</span>()) - <span class="kw">INTERVAL</span> <span class="str">'1 month'</span>
+  <span class="kw">AND</span> o.created_at &lt;  <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">now</span>())
+<span class="kw">GROUP BY</span> cat.name, si.item_kind, oi.currency_code
+<span class="kw">ORDER BY</span> total_value <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q10">
+  <header>
+    <span class="qid">Q10</span>
+    <h3>Monthly revenue trend for the last two years, by category. Reads reporting.v_monthly_volume, the tenant-filtered window on the materialized view mv_monthly_volume, so it is instant regardless of order volume. The materialized view itself is never granted: it cannot carry row-level security.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> month, category_code, item_kind,
+       order_count, item_count, redo_count, total_value, active_clients
+<span class="kw">FROM</span> reporting.v_monthly_volume
+<span class="kw">WHERE</span> month &gt;= <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">now</span>()) - <span class="kw">INTERVAL</span> <span class="str">'24 months'</span>
+<span class="kw">ORDER BY</span> month <span class="kw">DESC</span>, total_value <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q11">
+  <header>
+    <span class="qid">Q11</span>
+    <h3>Which orders are billable but still not invoiced? The &quot;not charged&quot; report, which the requirements backlog revisits often.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> o.order_number,
+       c.display_name          <span class="kw">AS</span> client,
+       si.name                 <span class="kw">AS</span> service,
+       oi.line_total,
+       oi.currency_code,
+       oi.completed_at,
+       <span class="kw">now</span>() - oi.completed_at <span class="kw">AS</span> age
+<span class="kw">FROM</span> orders.order_items oi
+<span class="kw">JOIN</span> orders.orders           o <span class="kw">ON</span> o.id = oi.order_id
+<span class="kw">JOIN</span> crm.contacts            c <span class="kw">ON</span> c.id = o.contact_id
+<span class="kw">JOIN</span> catalog.sellable_items si <span class="kw">ON</span> si.id = oi.sellable_item_id
+<span class="kw">WHERE</span> oi.is_billable
+  <span class="kw">AND</span> <span class="kw">NOT</span> oi.is_invoiced
+  <span class="kw">AND</span> oi.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> oi.completed_at <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>
+<span class="kw">ORDER BY</span> oi.completed_at;</code></pre>
+</section>
+<section class="query" id="Q12">
+  <header>
+    <span class="qid">Q12</span>
+    <h3>Top 25 clients by revenue over the last 12 months.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> display_name <span class="kw">AS</span> client, contact_type, sales_rep_name,
+       country_name, orders_last_12m, value_last_12m
+<span class="kw">FROM</span> reporting.v_client_activity
+<span class="kw">WHERE</span> orders_last_12m &gt; 0
+<span class="kw">ORDER BY</span> value_last_12m <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 25;</code></pre>
+</section><h2 id="production-pipeline">Production Pipeline</h2>
+<section class="query" id="Q13">
+  <header>
+    <span class="qid">Q13</span>
+    <h3>How many restorations are in design, and how many in production?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> oi.status, <span class="kw">count</span>(*) <span class="kw">AS</span> items, <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> oi.due_at &lt; <span class="kw">now</span>()) <span class="kw">AS</span> overdue
+<span class="kw">FROM</span> orders.order_items oi
+<span class="kw">JOIN</span> catalog.sellable_items si <span class="kw">ON</span> si.id = oi.sellable_item_id
+<span class="kw">JOIN</span> catalog.categories    cat <span class="kw">ON</span> cat.id = si.category_id
+<span class="kw">WHERE</span> cat.code = <span class="str">'restoration'</span>
+  <span class="kw">AND</span> oi.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> oi.status <span class="kw">IN</span> (<span class="str">'in_design'</span>, <span class="str">'in_production'</span>)
+<span class="kw">GROUP BY</span> oi.status;</code></pre>
+</section>
+<section class="query" id="Q14">
+  <header>
+    <span class="qid">Q14</span>
+    <h3>How many surgical guides are in design, and how many in production?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> oi.status, <span class="kw">count</span>(*) <span class="kw">AS</span> items, <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> oi.due_at &lt; <span class="kw">now</span>()) <span class="kw">AS</span> overdue
+<span class="kw">FROM</span> orders.order_items oi
+<span class="kw">JOIN</span> catalog.sellable_items si <span class="kw">ON</span> si.id = oi.sellable_item_id
+<span class="kw">JOIN</span> catalog.categories    cat <span class="kw">ON</span> cat.id = si.category_id
+<span class="kw">WHERE</span> cat.code = <span class="str">'surgical_guide'</span>
+  <span class="kw">AND</span> oi.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> oi.status <span class="kw">IN</span> (<span class="str">'in_design'</span>, <span class="str">'in_production'</span>)
+<span class="kw">GROUP BY</span> oi.status;</code></pre>
+</section>
+<section class="query" id="Q15">
+  <header>
+    <span class="qid">Q15</span>
+    <h3>How many treatment plans are in planning, and how many consultations are in progress?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> oi.status,
+       <span class="kw">count</span>(*)                                        <span class="kw">AS</span> items,
+       <span class="kw">round</span>(<span class="kw">avg</span>(<span class="kw">EXTRACT</span>(<span class="kw">EPOCH</span> <span class="kw">FROM</span> (<span class="kw">now</span>() - oi.created_at)) / 86400), 1) <span class="kw">AS</span> avg_age_days
+<span class="kw">FROM</span> orders.order_items oi
+<span class="kw">JOIN</span> catalog.sellable_items si <span class="kw">ON</span> si.id = oi.sellable_item_id
+<span class="kw">JOIN</span> catalog.categories    cat <span class="kw">ON</span> cat.id = si.category_id
+<span class="kw">WHERE</span> cat.code = <span class="str">'treatment_plan'</span>
+  <span class="kw">AND</span> oi.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> oi.status <span class="kw">IN</span> (<span class="str">'in_design'</span>, <span class="str">'in_review'</span>, <span class="str">'awaiting_approval'</span>, <span class="str">'pending_information'</span>)
+<span class="kw">GROUP BY</span> oi.status
+<span class="kw">ORDER BY</span> items <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q16">
+  <header>
+    <span class="qid">Q16</span>
+    <h3>The whole production pipeline on one screen — the daily dashboard.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> category_name, item_kind, item_status, item_count, overdue_count, avg_age_days
+<span class="kw">FROM</span> reporting.v_production_pipeline
+<span class="kw">ORDER BY</span> item_count <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q17">
+  <header>
+    <span class="qid">Q17</span>
+    <h3>How long does each production stage actually take?</h3>
+    <span class="chip pg">new in v2</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v1: there was no workflow engine, and legacy computed durations by subtracting varchar timestamps at query time.</p>
+  <pre><code><span class="kw">SELECT</span> ws_from.name                                  <span class="kw">AS</span> from_state,
+       ws_to.name                                    <span class="kw">AS</span> to_state,
+       <span class="kw">count</span>(*)                                      <span class="kw">AS</span> transitions,
+       <span class="kw">round</span>(<span class="kw">avg</span>(h.duration_seconds) / 3600.0, 1)    <span class="kw">AS</span> avg_hours,
+       <span class="kw">round</span>((<span class="kw">percentile_cont</span>(0.5) <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> h.duration_seconds) / 3600.0)::numeric, 1)
+                                                     <span class="kw">AS</span> median_hours,
+       <span class="kw">round</span>((<span class="kw">percentile_cont</span>(0.95) <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> h.duration_seconds) / 3600.0)::numeric, 1)
+                                                     <span class="kw">AS</span> p95_hours
+<span class="kw">FROM</span> workflow.workflow_history h
+<span class="kw">LEFT JOIN</span> workflow.workflow_states ws_from <span class="kw">ON</span> ws_from.id = h.from_state_id
+<span class="kw">JOIN</span>      workflow.workflow_states ws_to   <span class="kw">ON</span> ws_to.id   = h.to_state_id
+<span class="kw">WHERE</span> h.occurred_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'90 days'</span>
+  <span class="kw">AND</span> h.duration_seconds <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>
+<span class="kw">GROUP BY</span> ws_from.name, ws_to.name
+<span class="kw">HAVING</span> <span class="kw">count</span>(*) &gt; 10
+<span class="kw">ORDER BY</span> avg_hours <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q18">
+  <header>
+    <span class="qid">Q18</span>
+    <h3>Designer throughput last month.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> u.display_name              <span class="kw">AS</span> designer,
+       <span class="kw">count</span>(*)                    <span class="kw">AS</span> items_completed,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> oi.is_redo) <span class="kw">AS</span> redos,
+       <span class="kw">round</span>(100.0 * <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> oi.is_redo) / <span class="kw">count</span>(*), 1) <span class="kw">AS</span> redo_percent,
+       <span class="kw">sum</span>(pj.design_minutes)      <span class="kw">AS</span> design_minutes
+<span class="kw">FROM</span> orders.order_items oi
+<span class="kw">JOIN</span> iam.users u <span class="kw">ON</span> u.id = oi.designer_user_id
+<span class="kw">LEFT JOIN</span> production.production_jobs pj <span class="kw">ON</span> pj.order_item_id = oi.id
+<span class="kw">WHERE</span> oi.completed_at &gt;= <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">now</span>()) - <span class="kw">INTERVAL</span> <span class="str">'1 month'</span>
+  <span class="kw">AND</span> oi.completed_at &lt;  <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">now</span>())
+<span class="kw">GROUP BY</span> u.display_name
+<span class="kw">ORDER BY</span> items_completed <span class="kw">DESC</span>;</code></pre>
+</section><h2 id="vouchers">Vouchers</h2>
+<section class="query" id="Q19">
+  <header>
+    <span class="qid">Q19</span>
+    <h3>How many vouchers did we sell last month, and for how much?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> vt.name                <span class="kw">AS</span> voucher_type,
+       <span class="kw">count</span>(*)               <span class="kw">AS</span> vouchers_issued,
+       v.currency_code,
+       <span class="kw">sum</span>(v.issued_credit)   <span class="kw">AS</span> credit_issued,
+       <span class="kw">sum</span>(v.issued_cases)    <span class="kw">AS</span> cases_issued
+<span class="kw">FROM</span> vouchers.vouchers v
+<span class="kw">JOIN</span> vouchers.voucher_types vt <span class="kw">ON</span> vt.id = v.voucher_type_id
+<span class="kw">WHERE</span> v.issued_on &gt;= <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">CURRENT_DATE</span>) - <span class="kw">INTERVAL</span> <span class="str">'1 month'</span>
+  <span class="kw">AND</span> v.issued_on &lt;  <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">CURRENT_DATE</span>)
+<span class="kw">GROUP BY</span> vt.name, v.currency_code
+<span class="kw">ORDER BY</span> credit_issued <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q20">
+  <header>
+    <span class="qid">Q20</span>
+    <h3>How many vouchers expire by September 2026, and what credit is left on them? The workbook asks this one verbatim.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> vt.name              <span class="kw">AS</span> voucher_type,
+       <span class="kw">count</span>(*)             <span class="kw">AS</span> vouchers_expiring,
+       v.currency_code,
+       <span class="kw">sum</span>(v.remaining_credit)                       <span class="kw">AS</span> credit_at_risk,
+       <span class="kw">sum</span>(v.issued_cases - v.consumed_cases - v.expired_cases) <span class="kw">AS</span> cases_at_risk,
+       <span class="kw">min</span>(v.expires_on)    <span class="kw">AS</span> earliest,
+       <span class="kw">max</span>(v.expires_on)    <span class="kw">AS</span> latest
+<span class="kw">FROM</span> vouchers.vouchers v
+<span class="kw">JOIN</span> vouchers.voucher_types vt <span class="kw">ON</span> vt.id = v.voucher_type_id
+<span class="kw">WHERE</span> v.status <span class="kw">IN</span> (<span class="str">'active'</span>, <span class="str">'in_use'</span>)
+  <span class="kw">AND</span> v.expires_on <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> v.expires_on &lt;= <span class="kw">DATE</span> <span class="str">'2026-09-30'</span>
+<span class="kw">GROUP BY</span> vt.name, v.currency_code
+<span class="kw">ORDER BY</span> credit_at_risk <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q21">
+  <header>
+    <span class="qid">Q21</span>
+    <h3>How many GFMR vouchers have been sold, and what is their position?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> <span class="kw">count</span>(*)                           <span class="kw">AS</span> gfmr_vouchers,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> status = <span class="str">'exhausted'</span>) <span class="kw">AS</span> fully_used,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> expiry_bucket = <span class="str">'expired'</span>)       <span class="kw">AS</span> expired,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> expiry_bucket = <span class="str">'expiring_soon'</span>) <span class="kw">AS</span> expiring_within_90_days,
+       <span class="kw">sum</span>(issued_credit)                 <span class="kw">AS</span> issued,
+       <span class="kw">sum</span>(consumed_credit)               <span class="kw">AS</span> consumed,
+       <span class="kw">sum</span>(remaining_credit)              <span class="kw">AS</span> remaining,
+       <span class="kw">sum</span>(expired_credit)                <span class="kw">AS</span> lapsed
+<span class="kw">FROM</span> reporting.v_voucher_balances
+<span class="kw">WHERE</span> voucher_type_code = <span class="str">'gfmr'</span>;</code></pre>
+</section>
+<section class="query" id="Q22">
+  <header>
+    <span class="qid">Q22</span>
+    <h3>Track voucher consumption: every movement on one voucher.</h3>
+    <span class="chip pg">new in v2</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">v1 had no ledger, so a balance could not be explained.</p>
+  <pre><code><span class="kw">SELECT</span> t.sequence_no,
+       t.effective_at,
+       t.scope,
+       t.txn_kind,
+       t.credit_delta,
+       t.balance_after,
+       o.order_number,
+       si.name           <span class="kw">AS</span> service,
+       u.display_name    <span class="kw">AS</span> actor,
+       t.reason,
+       t.reconstruction_method
+<span class="kw">FROM</span> vouchers.voucher_transactions t
+<span class="kw">JOIN</span> vouchers.vouchers v          <span class="kw">ON</span> v.id = t.voucher_id
+<span class="kw">LEFT JOIN</span> orders.orders o         <span class="kw">ON</span> o.id = t.order_id
+<span class="kw">LEFT JOIN</span> catalog.sellable_items si <span class="kw">ON</span> si.id = t.sellable_item_id
+<span class="kw">LEFT JOIN</span> iam.users u             <span class="kw">ON</span> u.id = t.actor_user_id
+<span class="kw">WHERE</span> v.voucher_code = :voucher_code
+<span class="kw">ORDER BY</span> t.effective_at, t.sequence_no;</code></pre>
+</section>
+<section class="query" id="Q23">
+  <header>
+    <span class="qid">Q23</span>
+    <h3>Do the voucher balances agree with the ledger? Run this after any voucher incident. vouchers.fn_apply_transaction is the only writer of balances, so this should always return no rows.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> v.voucher_code,
+       v.remaining_credit                        <span class="kw">AS</span> balance_says,
+       <span class="kw">coalesce</span>(<span class="kw">sum</span>(t.credit_delta), 0)          <span class="kw">AS</span> ledger_says,
+       v.remaining_credit - <span class="kw">coalesce</span>(<span class="kw">sum</span>(t.credit_delta), 0) <span class="kw">AS</span> discrepancy
+<span class="kw">FROM</span> vouchers.vouchers v
+<span class="kw">LEFT JOIN</span> vouchers.voucher_transactions t <span class="kw">ON</span> t.voucher_id = v.id
+<span class="kw">GROUP BY</span> v.id, v.voucher_code, v.remaining_credit
+<span class="kw">HAVING</span> v.remaining_credit &lt;&gt; <span class="kw">coalesce</span>(<span class="kw">sum</span>(t.credit_delta), 0)
+<span class="kw">ORDER BY</span> abs(v.remaining_credit - <span class="kw">coalesce</span>(<span class="kw">sum</span>(t.credit_delta), 0)) <span class="kw">DESC</span>;</code></pre>
+</section><h2 id="shipping-and-archive">Shipping And Archive</h2>
+<section class="query" id="Q24">
+  <header>
+    <span class="qid">Q24</span>
+    <h3>How many restorations shipped last month, temporary and final?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> <span class="kw">count</span>(<span class="kw">DISTINCT</span> s.id)     <span class="kw">AS</span> shipments,
+       <span class="kw">count</span>(si_item.id)        <span class="kw">AS</span> restoration_items,
+       <span class="kw">count</span>(si_item.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> oi.restoration_stage = <span class="str">'temporary'</span>) <span class="kw">AS</span> temporary,
+       <span class="kw">count</span>(si_item.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> oi.restoration_stage = <span class="str">'final'</span>)     <span class="kw">AS</span> final,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> s.contact_id) <span class="kw">AS</span> clients
+<span class="kw">FROM</span> shipping.shipments s
+<span class="kw">JOIN</span> shipping.shipment_items si_item <span class="kw">ON</span> si_item.shipment_id = s.id
+<span class="kw">JOIN</span> orders.order_items oi           <span class="kw">ON</span> oi.id = si_item.order_item_id
+<span class="kw">JOIN</span> catalog.sellable_items sell     <span class="kw">ON</span> sell.id = oi.sellable_item_id
+<span class="kw">JOIN</span> catalog.categories cat          <span class="kw">ON</span> cat.id = sell.category_id
+<span class="kw">WHERE</span> cat.code = <span class="str">'restoration'</span>
+  <span class="kw">AND</span> s.direction = <span class="str">'outbound'</span>
+  <span class="kw">AND</span> s.shipped_at &gt;= <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">now</span>()) - <span class="kw">INTERVAL</span> <span class="str">'1 month'</span>
+  <span class="kw">AND</span> s.shipped_at &lt;  <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">now</span>());</code></pre>
+</section>
+<section class="query" id="Q25">
+  <header>
+    <span class="qid">Q25</span>
+    <h3>Shipment history for one order, with tracking events.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> s.tracking_number,
+       co.name              <span class="kw">AS</span> courier,
+       s.status,
+       s.shipped_at,
+       s.delivered_at,
+       e.occurred_at        <span class="kw">AS</span> event_at,
+       e.description        <span class="kw">AS</span> event,
+       e.location
+<span class="kw">FROM</span> shipping.shipments s
+<span class="kw">LEFT JOIN</span> shipping.couriers co       <span class="kw">ON</span> co.id = s.courier_id
+<span class="kw">LEFT JOIN</span> shipping.tracking_events e <span class="kw">ON</span> e.shipment_id = s.id
+<span class="kw">JOIN</span> orders.orders o                 <span class="kw">ON</span> o.id = s.order_id
+<span class="kw">WHERE</span> o.order_number = :order_number
+<span class="kw">ORDER BY</span> s.shipped_at, e.occurred_at;</code></pre>
+</section>
+<section class="query" id="Q26">
+  <header>
+    <span class="qid">Q26</span>
+    <h3>What is in the archive right now, and what is still waiting for a mold report?  Blocker #1.</h3>
+    <span class="chip pg">new in v2</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v1: PackageContent had no target table at all.</p>
+  <pre><code><span class="kw">SELECT</span> it.name                                          <span class="kw">AS</span> item_type,
+       <span class="kw">count</span>(*)                                         <span class="kw">AS</span> items,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> pi.is_used)               <span class="kw">AS</span> used,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> pi.mold_report_status = <span class="str">'pending'</span>) <span class="kw">AS</span> mold_report_pending,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> p.id)                             <span class="kw">AS</span> packages,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> p.order_id)                       <span class="kw">AS</span> orders
+<span class="kw">FROM</span> archive.package_items pi
+<span class="kw">JOIN</span> archive.packages   p <span class="kw">ON</span> p.id = pi.package_id
+<span class="kw">JOIN</span> archive.item_types it <span class="kw">ON</span> it.id = pi.item_type_id
+<span class="kw">WHERE</span> p.status <span class="kw">IN</span> (<span class="str">'received'</span>, <span class="str">'stored'</span>)
+<span class="kw">GROUP BY</span> it.name
+<span class="kw">ORDER BY</span> items <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q27">
+  <header>
+    <span class="qid">Q27</span>
+    <h3>Which loaner kits are out, and which are overdue back?  Blocker #2.</h3>
+    <span class="chip pg">new in v2</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v1: there was no inventory domain.</p>
+  <pre><code><span class="kw">SELECT</span> i.name              <span class="kw">AS</span> kit_type,
+       su.serial_number,
+       c.display_name      <span class="kw">AS</span> with_client,
+       o.order_number,
+       r.status,
+       r.shipped_at,
+       r.due_back_on,
+       <span class="kw">CURRENT_DATE</span> - r.due_back_on <span class="kw">AS</span> days_overdue
+<span class="kw">FROM</span> inventory.rentals r
+<span class="kw">JOIN</span> inventory.serialised_units su <span class="kw">ON</span> su.id = r.serialised_unit_id
+<span class="kw">JOIN</span> inventory.items i             <span class="kw">ON</span> i.id = su.item_id
+<span class="kw">LEFT JOIN</span> crm.contacts c           <span class="kw">ON</span> c.id = r.contact_id
+<span class="kw">LEFT JOIN</span> orders.orders o          <span class="kw">ON</span> o.id = r.order_id
+<span class="kw">WHERE</span> r.status <span class="kw">IN</span> (<span class="str">'shipped'</span>, <span class="str">'with_customer'</span>, <span class="str">'returning'</span>)
+<span class="kw">ORDER BY</span> r.due_back_on <span class="kw">NULLS</span> <span class="kw">LAST</span>;</code></pre>
+</section><h2 id="clinical-quality-and-operations">Clinical, Quality And Operations</h2>
+<section class="query" id="Q28">
+  <header>
+    <span class="qid">Q28</span>
+    <h3>Which teeth are involved most often, and in what way?  Review #1.</h3>
+    <span class="chip pg">new in v2</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v1: TeethMissed and TeethExtract were dropped, and the remaining site data was a comma-separated text column.</p>
+  <pre><code><span class="kw">SELECT</span> ts.site_type,
+       ts.tooth_number,
+       <span class="kw">count</span>(*) <span class="kw">AS</span> occurrences
+<span class="kw">FROM</span> clinical.tooth_sites ts
+<span class="kw">JOIN</span> clinical.tooth_charts tc <span class="kw">ON</span> tc.id = ts.tooth_chart_id
+<span class="kw">JOIN</span> orders.orders          o <span class="kw">ON</span> o.id = tc.order_id
+<span class="kw">WHERE</span> o.created_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'12 months'</span>
+<span class="kw">GROUP BY</span> ts.site_type, ts.tooth_number
+<span class="kw">ORDER BY</span> ts.site_type, occurrences <span class="kw">DESC</span>;
+
+<span class="cmt">--      ...and the same data as a per-case summary:</span>
+<span class="kw">SELECT</span> o.order_number,
+       c.display_name <span class="kw">AS</span> client,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> ts.site_type = <span class="str">'missing'</span>)    <span class="kw">AS</span> missing_teeth,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> ts.site_type = <span class="str">'extraction'</span>) <span class="kw">AS</span> extractions,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> ts.site_type = <span class="str">'to_be_extracted'</span>) <span class="kw">AS</span> to_be_extracted,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> ts.site_type = <span class="str">'implant'</span>)    <span class="kw">AS</span> implants,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> ts.site_type = <span class="str">'crown'</span>)      <span class="kw">AS</span> crowns
+<span class="kw">FROM</span> orders.orders o
+<span class="kw">JOIN</span> crm.contacts  c <span class="kw">ON</span> c.id = o.contact_id
+<span class="kw">JOIN</span> clinical.tooth_charts tc <span class="kw">ON</span> tc.order_id = o.id
+<span class="kw">JOIN</span> clinical.tooth_sites  ts <span class="kw">ON</span> ts.tooth_chart_id = tc.id
+<span class="kw">WHERE</span> o.created_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>
+<span class="kw">GROUP BY</span> o.order_number, c.display_name
+<span class="kw">ORDER BY</span> implants <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 50;</code></pre>
+</section>
+<section class="query" id="Q29">
+  <header>
+    <span class="qid">Q29</span>
+    <h3>What is the QC pass rate, and which checks fail most?  Migrated legacy records are in state 'migrated'; current records are versioned, so only the live version of each inspection is counted.</h3>
+    <span class="chip pg">new in v2</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v1: QC had a single stub table.</p>
+  <pre><code><span class="kw">SELECT</span> ft.name                                      <span class="kw">AS</span> qc_form,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> i.id)                         <span class="kw">AS</span> inspections,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> i.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> i.outcome = <span class="str">'passed'</span>) <span class="kw">AS</span> passed,
+       <span class="kw">round</span>(100.0 * <span class="kw">count</span>(<span class="kw">DISTINCT</span> i.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> i.outcome = <span class="str">'passed'</span>)
+             / <span class="kw">nullif</span>(<span class="kw">count</span>(<span class="kw">DISTINCT</span> i.id), 0), 1)  <span class="kw">AS</span> pass_rate_percent,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> r.passed <span class="kw">IS</span> FALSE)    <span class="kw">AS</span> failed_checks,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> r.passed <span class="kw">IS</span> FALSE <span class="kw">AND</span> fi.is_critical) <span class="kw">AS</span> failed_critical
+<span class="kw">FROM</span> quality.inspections i
+<span class="kw">JOIN</span> quality.form_templates ft   <span class="kw">ON</span> ft.id = i.template_id
+<span class="kw">LEFT JOIN</span> quality.inspection_results r <span class="kw">ON</span> r.inspection_id = i.id
+<span class="kw">LEFT JOIN</span> quality.form_items fi  <span class="kw">ON</span> fi.id = r.form_item_id
+<span class="kw">WHERE</span> i.inspected_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'90 days'</span>
+  <span class="kw">AND</span> i.superseded_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">GROUP BY</span> ft.name
+<span class="kw">ORDER BY</span> inspections <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q30">
+  <header>
+    <span class="qid">Q30</span>
+    <h3>Every order and its current production status — the master operational view the review asked for first.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> order_number,
+       client_name,
+       scan_center_name,
+       patient_code,                <span class="cmt">-- pseudonymous; identity only via Q36</span>
+       category_name,
+       item_name,
+       order_status,
+       item_status,
+       priority,
+       designer_name,
+       currency_code,
+       line_total,
+       order_created_at,
+       sent_to_production_at,
+       item_completed_at
+<span class="kw">FROM</span> reporting.v_order_items
+<span class="kw">WHERE</span> order_status <span class="kw">NOT</span> <span class="kw">IN</span> (<span class="str">'completed'</span>, <span class="str">'cancelled'</span>)
+<span class="kw">ORDER BY</span> order_created_at <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 500;</code></pre>
+</section><h2 id="cases-ismile-restorations-and-ai-plans">Cases, Ismile, Restorations And Ai Plans</h2>
+<section class="query" id="Q31">
+  <header>
+    <span class="qid">Q31</span>
+    <h3>Which cases hold more than one order, and how were they paired? A case sits above its orders (Q3); split-arch orders share one.</h3>
+    <span class="chip pg">new in v3</span><span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> cs.case_code,
+       cs.pairing_method,
+       cs.pairing_confidence,
+       c.display_name                <span class="kw">AS</span> client,
+       <span class="kw">count</span>(o.id)                   <span class="kw">AS</span> orders,
+       string_agg(o.order_number::text, <span class="str">', '</span> <span class="kw">ORDER BY</span> o.created_at) <span class="kw">AS</span> order_numbers,
+       <span class="kw">sum</span>(o.total_amount)           <span class="kw">AS</span> case_value
+<span class="kw">FROM</span> orders.cases cs
+<span class="kw">JOIN</span> orders.orders o <span class="kw">ON</span> o.case_id = cs.id <span class="kw">AND</span> o.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">JOIN</span> crm.contacts  c <span class="kw">ON</span> c.id = cs.contact_id
+<span class="kw">GROUP BY</span> cs.id, cs.case_code, cs.pairing_method, cs.pairing_confidence, c.display_name
+<span class="kw">HAVING</span> <span class="kw">count</span>(o.id) &gt; 1
+<span class="kw">ORDER BY</span> orders <span class="kw">DESC</span>, cs.case_code
+<span class="kw">LIMIT</span> 100;</code></pre>
+</section>
+<section class="query" id="Q32">
+  <header>
+    <span class="qid">Q32</span>
+    <h3>Which split-arch pairings are waiting for a human decision? The ETL proposes candidates; nobody is merged into one case until a reviewer accepts them (U8).</h3>
+    <span class="chip pg">new in v3</span><span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> p.id                     <span class="kw">AS</span> candidate_id,
+       oa.order_number          <span class="kw">AS</span> order_a,
+       ob.order_number          <span class="kw">AS</span> order_b,
+       c.display_name           <span class="kw">AS</span> client,
+       p.score,
+       p.evidence,
+       p.created_at
+<span class="kw">FROM</span> orders.case_pairing_candidates p
+<span class="kw">JOIN</span> orders.orders oa <span class="kw">ON</span> oa.id = p.order_a_id
+<span class="kw">JOIN</span> orders.orders ob <span class="kw">ON</span> ob.id = p.order_b_id
+<span class="kw">JOIN</span> crm.contacts  c  <span class="kw">ON</span> c.id = oa.contact_id
+<span class="kw">WHERE</span> p.decision = <span class="str">'pending'</span>
+<span class="kw">ORDER BY</span> p.score <span class="kw">DESC</span>, p.created_at
+<span class="kw">LIMIT</span> 200;</code></pre>
+</section>
+<section class="query" id="Q33">
+  <header>
+    <span class="qid">Q33</span>
+    <h3>iSmile treatments and their sub-orders (aligner stages and refinements), one row per treatment.</h3>
+    <span class="chip pg">new in v3</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v2: IsmileOrder was retired and sub-orders had no parent.</p>
+  <pre><code><span class="kw">SELECT</span> o.order_number,
+       c.display_name                                                <span class="kw">AS</span> client,
+       parent.status                                                 <span class="kw">AS</span> treatment_status,
+       <span class="kw">count</span>(child.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> child.item_role = <span class="str">'ismile_suborder'</span>) <span class="kw">AS</span> suborders,
+       <span class="kw">count</span>(child.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> child.item_role = <span class="str">'refinement'</span>)      <span class="kw">AS</span> refinements,
+       <span class="kw">sum</span>(child.line_total)                                         <span class="kw">AS</span> children_value,
+       <span class="kw">max</span>(child.completed_at)                                       <span class="kw">AS</span> last_child_completed
+<span class="kw">FROM</span> orders.order_items parent
+<span class="kw">JOIN</span> orders.orders      o     <span class="kw">ON</span> o.id = parent.order_id
+<span class="kw">JOIN</span> crm.contacts       c     <span class="kw">ON</span> c.id = o.contact_id
+<span class="kw">LEFT JOIN</span> orders.order_items child
+       <span class="kw">ON</span> child.parent_item_id = parent.id <span class="kw">AND</span> child.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">JOIN</span> catalog.sellable_items si <span class="kw">ON</span> si.id = parent.sellable_item_id
+<span class="kw">JOIN</span> catalog.categories    cat <span class="kw">ON</span> cat.id = si.category_id
+<span class="kw">WHERE</span> cat.code = <span class="str">'ismile'</span>
+  <span class="kw">AND</span> parent.parent_item_id <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> parent.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">GROUP BY</span> o.order_number, c.display_name, parent.id, parent.status
+<span class="kw">ORDER BY</span> o.order_number <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 200;</code></pre>
+</section>
+<section class="query" id="Q34">
+  <header>
+    <span class="qid">Q34</span>
+    <h3>Temporary versus final restorations: how many orders get a temporary first, and how long until the final ships?</h3>
+    <span class="chip pg">new in v3</span><span class="chip ">threeddx3_read</span>
+  </header>
+  <p class="why">Impossible in v2: final restorations (legacy finalRestorationID) were not loaded, and service lines were joined to the wrong orders.</p>
+  <pre><code><span class="kw">SELECT</span> <span class="kw">date_trunc</span>(<span class="str">'month'</span>, o.created_at)                        <span class="kw">AS</span> month,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> o.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> tmp.id <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>)   <span class="kw">AS</span> orders_with_temporary,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> o.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> fin.id <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>)   <span class="kw">AS</span> orders_with_final,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> o.id) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> tmp.id <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">AND</span> fin.id <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>)
+                                                                <span class="kw">AS</span> both,
+       <span class="kw">round</span>(<span class="kw">avg</span>(<span class="kw">EXTRACT</span>(<span class="kw">EPOCH</span> <span class="kw">FROM</span> (fin.completed_at - tmp.completed_at)) / 86400)
+             <span class="kw">FILTER</span> (<span class="kw">WHERE</span> tmp.completed_at <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">AND</span> fin.completed_at <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>), 1)
+                                                                <span class="kw">AS</span> avg_days_temp_to_final
+<span class="kw">FROM</span> orders.orders o
+<span class="kw">LEFT JOIN</span> orders.order_items tmp
+       <span class="kw">ON</span> tmp.order_id = o.id <span class="kw">AND</span> tmp.restoration_stage = <span class="str">'temporary'</span> <span class="kw">AND</span> tmp.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">LEFT JOIN</span> orders.order_items fin
+       <span class="kw">ON</span> fin.order_id = o.id <span class="kw">AND</span> fin.restoration_stage = <span class="str">'final'</span> <span class="kw">AND</span> fin.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">WHERE</span> o.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+  <span class="kw">AND</span> o.created_at &gt;= <span class="kw">date_trunc</span>(<span class="str">'month'</span>, <span class="kw">now</span>()) - <span class="kw">INTERVAL</span> <span class="str">'12 months'</span>
+  <span class="kw">AND</span> (tmp.id <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">OR</span> fin.id <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>)
+<span class="kw">GROUP BY</span> 1
+<span class="kw">ORDER BY</span> 1 <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q35">
+  <header>
+    <span class="qid">Q35</span>
+    <h3>Relu AI treatment planning: how many plans are eligible, how many went to AI, and how many fell back to manual planning?</h3>
+    <span class="chip pg">new in v3</span><span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> ap.planning_mode,
+       ap.ai_status,
+       ap.ai_decision,
+       <span class="kw">count</span>(*)                                           <span class="kw">AS</span> plans,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> ap.is_ai_eligible)          <span class="kw">AS</span> eligible,
+       <span class="kw">round</span>(<span class="kw">avg</span>(<span class="kw">EXTRACT</span>(<span class="kw">EPOCH</span> <span class="kw">FROM</span> (ap.ai_ready_at - ap.ai_queued_at)) / 3600)
+             <span class="kw">FILTER</span> (<span class="kw">WHERE</span> ap.ai_ready_at <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>), 1) <span class="kw">AS</span> avg_hours_queue_to_ready
+<span class="kw">FROM</span> orders.order_item_ai_plans ap
+<span class="kw">JOIN</span> orders.order_items oi <span class="kw">ON</span> oi.id = ap.order_item_id <span class="kw">AND</span> oi.deleted_at <span class="kw">IS</span> <span class="kw">NULL</span>
+<span class="kw">GROUP BY</span> ap.planning_mode, ap.ai_status, ap.ai_decision
+<span class="kw">ORDER BY</span> plans <span class="kw">DESC</span>;</code></pre>
+</section><h2 id="patient-identity-audit-and-migration-evidence">Patient Identity, Audit And Migration Evidence</h2>
+<section class="query" id="Q36">
+  <header>
+    <span class="qid">Q36</span>
+    <h3>Who is the patient on this order? Identity (name, date of birth, sex) lives in clinical.patient_identities, which no application or read role can SELECT. The app_rw role reads it through the logged gateway, stating why; every patient returned writes one audit.phi_access_log row. Read-only users get the masked view instead.</h3>
+    <span class="chip pg">new in v3</span><span class="chip legacy">threeddx3_app_rw</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> o.order_number, pi.full_name, pi.date_of_birth, pi.sex, pi.dob_status
+<span class="kw">FROM</span> orders.orders o
+<span class="kw">CROSS JOIN</span> <span class="kw">LATERAL</span> clinical.fn_get_patient_identity(o.patient_id, <span class="str">'case_review'</span>) pi
+<span class="kw">WHERE</span> o.order_number = :order_number;
+
+<span class="cmt">--      ...for a list screen, one call for up to 500 patients:</span>
+<span class="kw">SELECT</span> pi.patient_id, pi.full_name, pi.date_of_birth
+<span class="kw">FROM</span> clinical.fn_list_patient_identities(
+       ARRAY(<span class="kw">SELECT</span> o.patient_id <span class="kw">FROM</span> orders.orders o
+             <span class="kw">WHERE</span> o.patient_id <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>
+             <span class="kw">ORDER BY</span> o.created_at <span class="kw">DESC</span> <span class="kw">LIMIT</span> 50),
+       <span class="str">'worklist_display'</span>) pi;
+
+<span class="cmt">--      ...and the masked form every read role may use (initials + birth year):</span>
+<span class="kw">SELECT</span> o.order_number, m.patient_code, m.initials, m.birth_year, m.sex
+<span class="kw">FROM</span> orders.orders o
+<span class="kw">JOIN</span> clinical.v_patients_masked m <span class="kw">ON</span> m.patient_id = o.patient_id
+<span class="kw">WHERE</span> o.created_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'7 days'</span>
+<span class="kw">ORDER BY</span> o.created_at <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q37">
+  <header>
+    <span class="qid">Q37</span>
+    <h3>Who read patient identities in the last 30 days, and why? The HIPAA access report. Admin only (the audit schema is not granted to app or read roles).</h3>
+    <span class="chip pg">new in v3</span><span class="chip warn">threeddx3_admin</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> u.display_name                <span class="kw">AS</span> actor,
+       l.db_role,
+       l.purpose,
+       l.function_name,
+       <span class="kw">count</span>(*)                      <span class="kw">AS</span> identities_read,
+       <span class="kw">count</span>(<span class="kw">DISTINCT</span> l.patient_id)  <span class="kw">AS</span> distinct_patients,
+       <span class="kw">min</span>(l.occurred_at)            <span class="kw">AS</span> first_read,
+       <span class="kw">max</span>(l.occurred_at)            <span class="kw">AS</span> last_read
+<span class="kw">FROM</span> audit.phi_access_log l
+<span class="kw">LEFT JOIN</span> iam.users u <span class="kw">ON</span> u.id = l.actor_user_id
+<span class="kw">WHERE</span> l.occurred_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>
+<span class="kw">GROUP BY</span> u.display_name, l.db_role, l.purpose, l.function_name
+<span class="kw">ORDER BY</span> identities_read <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q38">
+  <header>
+    <span class="qid">Q38</span>
+    <h3>Is the audit trail intact? Recomputes the sha256 hash chain over audit.audit_log; first_broken_seq NULL = no row was altered, removed or inserted out of band. Admin only; the full chain is long, so pass a range for a spot check.</h3>
+    <span class="chip pg">new in v3</span><span class="chip warn">threeddx3_admin</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> rows_checked, first_broken_seq, expected_hash, stored_hash
+<span class="kw">FROM</span> audit.fn_verify_chain(1, <span class="kw">NULL</span>);
+
+<span class="cmt">--      ...and what changed on one order recently (old/new values are stored</span>
+<span class="cmt">--      with PHI columns already redacted):</span>
+<span class="kw">SELECT</span> a.occurred_at, a.action, a.table_name, a.changed_columns,
+       u.display_name <span class="kw">AS</span> actor, a.db_role
+<span class="kw">FROM</span> audit.audit_log a
+<span class="kw">LEFT JOIN</span> iam.users u <span class="kw">ON</span> u.id = a.actor_user_id
+<span class="kw">WHERE</span> a.schema_name = <span class="str">'orders'</span>
+  <span class="kw">AND</span> a.table_name <span class="kw">IN</span> (<span class="str">'orders'</span>, <span class="str">'order_items'</span>)
+  <span class="kw">AND</span> a.occurred_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>
+<span class="kw">ORDER BY</span> a.chain_seq <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 100;</code></pre>
+</section>
+<section class="query" id="Q39">
+  <header>
+    <span class="qid">Q39</span>
+    <h3>Did the migration account for every legacy row? The reconciliation rule is source = migrated + excluded, with zero unexplained rows, for the authoritative run.</h3>
+    <span class="chip pg">new in v3</span><span class="chip warn">threeddx3_admin</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> r.legacy_table,
+       r.target_table,
+       r.source_count,
+       r.migrated_count,
+       r.excluded_count,
+       r.unexplained_count,
+       r.status
+<span class="kw">FROM</span> audit.reconciliation_results r
+<span class="kw">JOIN</span> audit.migration_runs mr <span class="kw">ON</span> mr.run_id = r.run_id
+<span class="kw">WHERE</span> mr.is_authoritative
+<span class="kw">ORDER BY</span> (r.status = <span class="str">'pass'</span>), r.unexplained_count <span class="kw">DESC</span>, r.legacy_table;</code></pre>
+</section>
+<section class="query" id="Q40">
+  <header>
+    <span class="qid">Q40</span>
+    <h3>Why was a legacy row not migrated? The exclusion ledger, by table and reason (parent deleted, retired table, security policy …).</h3>
+    <span class="chip pg">new in v3</span><span class="chip warn">threeddx3_admin</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> e.legacy_table,
+       e.reason_code,
+       e.approval_reference,
+       <span class="kw">count</span>(*)          <span class="kw">AS</span> rows_excluded
+<span class="kw">FROM</span> audit.migration_exclusions e
+<span class="kw">JOIN</span> audit.migration_runs mr <span class="kw">ON</span> mr.run_id = e.run_id
+<span class="kw">WHERE</span> mr.is_authoritative
+<span class="kw">GROUP BY</span> e.legacy_table, e.reason_code, e.approval_reference
+<span class="kw">ORDER BY</span> rows_excluded <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="Q41">
+  <header>
+    <span class="qid">Q41</span>
+    <h3>Voucher movements by ledger stream. The main OrderVoucher ledger, the Engel programme and per-service vouchers are separate streams; the main stream was rebuilt by porting voucher_fill.php (Q19).</h3>
+    <span class="chip pg">new in v3</span><span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> t.scope,
+       t.txn_kind,
+       t.reconstruction_method,
+       t.currency_code,
+       <span class="kw">count</span>(*)              <span class="kw">AS</span> movements,
+       <span class="kw">sum</span>(t.credit_delta)   <span class="kw">AS</span> credit_delta,
+       <span class="kw">sum</span>(t.case_delta)     <span class="kw">AS</span> case_delta
+<span class="kw">FROM</span> vouchers.voucher_transactions t
+<span class="kw">GROUP BY</span> t.scope, t.txn_kind, t.reconstruction_method, t.currency_code
+<span class="kw">ORDER BY</span> t.scope, movements <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="E1">
+  <header>
+    <span class="qid">E1</span>
+    <h3>Task SLA: which teams are behind?</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> t_team.name             <span class="kw">AS</span> team,
+       tt.name                 <span class="kw">AS</span> task_type,
+       <span class="kw">count</span>(*)                <span class="kw">AS</span> open_tasks,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> tk.due_at &lt; <span class="kw">now</span>()) <span class="kw">AS</span> overdue,
+       <span class="kw">round</span>(<span class="kw">avg</span>(<span class="kw">EXTRACT</span>(<span class="kw">EPOCH</span> <span class="kw">FROM</span> (<span class="kw">now</span>() - tk.created_at)) / 86400), 1) <span class="kw">AS</span> avg_age_days
+<span class="kw">FROM</span> workflow.tasks tk
+<span class="kw">JOIN</span> workflow.task_assignments ta <span class="kw">ON</span> ta.task_id = tk.id <span class="kw">AND</span> ta.is_active
+<span class="kw">LEFT JOIN</span> iam.teams      t_team <span class="kw">ON</span> t_team.id = ta.team_id
+<span class="kw">LEFT JOIN</span> workflow.task_types tt <span class="kw">ON</span> tt.id = tk.task_type_id
+<span class="kw">WHERE</span> tk.state <span class="kw">IN</span> (<span class="str">'open'</span>, <span class="str">'in_progress'</span>, <span class="str">'blocked'</span>)
+<span class="kw">GROUP BY</span> t_team.name, tt.name
+<span class="kw">ORDER BY</span> overdue <span class="kw">DESC</span>, open_tasks <span class="kw">DESC</span>;</code></pre>
+</section>
+<section class="query" id="E2">
+  <header>
+    <span class="qid">E2</span>
+    <h3>Email deliverability by template last week.</h3>
+    <span class="chip ">threeddx3_read</span>
+  </header>
+  
+  <pre><code><span class="kw">SELECT</span> et.name                   <span class="kw">AS</span> template,
+       <span class="kw">count</span>(*)                  <span class="kw">AS</span> sent,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> el.status = <span class="str">'failed'</span>)  <span class="kw">AS</span> failed,
+       <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> el.status = <span class="str">'bounced'</span>) <span class="kw">AS</span> bounced,
+       <span class="kw">round</span>(100.0 * <span class="kw">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> el.status <span class="kw">IN</span> (<span class="str">'failed'</span>,<span class="str">'bounced'</span>))
+             / <span class="kw">nullif</span>(<span class="kw">count</span>(*), 0), 2) <span class="kw">AS</span> failure_percent
+<span class="kw">FROM</span> comms.email_logs el
+<span class="kw">LEFT JOIN</span> comms.email_templates et <span class="kw">ON</span> et.id = el.template_id
+<span class="kw">WHERE</span> el.sent_at &gt;= <span class="kw">now</span>() - <span class="kw">INTERVAL</span> <span class="str">'7 days'</span>
+<span class="kw">GROUP BY</span> et.name
+<span class="kw">ORDER BY</span> sent <span class="kw">DESC</span>;</code></pre>
+</section>
+
+  <p class="foot">Generated from sample_queries.sql by tools/gen_queries_doc.py &middot;
+    43 queries &middot; planned by tools/check_sample_queries.py</p>
+</main>
+</div>
+
+<button class="toggle" id="themeToggle" type="button" aria-label="Switch colour theme">Theme</button>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('threeddx-theme'); } catch (e) {}
+  if (saved) root.setAttribute('data-theme', saved);
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var isDark = root.getAttribute('data-theme') === 'dark'
+      || (!root.getAttribute('data-theme')
+          && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('threeddx-theme', next); } catch (e) {}
+  });
+})();
+</script>
+

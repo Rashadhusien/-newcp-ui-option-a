@@ -80,11 +80,28 @@ export const STATUS_ORDER: { [S in ServiceType]: readonly StatusByService[S][] }
   conversion: ['No Scans', 'In Progress', 'Download'],
 };
 
-export function getStatusPresentation<S extends ServiceType>(
-  service: S,
-  status: StatusByService[S],
-): StatusMeta {
-  return STATUS_META[service][status];
+/** A status together with its service type, narrowed on `service`. */
+export type ServiceStatus = {
+  [S in ServiceType]: { service: S; status: StatusByService[S] };
+}[ServiceType];
+
+/** Every service-type/status pair, in PLAN order (Models first). */
+export const ALL_SERVICE_STATUSES: readonly ServiceStatus[] = [
+  ...STATUS_ORDER.models.map((status) => ({ service: 'models' as const, status })),
+  ...STATUS_ORDER.conversion.map((status) => ({ service: 'conversion' as const, status })),
+];
+
+export function presentStatus(value: ServiceStatus): StatusMeta {
+  return value.service === 'models'
+    ? MODELS_STATUS[value.status]
+    : CONVERSION_STATUS[value.status];
+}
+
+/** Position in the listed order, for sorting only (not a transition rule). */
+export function statusIndex(value: ServiceStatus): number {
+  return value.service === 'models'
+    ? STATUS_ORDER.models.indexOf(value.status)
+    : STATUS_ORDER.conversion.indexOf(value.status);
 }
 
 /** Narrows an untrusted value (e.g. from the API) to a known status of the service. */

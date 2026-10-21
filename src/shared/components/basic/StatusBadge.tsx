@@ -13,25 +13,16 @@
 import Chip from '@mui/material/Chip';
 import Skeleton from '@mui/material/Skeleton';
 import { statusBadgeTokens } from '@/theme/tokens';
-import {
-  getStatusPresentation,
-  type ServiceType,
-  type StatusByService,
-} from '@/shared/status/status';
+import { presentStatus, type ServiceStatus } from '@/shared/status/status';
 
-export interface StatusBadgeProps<S extends ServiceType> {
-  service: S;
-  status: StatusByService[S];
+export interface StatusBadgeProps {
+  /** Status with its service type ("In Progress" exists in both). */
+  value: ServiceStatus;
   size?: 'sm' | 'md';
   loading?: boolean;
 }
 
-export function StatusBadge<S extends ServiceType>({
-  service,
-  status,
-  size = 'md',
-  loading = false,
-}: StatusBadgeProps<S>) {
+export function StatusBadge({ value, size = 'md', loading = false }: StatusBadgeProps) {
   if (loading) {
     return (
       <Skeleton
@@ -44,7 +35,7 @@ export function StatusBadge<S extends ServiceType>({
     );
   }
 
-  const meta = getStatusPresentation(service, status);
+  const meta = presentStatus(value);
   const tone = statusBadgeTokens[meta.semantic];
   const Icon = meta.icon;
 

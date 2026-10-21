@@ -38,10 +38,10 @@ Branch: feat/fe-a-a04-auth-guard | Gate: D2 | Date: Wed 21 Oct | Estimate: 2.0 h
 Done when: an unauthenticated user cannot open any app route; the guard is covered by a manual check (tests arrive in A11).
 
 ## Task A5: Combined Models/Conversion report on mocks
-Branch: feat/fe-a-a05-report-shell | Gate: D2 | Date: Wed 21 Oct | Estimate: 2.0 h | Depends on: A2 | Status: not started
-- [ ] A5.1 Reporting feature: table counted by service **instance** (one row per instance, not per order), columns: order, client, patient code, service type, option, arch, quantity, status chip (icon + label), due date, priority.
-- [ ] A5.2 Filters (service type, status, text search), sort, paging, state in the URL (`useQueryState` style), counts per status.
-- [ ] A5.3 Loading, empty, error-with-retry states; PriorityTable/cards on phones, no horizontal scroll at 390/768/1024/1440.
+Branch: feat/fe-a-a05-report-shell | Gate: D2 | Date: Wed 21 Oct | Estimate: 2.0 h | Depends on: A2 | Status: ready for review (on provisional fixtures, D-13)
+- [x] A5.1 Reporting feature: table counted by service **instance** (one row per instance, not per order), columns: order, client, patient code, service type, option, arch, quantity, status chip (icon + label), due date, priority.
+- [x] A5.2 Filters (service type, status, text search), sort, paging, state in the URL (`useQueryState` style), counts per status.
+- [x] A5.3 Loading, empty, error-with-retry states; PriorityTable/cards on phones, no horizontal scroll at 390/768/1024/1440.
 Done when: counts equal instances in the mock data (a mock order with two same-type instances adds two rows).
 
 ## Task A6: Models create/edit form
@@ -95,4 +95,5 @@ Branch: fix/fe-a-a14-stabilize-rc | Gate: D6 | Date: Tue 27 Oct | Estimate: 2.5 
 |---|---|---|
 | A1 | ready for review | verify green; awaiting developer commit and PR |
 | A2 | in progress | A2.4 done; A2.1 to A2.3 blocked: no OpenAPI draft |
-| A3 to A14 | not started | status only; hours are written by the developer |
+| A5 | ready for review | built on provisional fixtures (D-13); swap to mocks when A2 resumes |
+| A3, A4, A6 to A14 | not started | status only; hours are written by the developer |

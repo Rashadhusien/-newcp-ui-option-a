@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>threeddx3 Start Here</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  color-scheme: light dark;
+
+  /* light palette — complete, defined here so the un-stamped state resolves */
+  --ground:      #f2f5f3;
+  --surface:     #ffffff;
+  --surface-2:   #e9efec;
+  --ink:         #0f1a1b;
+  --ink-2:       #2c3f41;
+  --muted:       #62767a;
+  --hairline:    #d7e0dd;
+  --hairline-2:  #c3cfcb;
+
+  --pg:          #00706a;   /* PostgreSQL / v3 */
+  --pg-soft:     #d5eae7;
+  --pg-ink:      #00534e;
+  --legacy:      #8f6014;   /* legacy MySQL */
+  --legacy-soft: #f6ecd8;
+  --legacy-ink:  #6d4a10;
+
+  --ok:          #2c7a4e;
+  --warn:        #a9541c;
+  --crit:        #9c2f2c;
+  --ok-soft:     #dcecdf;
+  --warn-soft:   #f7e7d8;
+  --crit-soft:   #f6dedd;
+
+  --rail-w: 16.5rem;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #0a1112;
+    --surface:     #111a1b;
+    --surface-2:   #182425;
+    --ink:         #e3ebe9;
+    --ink-2:       #b6c6c4;
+    --muted:       #7f9593;
+    --hairline:    #22312f;
+    --hairline-2:  #2e403e;
+
+    --pg:          #4ec9bd;
+    --pg-soft:     #0d3330;
+    --pg-ink:      #7fdbd1;
+    --legacy:      #d7a53f;
+    --legacy-soft: #33280f;
+    --legacy-ink:  #e5bd6b;
+
+    --ok:          #62b884;
+    --warn:        #d68b4e;
+    --crit:        #d97370;
+    --ok-soft:     #14301f;
+    --warn-soft:   #331f10;
+    --crit-soft:   #331616;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground:      #0a1112;
+  --surface:     #111a1b;
+  --surface-2:   #182425;
+  --ink:         #e3ebe9;
+  --ink-2:       #b6c6c4;
+  --muted:       #7f9593;
+  --hairline:    #22312f;
+  --hairline-2:  #2e403e;
+
+  --pg:          #4ec9bd;
+  --pg-soft:     #0d3330;
+  --pg-ink:      #7fdbd1;
+  --legacy:      #d7a53f;
+  --legacy-soft: #33280f;
+  --legacy-ink:  #e5bd6b;
+
+  --ok:          #62b884;
+  --warn:        #d68b4e;
+  --crit:        #d97370;
+  --ok-soft:     #14301f;
+  --warn-soft:   #331f10;
+  --crit-soft:   #331616;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- structure */
+.wrap { display: flex; align-items: flex-start; gap: 0; min-height: 100vh; }
+
+.rail {
+  position: sticky; top: 0; align-self: flex-start;
+  width: var(--rail-w); flex: 0 0 var(--rail-w);
+  height: 100vh; overflow-y: auto;
+  padding: 1.75rem 1.25rem 3rem;
+  background: var(--surface);
+  border-right: 1px solid var(--hairline);
+}
+.rail-title {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--muted);
+  margin: 0 0 .9rem;
+}
+.rail nav { display: flex; flex-direction: column; gap: 1px; }
+.rail a {
+  display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
+  padding: .3rem .5rem; border-radius: 4px;
+  font-family: var(--mono); font-size: 12.5px;
+  color: var(--ink-2); text-decoration: none;
+}
+.rail a:hover { background: var(--surface-2); color: var(--pg); }
+.rail a .n { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rail .group {
+  margin-top: 1.4rem; padding-top: .8rem; border-top: 1px solid var(--hairline);
+}
+
+.main { flex: 1 1 auto; min-width: 0; padding: 2.5rem clamp(1.25rem, 4vw, 3.5rem) 6rem; }
+.col { max-width: 74ch; }
+
+/* -------------------------------------------------------------- masthead */
+.masthead { margin-bottom: 3rem; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--pg); margin: 0 0 .6rem;
+}
+h1 {
+  font-size: clamp(1.9rem, 3.4vw, 2.7rem); line-height: 1.1;
+  letter-spacing: -0.022em; font-weight: 640; margin: 0 0 .7rem;
+  text-wrap: balance;
+}
+.lede { font-size: 1.06rem; color: var(--ink-2); max-width: 68ch; margin: 0; }
+
+h2 {
+  font-size: 1.35rem; letter-spacing: -0.014em; font-weight: 640;
+  margin: 3.2rem 0 .4rem; padding-top: 1.1rem;
+  border-top: 2px solid var(--ink); text-wrap: balance;
+}
+h3 {
+  font-size: 1.02rem; font-weight: 620; margin: 2rem 0 .4rem;
+  letter-spacing: -0.008em;
+}
+h4 { font-size: .95rem; font-weight: 620; margin: 1.4rem 0 .3rem; }
+p { margin: 0 0 .85rem; }
+a { color: var(--pg); }
+
+/* ------------------------------------------------------------------ chips */
+.chip {
+  display: inline-flex; align-items: center; gap: .3em;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em;
+  text-transform: uppercase; padding: .18em .5em; border-radius: 3px;
+  background: var(--surface-2); color: var(--muted); white-space: nowrap;
+  border: 1px solid var(--hairline);
+}
+.chip.pg     { background: var(--pg-soft);     color: var(--pg-ink);     border-color: transparent; }
+.chip.legacy { background: var(--legacy-soft); color: var(--legacy-ink); border-color: transparent; }
+.chip.ok     { background: var(--ok-soft);     color: var(--ok);         border-color: transparent; }
+.chip.warn   { background: var(--warn-soft);   color: var(--warn);       border-color: transparent; }
+.chip.crit   { background: var(--crit-soft);   color: var(--crit);       border-color: transparent; }
+
+code, .mono { font-family: var(--mono); font-size: .88em; }
+p code, li code, td code {
+  background: var(--surface-2); padding: .1em .35em; border-radius: 3px;
+  color: var(--ink);
+}
+
+/* ----------------------------------------------------------------- tables */
+.scroller { overflow-x: auto; margin: .9rem 0 1.6rem; border-radius: 6px;
+            border: 1px solid var(--hairline); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface-2); color: var(--muted);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+  text-transform: uppercase; font-weight: 500;
+  text-align: left; padding: .55rem .7rem; white-space: nowrap;
+  border-bottom: 1px solid var(--hairline-2);
+}
+tbody td {
+  padding: .45rem .7rem; border-bottom: 1px solid var(--hairline);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--surface-2); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.name { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+td.type { font-family: var(--mono); font-size: 12px; color: var(--pg); white-space: nowrap; }
+td.note { color: var(--muted); font-size: 12.5px; min-width: 18rem; }
+
+/* ------------------------------------------------------------ table cards */
+.entity {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 8px; margin: 1.5rem 0; overflow: hidden;
+  scroll-margin-top: 1rem;
+}
+.entity > header {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem;
+  padding: .8rem 1rem; border-bottom: 1px solid var(--hairline);
+  background: linear-gradient(to bottom, var(--surface-2), var(--surface));
+}
+.entity > header h3 {
+  margin: 0; font-family: var(--mono); font-size: 14px; font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.entity > header h3 .sch { color: var(--muted); font-weight: 400; }
+.entity .desc { padding: .7rem 1rem 0; color: var(--ink-2); font-size: 13.5px; max-width: 78ch; }
+.entity .scroller { margin: .7rem 0 0; border: none; border-radius: 0;
+                    border-top: 1px solid var(--hairline); }
+
+/* ------------------------------------------------------------------ notes */
+.note-box {
+  border-left: 3px solid var(--pg); background: var(--surface);
+  padding: .8rem 1rem; margin: 1.2rem 0; border-radius: 0 6px 6px 0;
+  font-size: 14px;
+}
+.note-box.legacy { border-left-color: var(--legacy); }
+.note-box.warn   { border-left-color: var(--warn); }
+.note-box h4 { margin: 0 0 .3rem; font-family: var(--mono); font-size: 11px;
+               letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.note-box p:last-child { margin-bottom: 0; }
+
+/* ------------------------------------------------------------------- misc */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+         gap: 1px; background: var(--hairline); border: 1px solid var(--hairline);
+         border-radius: 8px; overflow: hidden; margin: 1.5rem 0 2rem; }
+.stat { background: var(--surface); padding: .85rem 1rem; }
+.stat .v { font-family: var(--mono); font-size: 1.5rem; font-weight: 600;
+           letter-spacing: -0.02em; font-variant-numeric: tabular-nums; display: block; }
+.stat .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+           text-transform: uppercase; color: var(--muted); }
+
+pre {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 6px; padding: .85rem 1rem; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.55; margin: .9rem 0 1.4rem;
+}
+pre code { background: none; padding: 0; }
+
+ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+li { margin-bottom: .3rem; }
+
+.foot { margin-top: 4rem; padding-top: 1.2rem; border-top: 1px solid var(--hairline);
+        color: var(--muted); font-size: 12.5px; font-family: var(--mono); }
+
+.toggle {
+  position: fixed; right: 1rem; bottom: 1rem; z-index: 20;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+  text-transform: uppercase; padding: .5rem .75rem; border-radius: 999px;
+  background: var(--surface); color: var(--ink-2);
+  border: 1px solid var(--hairline-2); cursor: pointer;
+}
+.toggle:hover { color: var(--pg); border-color: var(--pg); }
+:focus-visible { outline: 2px solid var(--pg); outline-offset: 2px; }
+
+@media (max-width: 900px) {
+  .wrap { flex-direction: column; }
+  .rail { position: static; width: 100%; flex: none; height: auto;
+          border-right: none; border-bottom: 1px solid var(--hairline); }
+  .rail nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+  .main { padding: 1.75rem 1.1rem 4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* classification tags quoted from v3 comments: [PHI] [PHI-RISK] [PII] [FINANCIAL] … */
+.tag { display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 650;
+       letter-spacing: .04em; padding: 0 .35rem; border-radius: 3px; margin-right: .2rem;
+       border: 1px solid var(--hairline); color: var(--muted); vertical-align: 1px; }
+.tag.t-phi        { background: var(--crit-soft); color: var(--crit); border-color: var(--crit); }
+.tag.t-phi-risk   { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.tag.t-pii        { background: var(--legacy-soft); color: var(--legacy-ink); border-color: transparent; }
+.tag.t-financial  { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.tag.t-secret-ref { background: var(--crit-soft); color: var(--crit); border-color: transparent; }
+.tag.t-audit, .tag.t-snapshot { background: var(--pg-soft); color: var(--pg-ink); border-color: transparent; }
+tr.row-phi td.name { box-shadow: inset 3px 0 0 var(--crit); }
+tr.row-phi-risk td.name { box-shadow: inset 3px 0 0 var(--warn); }
+
+@media print {
+  .rail, .toggle { display: none; }
+  body { background: #fff; }
+  .entity { break-inside: avoid; }
+}
+
+.step { display: grid; grid-template-columns: 2.4rem 1fr; gap: 1rem; margin: 1.5rem 0; align-items: start; }
+.step .n { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--pg);
+           background: var(--pg-soft); border-radius: 4px; text-align: center; padding: .3rem 0; }
+.step h3 { margin: .1rem 0 .4rem; }
+.doc { border: 1px solid var(--hairline); border-radius: 8px; background: var(--surface);
+       margin: 1.2rem 0; overflow: hidden; }
+.doc > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem;
+  padding: .75rem 1rem; border-bottom: 1px solid var(--hairline);
+  background: linear-gradient(to bottom, var(--surface-2), var(--surface)); }
+.doc > header .ord { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--pg);
+  background: var(--pg-soft); border-radius: 3px; padding: .1em .45em; }
+.doc > header h3 { margin: 0; font-size: .98rem; flex: 1 1 16rem; font-family: var(--mono); }
+.doc dl { display: grid; grid-template-columns: minmax(6.5rem, 8.5rem) 1fr; gap: .1rem 1rem;
+          margin: 0; padding: .8rem 1rem; font-size: 14px; }
+.doc dt { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+          color: var(--muted); padding: .4rem 0; border-top: 1px solid var(--hairline); }
+.doc dd { margin: 0; padding: .4rem 0; border-top: 1px solid var(--hairline); color: var(--ink-2); }
+.doc dt:first-of-type, .doc dd:first-of-type { border-top: none; }
+.reqs { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1px;
+        background: var(--hairline); border: 1px solid var(--hairline); border-radius: 8px;
+        overflow: hidden; margin: 1.4rem 0 2rem; }
+.req { background: var(--surface); padding: .85rem 1rem; }
+.req h4 { margin: 0 0 .3rem; font-family: var(--mono); font-size: 12px; color: var(--pg); }
+.req p { margin: 0; font-size: 13px; color: var(--ink-2); }
+</style></head><body>
+<div class="wrap">
+<aside class="rail">
+  <p class="rail-title">On this page</p>
+  <nav>
+    <a href="#order"><span>reading order</span></a>
+    <a href="#prereqs"><span>prerequisites</span></a>
+    <a href="#steps"><span>build, migrate, load, anonymize</span></a>
+    <a href="#roles"><span>roles and users</span></a>
+    <a href="#tenant"><span>the tenant setting</span></a>
+    <a href="#agents"><span>briefing an AI agent</span></a>
+  </nav>
+  <div class="group"><p class="rail-title">Documents</p><nav><a href="BUSINESS_GUIDE.html"><span>business guide</span></a><a href="TECHNICAL_GUIDE.html"><span>technical guide</span></a><a href="SCHEMA_ONBOARDING.html"><span>schema guide</span></a><a href="ERD_DIAGRAM_V3.html"><span>entity diagrams</span></a><a href="MYSQL_TO_POSTGRES_MAPPING.html"><span>mysql to postgresql mapping</span></a><a href="SAMPLE_QUERIES.html"><span>sample queries</span></a><a href="RUNBOOK.html"><span>runbook</span></a><a href="OPEN_QUESTIONS.html"><span>open questions</span></a><a href="DECISIONS_LOG.html"><span>decisions log</span></a><a href="V2_TO_V3_CHANGES.html"><span>v2 to v3 changes</span></a><a href="DB_REVIEW_ASSESSMENT3.html"><span>review form (third review)</span></a><a href="COMPLIANCE_CHECKLIST.html"><span>compliance checklist</span></a>
+    <a href="../README.html"><span>repository readme</span></a></nav></div>
+</aside>
+<main class="main">
+  <div class="masthead col">
+    <p class="eyebrow">3D Diagnostix &middot; threeddx3 &middot; start here</p>
+    <h1>Read this first</h1>
+    <p class="lede"><code>threeddx3</code> is the third and final PostgreSQL schema for 3DDX, replacing the
+      legacy MySQL database <code>connect</code>. v2 was built, loaded and reviewed; v3 fixes the review
+      findings (F01–F06), applies the owner answers, adds the new requirements, and is secured for PHI:
+      fail-closed tenant isolation, PHI behind logged functions, a hash-chained audit trail. This page
+      says what to read, in what order, and how to stand the database up.</p>
+  </div>
+  <div class="stats"><div class="stat"><div class="v">23</div><div class="k">schemas</div></div><div class="stat"><div class="v">251</div><div class="k">tables</div></div><div class="stat"><div class="v">4176</div><div class="k">columns</div></div><div class="stat"><div class="v">787</div><div class="k">foreign keys</div></div><div class="stat"><div class="v">225</div><div class="k">tables RLS forced</div></div><div class="stat"><div class="v">38</div><div class="k">migration files</div></div><div class="stat"><div class="v">14</div><div class="k">ETL stages</div></div></div>
+
+  <h2 id="order">Reading order</h2>
+  <div class="col">
+  <p>The repository overview is <a href="../README.html">README.html</a>. Then:</p>
+  
+<div class="doc">
+  <header><span class="ord">1</span><h3><a href="BUSINESS_GUIDE.html">BUSINESS_GUIDE.html</a></h3>
+    <span class="chip pg">Business guide</span></header>
+  <dl><dt>What it is</dt><dd>The domain in prose: what 3DDX sells, who does what, cases above orders, the iSmile hierarchy, temporary and final restorations, vouchers and their ledger, Relu AI planning, AoX / FMP, uploads and notifications.</dd>
+      <dt>Who it's for</dt><dd>Everyone. New developers, analysts, reviewers and department leads.</dd>
+      <dt>Assumes</dt><dd>Nothing.</dd>
+      <dt>When</dt><dd>First.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">2</span><h3><a href="TECHNICAL_GUIDE.html">TECHNICAL_GUIDE.html</a></h3>
+    <span class="chip pg">Technical guide</span></header>
+  <dl><dt>What it is</dt><dd>How threeddx3 is built: schemas, the security model (fail-closed RLS, roles, PHI gateways, the audit hash chain), the ETL, and the legacy findings of this round (subOrderID is a line id, the -1 price sentinel, DOB encryption formats, doorType bits, numberingSystem codes, the archive +5 h).</dd>
+      <dt>Who it's for</dt><dd>Developers, DBAs, anyone touching the ETL or the application's database layer.</dd>
+      <dt>Assumes</dt><dd>The business guide.</dd>
+      <dt>When</dt><dd>Before writing code against the database.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">3</span><h3><a href="SCHEMA_ONBOARDING.html">SCHEMA_ONBOARDING.html</a></h3>
+    <span class="chip pg">Schema guide</span></header>
+  <dl><dt>What it is</dt><dd>Every schema, table and column with its catalog comment; constraints with their rules; indexes with their purpose. PHI / PII / financial tags are flagged.</dd>
+      <dt>Who it's for</dt><dd>Developers and analysts.</dd>
+      <dt>Assumes</dt><dd>The business guide.</dd>
+      <dt>When</dt><dd>As a reference, next to your SQL editor.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">4</span><h3><a href="ERD_DIAGRAM_V3.html">ERD_DIAGRAM_V3.html</a></h3>
+    <span class="chip pg">Entity diagrams</span></header>
+  <dl><dt>What it is</dt><dd>A domain map (edge weight = number of foreign keys) and one diagram per domain.</dd>
+      <dt>Who it's for</dt><dd>Anyone who thinks in pictures.</dd>
+      <dt>Assumes</dt><dd>Nothing.</dd>
+      <dt>When</dt><dd>Alongside the schema guide.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">5</span><h3><a href="MYSQL_TO_POSTGRES_MAPPING.html">MYSQL_TO_POSTGRES_MAPPING.html</a></h3>
+    <span class="chip pg">MySQL to PostgreSQL mapping</span></header>
+  <dl><dt>What it is</dt><dd>Where each of the 223 legacy MySQL tables went: ETL stage or declarative mapping, target, or the recorded reason it was not migrated. Tables new since March are called out.</dd>
+      <dt>Who it's for</dt><dd>Anyone who knows the old database and needs to find something.</dd>
+      <dt>Assumes</dt><dd>Some familiarity with the legacy tables.</dd>
+      <dt>When</dt><dd>When moving a query or a report from MySQL.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">6</span><h3><a href="SAMPLE_QUERIES.html">SAMPLE_QUERIES.html</a></h3>
+    <span class="chip pg">Sample queries</span></header>
+  <dl><dt>What it is</dt><dd>Business questions answered in SQL against v3 names (patient identity through the logged function, cases, reporting views). Every query was parsed with EXPLAIN against the migrated schema.</dd>
+      <dt>Who it's for</dt><dd>Analysts and developers.</dd>
+      <dt>Assumes</dt><dd>The tenant setting below.</dd>
+      <dt>When</dt><dd>When writing your first queries.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">7</span><h3><a href="RUNBOOK.html">RUNBOOK.html</a></h3>
+    <span class="chip pg">Runbook</span></header>
+  <dl><dt>What it is</dt><dd>Build, verify, the authoritative run, reconciliation, the anonymized copy, dumps, users, restore elsewhere, partition maintenance and day-two operations.</dd>
+      <dt>Who it's for</dt><dd>Whoever operates the Dokku host.</dd>
+      <dt>Assumes</dt><dd>Shell, ssh, PostgreSQL basics.</dd>
+      <dt>When</dt><dd>Before running anything.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">8</span><h3><a href="COMPLIANCE_CHECKLIST.html">COMPLIANCE_CHECKLIST.html</a></h3>
+    <span class="chip pg">Compliance checklist</span></header>
+  <dl><dt>What it is</dt><dd>Which table, function, trigger or policy supports which HIPAA, GDPR, FDA Part 11 / 820 / UDI requirement, with live-catalog evidence, plus what still needs legal / compliance review.</dd>
+      <dt>Who it's for</dt><dd>Quality Assurance, privacy, auditors, and engineers answering them.</dd>
+      <dt>Assumes</dt><dd>Nothing; each row cites the objects.</dd>
+      <dt>When</dt><dd>Before an audit, or before relying on a control.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">9</span><h3><a href="OPEN_QUESTIONS.html">OPEN_QUESTIONS.html</a></h3>
+    <span class="chip pg">Open questions</span></header>
+  <dl><dt>What it is</dt><dd>What is still unknown: v2's open questions with the owner answers, and every new TO CONFIRM item from this round — what was found, why it is ambiguous, the risk of guessing, and what answer is usable.</dd>
+      <dt>Who it's for</dt><dd>Department owners who can answer them; developers who must not guess.</dd>
+      <dt>Assumes</dt><dd>The business guide.</dd>
+      <dt>When</dt><dd>Before assuming a rule.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">10</span><h3><a href="DECISIONS_LOG.html">DECISIONS_LOG.html</a></h3>
+    <span class="chip pg">Decisions log</span></header>
+  <dl><dt>What it is</dt><dd>Every decision the 3DDX owner took with the migration team (D-01...): what was decided, why, what it changed, its status, and where the ETL cites it as an approval reference.</dd>
+      <dt>Who it's for</dt><dd>Everyone on the team; reviewers checking why the data looks the way it does.</dd>
+      <dt>Assumes</dt><dd>Nothing.</dd>
+      <dt>When</dt><dd>Before questioning a migration rule, and after each decision round.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">11</span><h3><a href="V2_TO_V3_CHANGES.html">V2_TO_V3_CHANGES.html</a></h3>
+    <span class="chip pg">v2 to v3 changes</span></header>
+  <dl><dt>What it is</dt><dd>What changed from threeddx2 to threeddx3 — schema, migrations, ETL — measured from both codebases, and why (review findings F01–F06, owner answers, new requirements).</dd>
+      <dt>Who it's for</dt><dd>Reviewers of v2 and anyone who built against it.</dd>
+      <dt>Assumes</dt><dd>Having seen v2 helps.</dd>
+      <dt>When</dt><dd>When you want the reasoning.</dd></dl>
+</div>
+<div class="doc">
+  <header><span class="ord">12</span><h3><a href="DB_REVIEW_ASSESSMENT3.html">DB_REVIEW_ASSESSMENT3.html</a></h3>
+    <span class="chip pg">Review form (third review)</span></header>
+  <dl><dt>What it is</dt><dd>The third review form: each finding of the v2 review with what v3 did, asking &quot;fixed?&quot;. Autosaves, can be resumed, exports JSON.</dd>
+      <dt>Who it's for</dt><dd>Reviewers.</dd>
+      <dt>Assumes</dt><dd>Enough of the schema guide to have an opinion.</dd>
+      <dt>When</dt><dd>After reviewing. The main feedback channel.</dd></dl>
+</div>
+  </div>
+
+  <h2 id="prereqs">Prerequisites</h2>
+  <div class="reqs"><div class="req"><h4>Dokku host</h4><p><code>ssh as DEPLOY_SSH_USER, key DEPLOY_SSH_KEY</code></p><p>Everything heavy runs on the host, never through a tunnel. One multiplexed ssh connection (tools/cli.py) — never a retry loop: repeated logins lock the account.</p></div><div class="req"><h4>PostgreSQL</h4><p><code>18.3</code></p><p>The Dokku shared-postgres service. psql and pg_dump exist only inside the container (docker exec dokku.postgres.shared-postgres …); the tools use psycopg instead.</p></div><div class="req"><h4>Legacy MySQL</h4><p><code>database connect, snapshot 2026-10-13 03:00</code></p><p>Restored into dokku shared-mysql by ops/restore_mysql_connect.sh. The ETL only reads it.</p></div><div class="req"><h4>Server Python</h4><p><code>/var/tmp/etlvenv/bin/python (3.12)</code></p><p>psycopg and mysql-connector-python. tools/remote.py maps python3 to it.</p></div><div class="req"><h4>Workstation Python</h4><p><code>3.8 or newer</code></p><p>Only for tools/remote.py, the static checks and the document generators (standard library only).</p></div><div class="req"><h4>Secrets</h4><p><code>~/.3ddx3/ on the host, mode 600</code></p><p>secrets.env (SODIUM_KEY for the date-of-birth decoder; never logged), users.env (passwords issued by ops/create_users.py). The server copy of etl/connections.env holds the internal hosts and is never overwritten by a sync.</p></div></div>
+
+  <h2 id="steps">Build, migrate, load, anonymize — on the Dokku host</h2>
+  <div class="col">
+  <p>All commands are run from <code>v3/</code> on the workstation and execute on the host through
+    <code>tools/remote.py</code>. If ssh fails, stop and find out why; do not retry in a loop.</p>
+  <div class="step"><div class="n">1</div><div><h3>Configure the workstation side</h3>
+<p>Copy <code>etl/connections.env.example</code> to <code>etl/connections.env</code> (git-ignored) and set
+  <code>DEPLOY_SSH_HOST</code>, <code>DEPLOY_SSH_USER</code>, <code>DEPLOY_SSH_PORT</code>,
+  <code>DEPLOY_SSH_KEY</code>. Then load it in every shell that runs the tools:</p>
+<pre><code>cd v3
+set -a; . etl/connections.env; set +a</code></pre></div></div><div class="step"><div class="n">2</div><div><h3>Push the code to the host</h3>
+<p><code>tools/remote.py</code> tars <code>etl/ tools/ tests/ migrations/ ops/ 3ddx</code> to
+  <code>/var/tmp/3ddx3</code> over one multiplexed ssh connection. Every <code>run</code> sources the
+  server's <code>etl/connections.env</code> and <code>~/.3ddx3/secrets.env</code>, and maps
+  <code>python3</code> to the server venv.</p>
+<pre><code>python3 tools/remote.py sync
+python3 tools/remote.py run 'python3 tools/apply_migrations.py --status'
+python3 tools/remote.py sync-run '…'      # both in one call</code></pre></div></div><div class="step"><div class="n">3</div><div><h3>Create threeddx3 and apply the migrations</h3>
+<p>38 files, each in its own transaction, recorded with its SHA-256 in
+  <code>public.schema_migrations</code> (an edited, already-applied file is reported as
+  <code>CHANGED SINCE APPLIED</code>). <code>tools/apply_migrations.py</code> accepts only
+  <code>threeddx3</code>, <code>threeddx3_anony</code> or <code>threeddx3_scratch_&lt;name&gt;</code>.
+  ssh gives no terminal, so the drop confirmation must be given with <code>--yes</code>:</p>
+<pre><code>python3 tools/remote.py run 'python3 tools/apply_migrations.py --db threeddx3 --recreate-db --yes'</code></pre>
+<p>Other flags: <code>--create-db</code> (create if absent), <code>--status</code>, <code>--to V090</code>,
+  <code>--files V001,V002,V003</code>. Authoritative loads always start from a recreated empty database:
+  append-only history rejects DELETE, so a stage cannot be re-run over its own rows.</p></div></div><div class="step"><div class="n">4</div><div><h3>Verify the empty schema</h3>
+<p>On a scratch copy (scratch databases are disposable; <code>--recreate-db</code> needs no confirmation there):</p>
+<pre><code>python3 tools/remote.py sync-run 'python3 tools/apply_migrations.py --db threeddx3_scratch_all --recreate-db \
+  &amp;&amp; python3 tools/check_v3_catalog.py --db threeddx3_scratch_all \
+  &amp;&amp; python3 tools/check_on_conflict.py --db threeddx3_scratch_all \
+  &amp;&amp; python3 tests/run_runtime_tests.py --db threeddx3_scratch_all --quiet'</code></pre>
+<p>See the <a href="RUNBOOK.html">runbook</a> for what each check proves.</p></div></div><div class="step"><div class="n">5</div><div><h3>Create the login users</h3>
+<p>Creates any missing login, attaches it to its group role, and for human users sets the tenant default
+  in <code>threeddx3</code> and <code>threeddx3_anony</code> (whichever exist). New passwords are 32 random
+  characters, sent over the connection (never on a command line) and written to
+  <code>~/.3ddx3/users.env</code> (mode 600). Existing passwords are kept unless named with
+  <code>--rotate</code>; aya and kyousry are never rotated here.</p>
+<pre><code>python3 tools/remote.py run 'python3 ops/create_users.py'
+python3 tools/remote.py run 'python3 ops/create_users.py --rotate app backup'</code></pre>
+<p>Run it again after creating <code>threeddx3_anony</code> so its tenant defaults are set too.</p></div></div><div class="step"><div class="n">6</div><div><h3>Run the ETL, detached, on the host</h3>
+<p><code>ops/run_etl_detached.sh &lt;target_db&gt; &lt;log_name&gt; &lt;stage&gt; [stage …]</code> runs
+  each named stage with <code>etl/run_etl.py --only</code>, after sourcing <code>connections.env</code> and
+  <code>secrets.env</code>; it exports <code>ETL_STRICT=0</code> <em>after</em> sourcing (the env file sets it
+  itself) and <code>ETL_SOURCE_SNAPSHOT</code> (default <code>connect-261013-0300</code>), recorded in
+  <code>audit.migration_runs</code>. A <code>threeddx3_scratch_*</code> target is allowed through
+  <code>ETL_ALLOW_SCRATCH</code>. Start it with <code>setsid nohup</code> so a dropped link cannot kill it:</p>
+<pre><code>python3 tools/remote.py run 'setsid nohup bash ops/run_etl_detached.sh threeddx3 full \
+  00_reference 05_ec2_statics 10_identity 20_pricing 30_orders 40_clinical 50_vouchers 60_workflow 70_operations 80_docs_comms 85_remaining 86_v3_additions 87_ec2_links 90_finalise \
+  &gt; etl-full.log 2&gt;&amp;1 &lt; /dev/null &amp;'
+python3 tools/remote.py run 'tail -40 etl-full.log'</code></pre>
+<p>The stages, in order (from <code>etl/run_etl.py</code>):</p>
+<div class="scroller"><table><thead><tr><th>stage</th><th>what it loads</th></tr></thead>
+<tbody><tr><td class="name">00_reference</td><td class="note">Currencies, countries, lookups, catalog, fields</td></tr><tr><td class="name">05_ec2_statics</td><td class="note">EC2 JSON statics: pick-lists, kits, snippets, suppressions, products</td></tr><tr><td class="name">10_identity</td><td class="note">Users, employees, teams, contacts, addresses</td></tr><tr><td class="name">20_pricing</td><td class="note">Price lists, 8.7M price rows, tiers, rush rules</td></tr><tr><td class="name">30_orders</td><td class="note">Orders, order items, field values, history, locks</td></tr><tr><td class="name">40_clinical</td><td class="note">Patients, tooth charts and sites, implants, sleeves</td></tr><tr><td class="name">50_vouchers</td><td class="note">Voucher types, balances, coverage, ledger</td></tr><tr><td class="name">60_workflow</td><td class="note">Workflow definitions, tasks, internal history</td></tr><tr><td class="name">70_operations</td><td class="note">Archive, inventory, production reports, shipping</td></tr><tr><td class="name">80_docs_comms</td><td class="note">Documents, configurable forms, email logs, integrations</td></tr><tr><td class="name">85_remaining</td><td class="note">The declarative mappings: 74 remaining legacy tables</td></tr><tr><td class="name">86_v3_additions</td><td class="note">Staff pairs, pre-shipping versions, charge requests, InsightHub, couriers</td></tr><tr><td class="name">87_ec2_links</td><td class="note">EC2 statics links: SR category access, sleeve manufacturer articles</td></tr><tr><td class="name">90_finalise</td><td class="note">Totals, constraint validation, views, reconciliation</td></tr></tbody></table></div>
+<p>Stage <code>90_finalise</code> ends with reconciliation: for every legacy table,
+  source = migrated + excluded, exactly. Results are in <code>audit.reconciliation_results</code>;
+  any <code>fail</code> row makes the run exit non-zero.</p></div></div><div class="step"><div class="n">7</div><div><h3>Make the anonymized copy</h3>
+<p>Clone, then anonymize the clone in place. <code>tools/clone_db.py</code> refuses to overwrite
+  <code>threeddx3</code>; <code>ops/anonymize.py</code> refuses any database but
+  <code>threeddx3_anony</code>.</p>
+<pre><code>python3 tools/remote.py run 'python3 tools/clone_db.py threeddx3 threeddx3_anony --replace'
+python3 tools/remote.py run 'python3 ops/anonymize.py --db threeddx3_anony --yes'
+python3 tools/remote.py run 'python3 ops/create_users.py'</code></pre>
+<p>The anonymizer is driven by <code>compliance.data_classifications</code>: a per-patient date shift,
+  every classified column replaced, the audit / event / PHI-access logs emptied, a post-check that no
+  sampled original value survives (exit 1 otherwise), then <code>VACUUM FULL ANALYZE</code>.</p></div></div><div class="step"><div class="n">8</div><div><h3>Dump, hand over, document</h3>
+<p>Dumps of both databases, users and restore elsewhere are in the <a href="RUNBOOK.html">runbook</a>.
+  Regenerate this document set with <code>python3 tools/build_docs.py</code> (add
+  <code>--refresh-catalog</code> after a migration change).</p></div></div>
+  </div>
+
+  <h2 id="roles">Roles and users</h2>
+  <div class="col">
+  <p>Group roles are created by <code>V001</code> and granted by <code>V130</code> (design: V3_DESIGN §C1).
+    Nobody logs in as a group role; login users are members. Every object is owned by
+    <code>threeddx3_owner</code>; PUBLIC has nothing. The comments below are read from the catalog.</p>
+  </div>
+  <div class="scroller"><table><thead><tr><th>group role</th><th>RLS</th><th>purpose</th></tr></thead>
+  <tbody><tr><td class="name">threeddx3_admin</td><td><span class="chip warn">BYPASSRLS</span></td><td class="note">threeddx3: full administrative access for named administrators (aya, kyousry). BYPASSRLS; every PHI read through the access functions is still logged.</td></tr><tr><td class="name">threeddx3_app_rw</td><td>subject to RLS</td><td class="note">threeddx3: create/read/update/delete on business tables under row-level security. Used by the web application (login app) and by user2_rw. No direct access to PHI identity tables; PHI is read through logged functions.</td></tr><tr><td class="name">threeddx3_backup</td><td><span class="chip warn">BYPASSRLS</span></td><td class="note">threeddx3: reads every row for pg_dump (pg_read_all_data, BYPASSRLS). Cannot write anything.</td></tr><tr><td class="name">threeddx3_etl</td><td><span class="chip">LOGIN</span></td><td class="note">threeddx3 login; member of threeddx3_migrator. Created/managed by v3/ops/create_users.py.</td></tr><tr><td class="name">threeddx3_migrator</td><td><span class="chip warn">BYPASSRLS</span></td><td class="note">threeddx3: applies migrations and runs the ETL. BYPASSRLS because the load writes across tenants; the only role allowed to set app.skip_audit.</td></tr><tr><td class="name">threeddx3_owner</td><td><span class="chip warn">BYPASSRLS</span></td><td class="note">threeddx3: owns every schema, table, function and view. NOLOGIN; nobody connects as it. Members (migrator, admin) act as owner through SET ROLE or inheritance.</td></tr><tr><td class="name">threeddx3_read</td><td>subject to RLS</td><td class="note">threeddx3: read-only access to business tables and PHI-masked views under row-level security (login user1_r).</td></tr></tbody></table></div>
+  <div class="col"><p>Login users, from <code>ops/create_users.py</code>:</p></div>
+  <div class="scroller"><table><thead><tr><th>login</th><th>member of</th><th>tenant default</th><th>rotatable</th></tr></thead>
+  <tbody><tr><td class="name">user1_r</td><td class="type">threeddx3_read</td><td>app.tenant_id preset</td><td>yes</td></tr><tr><td class="name">user2_rw</td><td class="type">threeddx3_app_rw</td><td>app.tenant_id preset</td><td>yes</td></tr><tr><td class="name">app</td><td class="type">threeddx3_app_rw</td><td>—</td><td>yes</td></tr><tr><td class="name">aya</td><td class="type">threeddx3_admin</td><td>app.tenant_id preset</td><td>never by the script</td></tr><tr><td class="name">kyousry</td><td class="type">threeddx3_admin</td><td>app.tenant_id preset</td><td>never by the script</td></tr><tr><td class="name">backup</td><td class="type">threeddx3_backup</td><td>—</td><td>yes</td></tr><tr><td class="name">threeddx3_etl</td><td class="type">threeddx3_migrator</td><td>—</td><td>yes</td></tr><tr><td class="name">maryam</td><td class="type">threeddx3_read</td><td>app.tenant_id preset</td><td>yes</td></tr><tr><td class="name">degwy</td><td class="type">threeddx3_read</td><td>app.tenant_id preset</td><td>yes</td></tr><tr><td class="name">ayousry</td><td class="type">threeddx3_read</td><td>app.tenant_id preset</td><td>yes</td></tr><tr><td class="name">user1</td><td class="type">threeddx3_read</td><td>app.tenant_id preset</td><td>yes</td></tr><tr><td class="name">user4</td><td class="type">threeddx3_read</td><td>app.tenant_id preset</td><td>yes</td></tr><tr><td class="name">user5</td><td class="type">threeddx3_read</td><td>app.tenant_id preset</td><td>yes</td></tr></tbody></table></div>
+  <div class="col">
+  <p>The ETL connects as <code>PG_USER</code> from the server's <code>connections.env</code> (today the
+    service superuser); <code>threeddx3_etl</code> is the migrator login it is meant to switch to.
+    Only the migrator role may set <code>app.skip_audit</code> — the check is made on the acting role,
+    not on the setting alone.</p>
+  </div>
+
+  <h2 id="tenant">The tenant setting — fail-closed</h2>
+  <div class="col">
+  <p>Every tenant-scoped table (225 of them) has row-level security
+    <strong>enabled and forced</strong>, with one policy:</p>
+  <pre><code>USING (tenant_id = core.fn_current_tenant()) WITH CHECK (tenant_id = core.fn_current_tenant())
+-- core.fn_current_tenant() = NULLIF(current_setting('app.tenant_id', true), '')::bigint</code></pre>
+  <div class="note-box warn">
+    <h4>No tenant, no rows</h4>
+    <p>When <code>app.tenant_id</code> is unset the function returns NULL, the comparison is NULL, and the
+      session sees <strong>nothing</strong> — and cannot insert. This is the opposite of v2, whose
+      <code>OR … IS NULL</code> branch showed every tenant to an unscoped session (review finding F01).
+      An empty result usually means a missing tenant, not missing data.</p>
+  </div>
+  <pre><code>SELECT core.fn_set_tenant('3ddx');          -- raises on an unknown slug
+SELECT * FROM core.v_session_context;        -- what this session will see</code></pre>
+  <p><code>core.fn_set_tenant</code> sets the value for the session. The application must call it (and
+    <code>core.fn_set_user</code>) on every connection it takes from a pool. Human logins marked
+    "app.tenant_id preset" above start inside the 3ddx tenant through
+    <code>ALTER ROLE … IN DATABASE … SET app.tenant_id</code>; <code>app</code>, <code>backup</code> and
+    <code>threeddx3_etl</code> do not. Roles with BYPASSRLS (owner, migrator, admin, backup) are not
+    filtered at all. The only rows visible without a tenant are the global vocabulary rows of
+    <code>core.lookup_values</code> and <code>platform.feature_flags</code> (SELECT only).</p>
+  <p>Patient names and dates of birth are not in any table the app or read roles can select:
+    use <code>clinical.fn_get_patient_identity(patient_id, purpose)</code> (logged in
+    <code>audit.phi_access_log</code>) or <code>clinical.v_patients_masked</code>.</p>
+  </div>
+
+  <h2 id="agents">Briefing an AI agent on this project</h2>
+  <div class="col">
+  <ol>
+    <li><code>v3/analysis/SCHEMA_CONVENTIONS.md</code> and <code>v3/analysis/V3_DESIGN.md</code> — binding rules and the design.</li>
+    <li><code>v3/analysis/INTEGRATION_LOG.md</code> — every decision, finding and TO CONFIRM item of this round.</li>
+    <li><code>v3/analysis/AGENT_SCHEMA_BRIEF.md</code> — ssh and verification rules (only tools/remote.py; scratch databases only).</li>
+    <li><a href="OPEN_QUESTIONS.html">OPEN_QUESTIONS.html</a> — what is genuinely unknown, so it does not invent an answer.</li>
+    <li><a href="TECHNICAL_GUIDE.html">TECHNICAL_GUIDE.html</a> and <a href="SCHEMA_ONBOARDING.html">SCHEMA_ONBOARDING.html</a>.</li>
+    <li><code>v2/HANDOFF_V3.md</code> — the silent-defect patterns v2 taught; still the best list of what to distrust.</li>
+  </ol>
+  </div>
+
+  <p class="foot">3D Diagnostix &middot; threeddx3 &middot; generated by tools/gen_readme_first.py</p>
+</main>
+</div>
+
+<button class="toggle" id="themeToggle" type="button" aria-label="Switch colour theme">Theme</button>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('threeddx-theme'); } catch (e) {}
+  if (saved) root.setAttribute('data-theme', saved);
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var isDark = root.getAttribute('data-theme') === 'dark'
+      || (!root.getAttribute('data-theme')
+          && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('threeddx-theme', next); } catch (e) {}
+  });
+})();
+</script>
+
+</body></html>

@@ -41,6 +41,7 @@ import {
   MuiTab,
   MuiToggleButton,
   MuiOutlinedInput,
+  MuiPaginationItem,
 } from './components';
 
 // ============================================================================
@@ -135,6 +136,7 @@ const baseTheme = {
     MuiTab,
     MuiToggleButton,
     MuiOutlinedInput,
+    MuiPaginationItem,
   } as ThemeOptions['components'],
 
   // Custom properties (will be augmented)
