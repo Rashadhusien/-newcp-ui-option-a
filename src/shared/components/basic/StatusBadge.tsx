@@ -1,8 +1,8 @@
 /**
- * StatusBadge: icon + label pill for supported order and business statuses.
+ * StatusBadge: icon + label pill for a Models or Conversion status.
  *
- * Status is never color-only. Status -> semantic/label lives in
- * domain/status.ts; the soft pill colors live in statusBadgeTokens
+ * Status is never color-only. Status -> label/icon/tone lives in
+ * shared/status/status.ts; the soft pill colors live in statusBadgeTokens
  * (light pastel tint / dark translucent tint, all contrast-checked).
  *
  * Dark mode uses `theme.applyStyles('dark', …)`: with cssVariables +
@@ -11,32 +11,27 @@
  */
 
 import Chip from '@mui/material/Chip';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import ScheduleIcon from '@mui/icons-material/Schedule';
-import TimelapseIcon from '@mui/icons-material/Timelapse';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import Skeleton from '@mui/material/Skeleton';
 import { statusBadgeTokens } from '@/theme/tokens';
-import { getStatusPresentation, type StatusSemantic, type StatusValue } from '@/shared/status/status';
+import {
+  getStatusPresentation,
+  type ServiceType,
+  type StatusByService,
+} from '@/shared/status/status';
 
-const SEMANTIC_ICON: Record<StatusSemantic, React.ReactElement> = {
-  neutral: <RadioButtonUncheckedIcon />,
-  info: <InfoOutlinedIcon />,
-  primary: <TimelapseIcon />,
-  warning: <ScheduleIcon />,
-  success: <CheckCircleIcon />,
-  error: <ErrorIcon />,
-};
-
-interface StatusBadgeProps {
-  status: StatusValue;
+export interface StatusBadgeProps<S extends ServiceType> {
+  service: S;
+  status: StatusByService[S];
   size?: 'sm' | 'md';
   loading?: boolean;
 }
 
-export function StatusBadge({ status, size = 'md', loading = false }: StatusBadgeProps) {
+export function StatusBadge<S extends ServiceType>({
+  service,
+  status,
+  size = 'md',
+  loading = false,
+}: StatusBadgeProps<S>) {
   if (loading) {
     return (
       <Skeleton
@@ -49,12 +44,13 @@ export function StatusBadge({ status, size = 'md', loading = false }: StatusBadg
     );
   }
 
-  const meta = getStatusPresentation(status);
+  const meta = getStatusPresentation(service, status);
   const tone = statusBadgeTokens[meta.semantic];
+  const Icon = meta.icon;
 
   return (
     <Chip
-      icon={SEMANTIC_ICON[meta.semantic]}
+      icon={<Icon aria-hidden="true" />}
       label={meta.label}
       size={size === 'sm' ? 'small' : 'medium'}
       aria-label={`Status: ${meta.label}`}

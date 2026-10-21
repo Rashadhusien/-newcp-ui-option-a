@@ -75,6 +75,8 @@ Legend: **copy** = copied as-is apart from import paths; **adapt** = copied, the
 - **D-8 Placeholder routes.** The `/reporting`, `/orders`, `/models`, `/conversion` and `/settings` paths are the frontend's own choice, not the contract's. `/` redirects to `/reporting`. The scope of the Settings feature is `[NEEDS VERIFICATION]`: PLAN §3 lists no settings screen.
 - **D-9 Status tones** (refines D-2): Awaiting Models and No Scans = warning (waiting on input), On its way = info, In Progress = primary, Done and Download = success. All `[NEEDS VERIFICATION]` (Q2).
 - **D-10 `.claude/launch.json`** was added so the assistant can run the dev server preview. It is dev tooling only. Decided 20 Oct: the developer adds `.claude/` to `.gitignore`, so it is not committed.
+- **D-11 Status mapping before the contract (A2.4, 21 Oct).** The contract was late, so A2.4 was built from PLAN §4 alone. Statuses are keyed per service type (`models`, `conversion`) because "In Progress" exists in both. Each status has its own icon (Awaiting Models = hourglass, On its way = truck, In Progress = autorenew, Done = check, No Scans = cloud-off, Download = download). Still `[NEEDS VERIFICATION]`: the wire values (the API may send codes, not labels), the initial status, the permitted transitions (Q2), and whether the service-type names match the contract.
+- **D-12 A2.1 to A2.3 blocked (21 Oct):** `docs/openapi/newcp.openapi.yaml` is not available yet. No client types, endpoints, error shapes or mocks were written, so nothing is invented. They resume when the draft arrives.
 - **D-6 Versions are pinned exactly** (no `^`), using the versions installed in the mui POC lockfile, so that `npm install` reproduces the POC's build.
 
 ## Questions for Bishoy (A2)

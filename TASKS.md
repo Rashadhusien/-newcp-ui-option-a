@@ -20,11 +20,11 @@ Goal: an empty-but-correct New CP frontend whose `npm run verify` passes, in the
 Done when: `npm run verify` is green; the app starts on a login placeholder with the shell; light and dark both render; no unused feature code remains; DEVIATIONS lists every deviation.
 
 ## Task A2: OpenAPI review, typed client, contract-shaped mocks
-Branch: feat/fe-a-a02-api-client-mocks | Gate: D1 | Date: Tue 20 Oct | Estimate: 1.5 h | Depends on: A1; OpenAPI draft | Status: not started
+Branch: feat/fe-a-a02-api-client-mocks | Gate: D1 | Date: Tue 20 Oct | Estimate: 1.5 h | Depends on: A1; OpenAPI draft | Status: in progress (A2.4 done; A2.1 to A2.3 blocked on the contract, D-12)
 - [ ] A2.1 Read the contract in `docs/openapi/`; write the question list for Bishoy in `docs/DEVIATIONS.md` (missing fields, statuses, error shapes, pagination, auth). Verify: list reviewed by the developer.
 - [ ] A2.2 `src/shared/api/`: typed client (fetch wrapper, base URL, auth header from session, error normalisation into one `ApiError` with kind: validation, transition, invoiced, locked, forbidden, unauthorized, server, network), types matching the contract. Verify: `npm run typecheck`.
 - [ ] A2.3 `src/mocks/`: handlers and fixtures from the contract examples, including every error kind and a duplicate-instances order; `VITE_USE_MOCKS` switch; latency and failure injection (`?fail=1`). Verify: a dev page or console check shows each error kind.
-- [ ] A2.4 `src/shared/status/status.ts` single status mapping with label, icon and tone. Verify: `npm run verify`.
+- [x] A2.4 `src/shared/status/status.ts` single status mapping with label, icon and tone. Verify: `npm run verify`.
 Each subtask: - [ ] AI_USAGE_LOG.md updated
 
 ## Task A3: Breakdown and kickoff (developer-owned, no Claude work)
@@ -94,4 +94,5 @@ Branch: fix/fe-a-a14-stabilize-rc | Gate: D6 | Date: Tue 27 Oct | Estimate: 2.5 
 | Task | Status | Notes |
 |---|---|---|
 | A1 | ready for review | verify green; awaiting developer commit and PR |
-| A2 to A14 | not started | status only; hours are written by the developer |
+| A2 | in progress | A2.4 done; A2.1 to A2.3 blocked: no OpenAPI draft |
+| A3 to A14 | not started | status only; hours are written by the developer |
