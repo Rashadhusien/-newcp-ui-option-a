@@ -1,8 +1,8 @@
 # TASKS: New CP frontend, UI Option A
 
-**Do not start any task until the developer says `start A<NN>`.** One task = one branch = one commit = one PR (see `GIT_WORKFLOW.md`). Base: the integration branch (name to confirm). Update `AI_USAGE_LOG.md` right after every subtask group.
-Sources of truth: `docs/PLAN.md`, the OpenAPI contract in `docs/openapi/` (when received), `CLAUDE.md`. Unknown means `[NEEDS VERIFICATION]`; log gaps in `docs/DEVIATIONS.md`.
-Total estimate: **24 h** (4 h/day, 20-27 Oct 2026).
+**Do not start any task until the developer says `start A<NN>`.** One task = one branch = one commit = one PR (see `GIT_WORKFLOW.md`). Base: `develop` (name to confirm, G7); stack on the previous branch while its PR is unmerged. Update `AI_USAGE_LOG.md` right after every subtask group.
+Sources of truth (highest first): the v0.9 handoff package in `docs/newcp-ai/`, `CLAUDE.md`, `docs/PLAN.md`. Unknown means `[NEEDS VERIFICATION]`; log gaps in `docs/DEVIATIONS.md`.
+Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00): 16 h planned for about 14 h left; cut order in PLAN section 8; if we slip, A9R merges into A7R.
 
 ## Task A1: Bootstrap the repo from the existing mui POC
 Branch: build/fe-a-a01-bootstrap | Gate: D1 | Date: Tue 20 Oct | Estimate: 2.0 h | Depends on: sources available | Status: ready for review
@@ -20,7 +20,7 @@ Goal: an empty-but-correct New CP frontend whose `npm run verify` passes, in the
 Done when: `npm run verify` is green; the app starts on a login placeholder with the shell; light and dark both render; no unused feature code remains; DEVIATIONS lists every deviation.
 
 ## Task A2: OpenAPI review, typed client, contract-shaped mocks
-Branch: feat/fe-a-a02-api-client-mocks | Gate: D1 | Date: Tue 20 Oct | Estimate: 1.5 h | Depends on: A1; OpenAPI draft | Status: in progress (A2.4 done; A2.1 pre-contract questions B1-B10 from the V3 docs recorded, D-16 to D-20; A2.1 contract review, A2.2, A2.3 blocked on the contract, D-12)
+Branch: feat/fe-a-a02-api-client-mocks | Gate: D1 | Date: Tue 20 Oct | Estimate: 1.5 h | Depends on: A1; OpenAPI draft | Status: closed 23 Oct (A2.4 done; V3 findings and B1-B10 recorded as part 2a; A2.1-A2.3 superseded by A00 and A2R, because the v0.9 package delivered the contract)
 - [ ] A2.1 Read the contract in `docs/openapi/`; write the question list for Bishoy in `docs/DEVIATIONS.md` (missing fields, statuses, error shapes, pagination, auth). Verify: list reviewed by the developer.
 - [ ] A2.2 `src/shared/api/`: typed client (fetch wrapper, base URL, auth header from session, error normalisation into one `ApiError` with kind: validation, transition, invoiced, locked, forbidden, unauthorized, server, network), types matching the contract. Verify: `npm run typecheck`.
 - [ ] A2.3 `src/mocks/`: handlers and fixtures from the contract examples, including every error kind and a duplicate-instances order; `VITE_USE_MOCKS` switch; latency and failure injection (`?fail=1`). Verify: a dev page or console check shows each error kind.
@@ -30,8 +30,8 @@ Each subtask: - [ ] AI_USAGE_LOG.md updated
 ## Task A3: Breakdown and kickoff (developer-owned, no Claude work)
 The developer sends the breakdown to Aya and raises Q1 to Q7. Claude only helps with wording if asked.
 
-## Task A4: Google login and protected routes
-Branch: feat/fe-a-a04-auth-guard | Gate: D2 | Date: Wed 21 Oct | Estimate: 2.0 h | Depends on: A1, A2; auth contract (Q3) | Status: not started
+## Task A4 (20 Oct version): Google login and protected routes
+Status: superseded 23 Oct by "Task A4: Auth (reduced)" below (0.5 h); real Google sign-in blocked (R06). A4.2 guard parts already exist from A1.
 - [ ] A4.1 Login page (Google sign-in button, error and loading states, no secrets in code; client id from env). Mock session when `VITE_USE_MOCKS=true`.
 - [ ] A4.2 Session provider, `AuthBoundary` route guard, redirect with return path, logout, session-expired handling (401 anywhere sends the user to login).
 - [ ] A4.3 Unauthorized and forbidden pages; user menu with the current user only (no role simulator in production code).
@@ -44,56 +44,86 @@ Branch: feat/fe-a-a05-report-shell | Gate: D2 | Date: Wed 21 Oct | Estimate: 2.0
 - [x] A5.3 Loading, empty, error-with-retry states; PriorityTable/cards on phones, no horizontal scroll at 390/768/1024/1440.
 Done when: counts equal instances in the mock data (a mock order with two same-type instances adds two rows).
 
-## Task A6: Models create/edit form
-Branch: feat/fe-a-a06-models-form | Gate: D3 | Date: Thu 22 Oct | Estimate: 2.5 h | Depends on: A2, A5; Models endpoints (Q1) | Status: not started
-- [ ] A6.1 Form (react-hook-form + zod) for add and edit; labels, `aria-describedby` errors, dirty guard, Cancel.
-- [ ] A6.2 Error summary on failed submit; server error mapping (validation field errors, invoiced, locked by another user) with actionable text; nothing is added to the report on failure.
-- [ ] A6.3 Save then reopen shows the saved values; success toast; report refreshes.
+## Tasks A6 to A10 (20 Oct versions): superseded
+Replaced on 23 Oct by A6R, A7R, A8R, A9R and A10 (blocked) below, because the v0.9 package changed the fields, statuses, Bill To and contract (D-22 to D-27).
 
-## Task A7: Models details, transition, history
-Branch: feat/fe-a-a07-models-details-history | Gate: D3 | Date: Thu 22 Oct | Estimate: 1.5 h | Depends on: A6; history and transition endpoints (Q2) | Status: not started
-- [ ] A7.1 Details page: service info, order context (patient code only), existing attachments display-only.
-- [ ] A7.2 Allowed-next-status action only; prohibited-transition message leaves the status unchanged; confirm dialog where destructive.
-- [ ] A7.3 History timeline (newest first, who/when, status change and field edits).
+## Task A00: Adopt the v0.9 handoff package (docs only)
+Branch: docs/fe-a-a00-adopt-handoff-v09 (stacked on docs/fe-a-a02-v3-findings) | Date: 23 Oct | Estimate: 0.5 h | Status: ready for review
+- [x] A00.1 Merged `CLAUDE.md` (approved text) and root `AGENTS.md` pointer.
+- [x] A00.2 Re-baselined `docs/PLAN.md` and this file (16 h, cut order, A9R-into-A7R rule).
+- [x] A00.3 `docs/DEVIATIONS.md`: superseded items, contract gaps, R01-R14 status, questions G1-G7 and Q-B1-Q-B7.
+- [x] AI_USAGE_LOG.md updated
 
-## Task A8: Conversion create/edit/transition/history
-Branch: feat/fe-a-a08-conversion | Gate: D4 | Date: Sun 25 Oct | Estimate: 2.0 h | Depends on: A6, A7; Conversion endpoints | Status: not started
-- [ ] A8.1 Conversion form on the same form host; fields and options from the contract.
-- [ ] A8.2 Transition, details and history reuse the A7 components.
-- [ ] A8.3 Same error handling as Models; report shows Conversion rows.
+## Task A2R: Shared API client, mock adapter, status mapper, test runner
+Branch: feat/fe-a-a02r-api-adapter | Date: 23/25 Oct | Estimate: 2.0 h | Depends on: A00; G1 for the test runner | Status: not started
+- [ ] A2R.1 `src/shared/api/`: client ported from `newcp-demo-client-f07.ts` with types from the OpenAPI (CatalogService, FormDefinition, ServiceItem, AvailableTransition, HistoryEvent, BilledPartyChoice, Problem); token source; `ApiError` normalised from `Problem` + status (400/401/403/404/409/422/5xx/network).
+- [ ] A2R.2 `src/features/services/data/serviceApi.ts`: one interface, mock implementation on the F07 synthetic fixtures (two same-type items with different payers, every error status, latency, `?fail=`); real implementation wired to the client but off (`VITE_USE_MOCKS`). Evidence label MOCK/INTEGRATED.
+- [ ] A2R.3 Rewrite `src/shared/status/status.ts` as a mapper (API value -> label/icon/tone, neutral fallback); remove the provisional statuses; adapt `StatusBadge` and the report.
+- [ ] A2R.4 After G1: Vitest + jsdom + React Testing Library; `npm run test` in `verify`; unit tests for the client error mapping, the mock adapter and the status mapper.
+- [ ] AI_USAGE_LOG.md updated
 
-## Task A9: Same-type duplicate instances and access control
-Branch: feat/fe-a-a09-duplicates-access | Gate: D4 | Date: Sun 25 Oct | Estimate: 2.0 h | Depends on: A8; seeded duplicate case (Q5) | Status: not started
-- [ ] A9.1 Two instances of one type in one order: distinct IDs shown, edit or transition one and the other stays unchanged, separate history.
-- [ ] A9.2 403 and cross-tenant denied state (no data leakage in the message); disabled actions with an explanation when the user lacks permission.
-- [ ] A9.3 Manual check script for the D4 demo.
+## Task A6R: Service forms (Biomodel and Conversion, all controls)
+Branch: feat/fe-a-a06r-service-forms | Date: 25 Oct | Estimate: 3.0 h | Depends on: A2R | Status: not started
+- [ ] A6R.1 Typed field definitions from `form_biomodel.json` (28) and `form_conversion.json` (21), served by the mock `formSchema`; one form host (react-hook-form + zod) rendering radio/select/text/number/boolean with labels and `aria-describedby`.
+- [ ] A6R.2 Conditional and nested controls (digital design deliverables, printer brand/model, arch customisation and colour, software/format, model scan -> intra-oral); only UI-attached validators (VAL-CONV-001/002/004/005, VAL-BIO-001/002/003); VAL-CONV-003 as a warning.
+- [ ] A6R.3 Create on an existing order (new UUID even for the same type, `Idempotency-Key` per intentional create); edit via PATCH answers; 422 field details mapped to fields; error summary; dirty guard; no success without a persisted response.
+- [ ] AI_USAGE_LOG.md updated
 
-## Task A10: Live API integration
-Branch: feat/fe-a-a10-live-api | Gate: D5 | Date: Mon 26 Oct | Estimate: 1.5 h | Depends on: backend endpoints deployed (Q4) | Status: not started
-- [ ] A10.1 Switch report and forms to the live API; fix contract drift (record each mismatch in DEVIATIONS and tell Bishoy).
-- [ ] A10.2 Write `docs/api-integration.md` (endpoints used, error mapping, how to switch mock/live, known gaps).
+## Task A7R: Service instance detail, staff fields, transitions, history
+Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 2.5 h | Depends on: A6R | Status: not started
+- [ ] A7R.1 Order services list: one row per instance with UUID (short) and line number; open one instance.
+- [ ] A7R.2 Staff fields: Redo, pending reason, service notes via PATCH; cost, rush, currency, zero-charge read-only or mock-saved (G5), labelled.
+- [ ] A7R.3 Status: actions from `available-transitions` only (label from the API), confirm, 409/422 leave the status unchanged; history timeline from the history endpoint.
+- [ ] AI_USAGE_LOG.md updated
+
+## Task A8R: Service-level Bill To (F07, mock)
+Branch: feat/fe-a-a08r-bill-to | Date: 26 Oct | Estimate: 1.0 h | Depends on: A7R | Status: not started
+- [ ] A8R.1 Doctor/Scanning Center selector from `eligible-billed-parties`; `billedToContactUuid` for ONE service on create/patch; never send provenance or tenant; never copy an order-level Bill To.
+- [ ] A8R.2 `canEditBilledParty` -> read-only with an explanation; 403/409/422 rendered; no success unless persisted; real save disabled until the F07 gate (shown in the UI).
+- [ ] AI_USAGE_LOG.md updated
+
+## Task A9R: Same-type independence and denied states
+Branch: feat/fe-a-a09r-independence-access | Date: 26 Oct | Estimate: 1.0 h | Depends on: A8R | Status: not started (merges into A7R if we slip)
+- [ ] A9R.1 Two same-type instances: edit, transition or payer change on one leaves the other unchanged (UI and mock state).
+- [ ] A9R.2 401 -> login, 403 -> read-only/forbidden state, tenant-masked 404 without data leakage.
+- [ ] AI_USAGE_LOG.md updated
+
+## Task A5R: Report re-key
+Branch: feat/fe-a-a05r-report-rekey | Date: 26 Oct | Estimate: 1.0 h | Depends on: A2R | Status: not started
+- [ ] A5R.1 Remove obsolete fields (option, arch, quantity, `ORD-` strings, provisional statuses); rows from the mock adapter's service items; status via the mapper; MOCK label; no report endpoint yet (G3).
+- [ ] AI_USAGE_LOG.md updated
 
 ## Task A11: Tests
-Branch: test/fe-a-a11-tests | Gate: D5 | Date: Mon 26 Oct | Estimate: 2.0 h | Depends on: A6 to A9; approval of Vitest/RTL (Q7) | Status: not started
-- [ ] A11.1 Install the approved test dependencies only after the developer confirms approval. Configure Vitest + jsdom + RTL; `npm run test`; add to `verify`.
-- [ ] A11.2 Tests: critical forms (Models, Conversion), validation display, loading/empty/error states, permissions (guard, disabled actions), responsive layout switch. Use mock data only.
+Branch: test/fe-a-a11-tests | Date: 26 Oct | Estimate: 2.0 h | Depends on: A2R.4 (G1), A6R to A9R | Status: not started
+- [ ] A11.1 Component tests: form conditions and attached validators, 422 mapping, Bill To single-instance patch, two-instance independence, transitions from the API, error/empty/loading states, read-only on 403. Mock data only.
+- [ ] AI_USAGE_LOG.md updated
 
-## Task A12: CI and quality gate
-Branch: ci/fe-a-a12-ci-sonar | Gate: D5 | Date: Mon 26 Oct | Estimate: 0.5 h | Depends on: A11; Sonar access | Status: not started
-- [ ] A12.1 GitHub Actions: install, lint, typecheck, test with coverage, build. [ ] A12.2 `sonar-project.properties` and the quality-gate step; no secrets in the repo (tokens come from repository secrets).
+## Task A4: Auth (reduced)
+Branch: feat/fe-a-a04-auth-token | Date: 27 Oct | Estimate: 0.5 h | Depends on: A2R | Status: not started
+- [ ] A4.1 Token source for the client from the session; 401 anywhere sends the user to login with the return path. Real Google sign-in blocked (R06).
+- [ ] AI_USAGE_LOG.md updated
+
+## Task A10: Live API integration
+Status: BLOCKED (R08 no running backend; F07-01 to F07-05 for Bill To). 0 h planned. If unblocked, it replaces A14 time.
+
+## Task A12: CI
+Branch: ci/fe-a-a12-ci | Date: 27 Oct | Estimate: 0.5 h | Depends on: A11 | Status: not started
+- [ ] A12.1 GitHub Actions: install, lint, typecheck, test, build, check-tokens. Sonar step only if access exists (cut item 4).
 
 ## Task A13: Docker and documentation
-Branch: build/fe-a-a13-docker-docs | Gate: D6 | Date: Tue 27 Oct | Estimate: 1.5 h | Depends on: A12 | Status: not started
-- [ ] A13.1 Multi-stage Dockerfile + nginx config (SPA fallback), `.dockerignore`. [ ] A13.2 README final (run, env, test, docker). [ ] A13.3 `docs/ux-rationale.md`: how Option A differs from Option B and why.
+Branch: build/fe-a-a13-docker-docs | Date: 27 Oct | Estimate: 1.0 h | Depends on: A12 | Status: not started
+- [ ] A13.1 Multi-stage Dockerfile + nginx (SPA fallback), `.dockerignore`. [ ] A13.2 README final. [ ] A13.3 `docs/ux-rationale.md` (Option A vs B).
 
 ## Task A14: Stabilize and release candidate
-Branch: fix/fe-a-a14-stabilize-rc | Gate: D6 | Date: Tue 27 Oct | Estimate: 2.5 h | Depends on: A13; feature freeze | Status: not started
-- [ ] A14.1 Fix review and Sonar findings. [ ] A14.2 Run the demo acceptance checklist and the rehearsal script. [ ] A14.3 Propose the RC tag to the developer (Claude never tags).
+Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on: A13 | Status: not started
+- [ ] A14.1 Review fixes. [ ] A14.2 Demo acceptance checklist and rehearsal script (MOCK/INTEGRATED stated honestly). [ ] A14.3 Propose the RC tag to the developer (Claude never tags).
 
 ## Phase log
 | Task | Status | Notes |
 |---|---|---|
-| A1 | ready for review | verify green; awaiting developer commit and PR |
-| A2 | in progress | A2.4 done; V3 findings + questions B1-B10 recorded (part 2a); contract review, client and mocks blocked: no OpenAPI draft |
-| A5 | ready for review | built on provisional fixtures (D-13); swap to mocks when A2 resumes |
-| A3, A4, A6 to A14 | not started | status only; hours are written by the developer |
+| A1 | merged | |
+| A2 | part 1 (A2.4) merged; part 2a (V3 findings) in review | A2.1-A2.3 replaced by A2R |
+| A5 | merged | on provisional fixtures; re-key in A5R |
+| A00 | ready for review | docs only |
+| A2R, A6R, A7R, A8R, A9R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
+| A6-A10 (20 Oct) | superseded / A10 blocked | |

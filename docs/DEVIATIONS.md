@@ -99,7 +99,33 @@ Legend: **copy** = copied as-is apart from import paths; **adapt** = copied, the
   - Present but not yet used: `item_status` (summary code), `is_invoiced`, `hold_type` (`customer`/`internal`), `client_name`, `scan_center_name`, `patient_code`, `is_redo`, `is_digital`.
 - **D-20 Rules confirmed by V3 (no change needed).** Edit locks are per order, at most one active, with an expiry; edits by anyone else are rejected (our "locked by another user" error). Invoiced lines freeze price, quantity, currency and payer (our "invoiced" error). Status history is `orders.order_status_history` (from, to, who, acting role, note; append-only) plus the detailed `workflow.workflow_history` (A7 timeline). Patients appear only as `patient_code`; identity is behind logged access functions. Tenant isolation is fail-closed, so an empty result can mean a missing tenant on the backend, not missing data. Cases above orders and parent/child lines are new in V3 and outside the demo scope.
 - **D-21 V3 docs were committed by mistake (22 Oct).** The V3 database docs (`local_docs/`, 11 files) went into the A5 commit `03bd2a0` and were pushed. They contain no patient data, emails or secrets, but they do contain internal security design and staff login names. The developer untracked them in `d025972`; `local_docs/` is in `.gitignore`. Whether to remove them from history (force-push) is open for Aya.
+- **D-22 v0.9 handoff package adopted (23 Oct, A00).** The AI Development Handoff Package v0.9 (F07) is the highest authority for the contract, form fields and business rules; `CLAUDE.md` was merged with `templates/option-a/AGENTS.md` (approved text) and `AGENTS.md` points to it. The package was copied to `docs/newcp-ai/payload/` instead of `docs/newcp-ai/`, so the package's own paths (`docs/newcp-ai/policy/...`) are one level off; it stays untracked and unmoved until Aya decides G4.
+- **D-23 Provisional statuses and fields are obsolete.** The PLAN §4 statuses (D-9, D-11, D-17: Awaiting Models, On its way, No Scans, Download ...) and the A5 row fields (D-13: option, arch, quantity, `ORD-` numbers, Normal/Rush priority) are replaced. Statuses come from the API (`status` + `available-transitions`); `status.ts` becomes a mapper in A2R. Fields come from `references/v06/form_biomodel.json` (28) and `form_conversion.json` (21). Field and option codes in the API are unresolved (R02): the v0.6 keys are provisional `fieldCode`s, labelled MOCK.
+- **D-24 Contract gaps (F07 OpenAPI v0.9.0-draft).** (a) No report endpoint and no order list or search: the report stays on mock data, labelled MOCK (G3, Q-B3). (b) `PatchServiceItem` has no unit price, cost, rush, currency or zero-charge: those staff fields are read-only or mock-saved (G5, Q-B2). (c) `ServiceItem.status` is a bare string, no label (Q-B1). (d) `HistoryEvent` has only `actorUserUuid` (Q-B6). (e) The typed client's `edit()` omits `pendingReason` and `redoOfItemUuid`, which the PATCH schema allows (Q-B4). (f) The client returns `unknown[]` for catalog, transitions and history; A2R types them from the OpenAPI. (g) Problem `code` values are not enumerated (Q-B7).
+- **D-25 R14: MUI vs Tailwind, and which repo is Option A.** The package's Option A is the Tailwind mock prototype `@3ddx/newcp-ui-option-a` (its baseline test log: `node --test`, `/data/*.json` mocks, "7 unit tests PASS"). This repo, `newcp-frontend-a`, is built with MUI from the mui POC. The package says to keep the prototype styles unless an ADR approves a change. Work continues on MUI pending Aya's written ADR (G2). R09's "7 tests pass" does not describe this repo.
+- **D-26 Tests move forward.** The package requires unit/component tests now. Vitest + jsdom + React Testing Library are set up in A2R.4, only after the developer confirms Aya's approval (G1); `test` joins `verify` then. Browser tests wait for a runner.
+- **D-27 Folder layout.** `src/features/services/` is added (package path `features/services/data/serviceApi.ts`); the Models and Conversion placeholder pages are folded into it in A6R/A7R. This overrides the earlier CLAUDE.md feature list (`models`, `conversion`).
+- **D-28 A00 is stacked.** `develop` did not yet contain the V3 findings commit (`cd31751`, pushed, PR unmerged), so `docs/fe-a-a00-adopt-handoff-v09` was created from `docs/fe-a-a02-v3-findings` (GIT_WORKFLOW stacking rule).
+- **D-29 ESLint ignores docs/ and local_docs/ (A00).** With the package present, `npm run lint` parsed its reference `.ts` files (`newcp-demo-client-f07.ts`, `v3-demo-f07.schema.ts`, v07 client and Drizzle) and failed: they are outside the TypeScript project. Both folders are reference-only, so `eslint.config.js` ignores `docs/**` and `local_docs/**`. A2R ports the client into `src/shared/api/`, where it is linted.
 - **D-6 Versions are pinned exactly** (no `^`), using the versions installed in the mui POC lockfile, so that `npm install` reproduces the POC's build.
+
+## R01-R14 status for Option A (23 Oct, from `references/v07/01_GAPS_AND_DECISIONS.csv` and `policy/F07_RELEASE_GATES.csv`)
+| R | Status for the frontend | How Option A handles it now |
+|---|---|---|
+| R01 catalog UUIDs | BLOCKED | Mock `sellableItemUuid` from the F07 synthetic fixtures |
+| R02 field/option codes | BLOCKED | v0.6 field keys as provisional `fieldCode`s, labelled MOCK |
+| R03 transitions | BLOCKED | Render `available-transitions` from the adapter; no hard-coded statuses |
+| R04 Bill To | TARGET RESOLVED (F07); live write gated F07-01 to F07-05 | Doctor/Scanning Center selector on the mock, one service at a time; real save disabled |
+| R05 pricing, zero-charge | BLOCKED + contract gap (D-24b) | Read-only or mock-saved, labelled |
+| R06 auth, roles | BLOCKED | Mock session; honour `canEditBilledParty` and 403 as read-only |
+| R07 dataset | BLOCKED | Package synthetic fixtures only |
+| R08 backend | NOT AVAILABLE | Nothing labelled INTEGRATED |
+| R09 Option A live API | NOT RUN | Refers to the Tailwind prototype (D-25) |
+| R10 Option B | Not this repo | — |
+| R11 idempotency | PROPOSED | New `Idempotency-Key` per intentional create |
+| R12 uncertain validators | PARTLY DECIDED | Enforce VAL-CONV-001/002/004/005, VAL-BIO-001/002/003; VAL-CONV-003 warning only; VAL-NEST-001/002 not enforced |
+| R13 history writer | Backend | Show the history endpoint as returned |
+| R14 Tailwind vs MUI | OPEN | Continue on MUI pending the ADR (G2) |
 
 ## Questions for Bishoy (A2)
 Asked before the contract arrived, from the V3 database docs (D-17 to D-20). Each answer decides a frontend change; until answered, the provisional choice stays.
@@ -116,3 +142,28 @@ Asked before the contract arrived, from the V3 database docs (D-17 to D-20). Eac
 | B8 | Does the report endpoint page, sort and filter on the server (which parameters), or return everything? | A5 does all of it on the client (D-13). | Client-side. |
 | B9 | What error shapes and codes do the lock, invoiced, prohibited-transition, validation, 403/cross-tenant and 5xx cases use? Does the lock error say who holds the lock and until when? | A2.2 error normalisation into one `ApiError`. | None written (D-12). |
 | B10 | Is `order_reference` ever returned to the UI? | It is PHI-RISK free text (D-19); we will not show it either way. | Never displayed. |
+
+## Questions after the v0.9 package (23 Oct)
+B2, B4 and B9 above are answered by the F07 contract (`available-transitions`; `uuid` + `lineNumber`; `Problem {code, message, requestId, details}`). Still open from that list: B1 (now Q-B1), B3, B5, B6 (now Q-B5), B7, B8 (now Q-B3), B10.
+
+For Aya:
+| # | Question | Blocks |
+|---|---|---|
+| G1 | Approve Vitest + jsdom + React Testing Library (+ vitest-axe?) now. | A2R.4, A11 |
+| G2 | Written ADR for R14 (MUI instead of the Tailwind prototype). Is this repo now "Option A"? | All UI work (risk) |
+| G3 | No report endpoint or order list in the contract: may the report stay MOCK-labelled for the demo? | A5R |
+| G4 | May `docs/newcp-ai/` (incl. F07 SQL, ETL and review files) be committed here, and moved out of `payload/`? | Package paths |
+| G5 | Staff money fields (cost, rush, currency, zero-charge): read-only or mock-saved? | A7R |
+| G6 | Cut order and the A9R-into-A7R rule. | Approved by the developer 23 Oct |
+| G7 | Integration branch `develop` confirmed? Clean `local_docs` from history (D-21)? | Git hygiene |
+
+For Bishoy:
+| # | Question | Blocks |
+|---|---|---|
+| Q-B1 | Add a status label (or `client_label`) to `ServiceItem`, or confirm a code-to-label endpoint. | Status chips |
+| Q-B2 | Add unit price, cost, rush, currency, zero-charge to `PatchServiceItem`, or confirm read-only. | A7R staff fields |
+| Q-B3 | A report/list endpoint per service instance, with due date, priority and server paging/sort/filter. | A5R |
+| Q-B4 | Align the client's `edit()` type with the PATCH schema (`pendingReason`, `redoOfItemUuid`). | A2R client |
+| Q-B5 | Field/option codes for Biomodel and Conversion answers (R02) and the catalog UUIDs (R01). | Real create/edit |
+| Q-B6 | Actor names (or a lookup) for history events. | A7R history |
+| Q-B7 | Problem `code` values for lock, invoiced, ineligible payer, prohibited transition. | Error messages |

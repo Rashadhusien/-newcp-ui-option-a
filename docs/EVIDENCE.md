@@ -18,3 +18,4 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-21 | A5 | No horizontal scroll at 390, 768, 1024, 1440 (`scrollWidth` <= width); 390 shows cards, 768 primary columns, 1024 + client/priority, 1440 + service ID/patient code | pass | |
 | 2026-10-21 | A5 | At 390 px the fields, pager and buttons are 44 px tall | pass | Theme rule D-14. |
 | 2026-10-21 | A5 | Status badge colours from tokens in light (`#E3F5EA`) and dark (translucent), icon + label in both | pass | |
+| 2026-10-23 | A00 | `npm run verify` after the docs changes and the ESLint ignore for reference folders | pass | Docs only; first run failed on the package's reference .ts files (D-29). |
