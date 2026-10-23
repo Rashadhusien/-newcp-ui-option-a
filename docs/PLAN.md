@@ -45,7 +45,7 @@ Re-baselined again 23 Oct after Bishoy's v1 contract. Done: A1, A2.4, A5, V3 fin
 |---|---|---|---|
 | Sun 25 Oct | A2C, A6R | 1 + 3 = 4 | v1 client and mock; both forms with all controls on the mock |
 | Mon 26 Oct | A7R (incl. A9R), A8R | 3 + 1 = 4 | instance detail with staff fields and lookups, transitions, history, independence, denied states, Bill To |
-| Tue 27 Oct | A5R, A11, A4 (reduced), A12, A13, A14 | 0.5 + 2 + 0.5 + 0.5 + 1 + 1 = 5.5 | report re-key, tests, 401 handling, CI, Docker, release candidate |
+| Tue 27 Oct | A5R, A11, A4 (reduced), A12, A13 (trimmed), A14 | 0.5 + 2 + 0.5 + 0.5 + 0.75 + 1 = 5.25 | report re-key, tests, 401 handling, CI, Docker + README, release candidate |
 
 A10 (live API) has 0 h: blocked by R08 (no running backend) and the F07 gate. If the backend appears, it replaces A14 time.
 
@@ -60,7 +60,7 @@ A10 (live API) has 0 h: blocked by R08 (no running backend) and the F07 gate. If
 5. Staff money fields are read-only or mock-saved until the contract can PATCH them (G5).
 
 ## 8. Risks and cut order
-R1 no buffer: 13.5 h of work in 12 h (Tuesday holds 5.5 h). **Applied now:** A9R folded into A7R (saves 0.5 h) and A5R reduced to 0.5 h. **Cut order for the remaining 1.5 h:** (1) dark-mode checks (0.5 h), (2) tablet polish (0.5 h), (3) the Sonar step (0.25 h), (4) history pagination (not planned). Cuts 1-3 recover about 1.25 h; the last 0.25 h needs the developer's decision (trim A13 to Dockerfile + README, or use time on 28 Oct before the rehearsal). Money fields are read-only by contract now, so the old cut "mock-saving money fields" no longer applies. The core flow, the forms and Bill To on the mock are never cut.
+R1 no buffer: 13.5 h of work in 12 h (Tuesday holds 5.5 h). **Applied now:** A9R folded into A7R (saves 0.5 h) and A5R reduced to 0.5 h. **Cut order for the remaining 1.5 h:** (1) dark-mode checks (0.5 h), (2) tablet polish (0.5 h), (3) the Sonar step (0.25 h), (4) history pagination (not planned). Cuts 1-3 recover about 1.25 h; the last 0.25 h is covered by trimming A13 to Dockerfile + README (no `docs/ux-rationale.md`), decided by the developer on 23 Oct. With all of these applied, the plan fits 12 h with no buffer. Money fields are read-only by contract now, so the old cut "mock-saving money fields" no longer applies. The core flow, the forms and Bill To on the mock are never cut.
 R2 contract provisional and changing: one shared client, one adapter interface, typed from the OpenAPI.
 R3 no backend (R08) and unresolved catalog/field/transition mappings (R01-R03): everything runs on the mock and is labelled MOCK; no INTEGRATED or PASS claims without executed evidence.
 R4 R14 decided against MUI: the UI layer would need a rewrite; business logic, adapter and tests carry over.

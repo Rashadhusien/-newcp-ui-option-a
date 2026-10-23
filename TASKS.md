@@ -115,9 +115,9 @@ Status: BLOCKED (R08 no running backend; F07-01 to F07-05 for Bill To). 0 h plan
 Branch: ci/fe-a-a12-ci | Date: 27 Oct | Estimate: 0.5 h | Depends on: A11 | Status: not started
 - [ ] A12.1 GitHub Actions: install, lint, typecheck, test, build, check-tokens. Sonar step only if access exists (cut item 4).
 
-## Task A13: Docker and documentation
-Branch: build/fe-a-a13-docker-docs | Date: 27 Oct | Estimate: 1.0 h | Depends on: A12 | Status: not started
-- [ ] A13.1 Multi-stage Dockerfile + nginx (SPA fallback), `.dockerignore`. [ ] A13.2 README final. [ ] A13.3 `docs/ux-rationale.md` (Option A vs B).
+## Task A13: Docker and README
+Branch: build/fe-a-a13-docker-docs | Date: 27 Oct | Estimate: 0.75 h (trimmed 23 Oct) | Depends on: A12 | Status: not started
+- [ ] A13.1 Multi-stage Dockerfile + nginx (SPA fallback), `.dockerignore`. [ ] A13.2 README final. (A13.3 `docs/ux-rationale.md` dropped by the developer on 23 Oct to fit 12 h.)
 
 ## Task A14: Stabilize and release candidate
 Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on: A13 | Status: not started
