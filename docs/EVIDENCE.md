@@ -23,3 +23,6 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-23 | A2R | Browser: header shows "MOCK" with icon and aria-label "Data source: MOCK. Mock data: nothing is saved…"; report renders 10 rows, no console errors | pass | 1024 px; report statuses use the neutral fallback until A5R (D-31c). |
 | 2026-10-23 | A2R | Browser: 390 px, badge visible, `scrollWidth` 390 | pass | |
 | 2026-10-23 | A2R | Real API adapter | NOT RUN | No backend (R08) and no token source until A4 (D-31e). |
+| 2026-10-23 | chore vite | `npm audit` after pinning vite 8.3.5 | pass | 0 vulnerabilities (was: advisories against vite 8.3.1). |
+| 2026-10-23 | chore vite | `npm run verify` on vite 8.3.5 | pass | Build on vite v8.3.5; 39 tests pass. |
+| 2026-10-23 | chore vite | Dev server smoke: `/reporting` loads, MOCK badge, 10 rows, no console errors | pass | Port 5174 (5173 was busy). |

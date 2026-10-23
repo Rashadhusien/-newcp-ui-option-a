@@ -125,6 +125,8 @@ Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on:
 | A2 | part 1 (A2.4) merged; part 2a (V3 findings) in review | A2.1-A2.3 replaced by A2R |
 | A5 | merged | on provisional fixtures; re-key in A5R |
 | A00 | merged | docs only |
-| A2R | ready for review | client, mock adapter, status mapper, Vitest (39 tests) |
+| chore: ignore handoff package (G4) | merged | developer commit |
+| chore: vite 8.3.5 | ready for review | audit fix, approved 23 Oct |
+| A2R | merged | client, mock adapter, status mapper, Vitest (39 tests) |
 | A6R, A7R, A8R, A9R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
