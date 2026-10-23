@@ -14,7 +14,13 @@ interface InlineAlertProps {
 
 export function InlineAlert({ severity, children, action, onClose }: InlineAlertProps) {
   return (
-    <Alert severity={severity} action={action} onClose={onClose}>
+    <Alert
+      severity={severity}
+      action={action}
+      onClose={onClose}
+      // MUI gives every Alert role="alert"; only problems should interrupt a screen reader.
+      role={severity === 'error' || severity === 'warning' ? 'alert' : 'status'}
+    >
       {children}
     </Alert>
   );

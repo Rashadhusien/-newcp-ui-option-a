@@ -42,6 +42,8 @@ import {
   MOCK_TRANSITIONS,
   MOCK_ZERO_CHARGE_REASONS,
 } from '@/mocks/serviceFixtures';
+import { specForService } from '../forms/formSpecs';
+import { mockFormDefinition } from '../forms/mockFormDefinition';
 
 export interface MockOptions {
   /** Artificial latency in ms (default 300; 0 in tests). */
@@ -170,8 +172,10 @@ export function createMockServiceApi(options: MockOptions = {}): NewCpClient {
       respond((): FormDefinition => {
         const service = MOCK_CATALOG.find((entry) => entry.uuid === serviceUuid);
         if (!service) throw new ApiError(404, problem('mock.not_found', 'Service not found.'));
-        // Fields arrive in A6R from the v0.6 form specs; tenant mapping is R02.
-        return { service, fields: [], evidence: 'MOCK: field mapping unresolved (R02)' };
+        const spec = specForService(service.code);
+        return spec
+          ? mockFormDefinition(service, spec)
+          : { service, fields: [], evidence: 'MOCK: no form spec for this service' };
       }),
 
     eligibleBilledParties: (orderUuid) => respond(() => [...eligible(orderUuid)]),

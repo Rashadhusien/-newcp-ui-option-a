@@ -30,3 +30,8 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-23 | contract v1 | `npm run verify` after the docs changes | pass | Docs only; code still on v0.9 types until A2C (D-34). |
 | 2026-10-23 | A2C | `npm run verify` (lint, typecheck, build, check-tokens, test) | pass | 6 files, 50 tests: v1 lookups, defaults, answers, quantity, zero-charge, hold rules, `updatedAt`. |
 | 2026-10-23 | A2C | Real API with v1 | NOT RUN | No backend (R08); no token until A4. |
+| 2026-10-23 | A6R | `npm run verify` | pass | 8 files, 67 tests (form logic: field counts, attached validators only, conditions, resets, v1 answers, reopen round-trip; ServiceForm: summary focus, create + navigate, 422 on field, 409 above form). |
+| 2026-10-23 | A6R | Browser, Biomodel create: both arches None blocked with summary (focused) and linked field error; digital Yes shows Digital delivery; software appears only with software file; brand B narrows models to brand B; create opens `/services/<uuid>/edit` line 4 with every value as entered and a toast | pass | Mock; 1024 px. |
+| 2026-10-23 | A6R | Browser, Conversion: format 1-5 for Simplant, 8-9 and reset to 8 for coDiagnostiX, hidden for BSB; maxilla shows segmentation; model scan Yes shows and requires the intra-oral question; both-arches warning only while both None | pass | |
+| 2026-10-23 | A6R | Browser: dirty guard (Stay keeps the form, Leave page navigates); edit save stays on page with toast; 390 px no horizontal scroll | pass | |
+| 2026-10-23 | A6R | Real API create/edit | NOT RUN | No backend (R08); field codes unresolved (R02). |

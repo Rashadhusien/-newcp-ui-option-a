@@ -70,11 +70,11 @@ Branch: feat/fe-a-a2c-contract-v1 | Date: 25 Oct | Estimate: 1.0 h | Depends on:
 - [x] AI_USAGE_LOG.md updated
 
 ## Task A6R: Service forms (Biomodel and Conversion, all controls)
-Branch: feat/fe-a-a06r-service-forms | Date: 25 Oct | Estimate: 3.0 h | Depends on: A2C | Status: not started
-- [ ] A6R.1 Typed field definitions from `form_biomodel.json` (28) and `form_conversion.json` (21), served by the mock `formSchema`; one form host (react-hook-form + zod) rendering radio/select/text/number/boolean with labels and `aria-describedby`.
-- [ ] A6R.2 Conditional and nested controls (digital design deliverables, printer brand/model, arch customisation and colour, software/format, model scan -> intra-oral); only UI-attached validators (VAL-CONV-001/002/004/005, VAL-BIO-001/002/003); VAL-CONV-003 as a warning.
-- [ ] A6R.3 Create on an existing order (new UUID even for the same type, `Idempotency-Key` per intentional create); answers in the v1 model (`optionCodes` for every choice, `value` otherwise); edit via PATCH answers; 422 field details mapped to fields; error summary; dirty guard; no success without a persisted response.
-- [ ] AI_USAGE_LOG.md updated
+Branch: feat/fe-a-a06r-service-forms | Date: 25 Oct | Estimate: 3.0 h | Depends on: A2C | Status: ready for review
+- [x] A6R.1 Typed field definitions from `form_biomodel.json` (28) and `form_conversion.json` (21), served by the mock `formSchema`; one form host (react-hook-form + zod) rendering radio/select/text/number/boolean with labels and `aria-describedby`.
+- [x] A6R.2 Conditional and nested controls (digital design deliverables, printer brand/model, arch customisation and colour, software/format, model scan -> intra-oral); only UI-attached validators (VAL-CONV-001/002/004/005, VAL-BIO-001/002/003); VAL-CONV-003 as a warning.
+- [x] A6R.3 Create on an existing order (new UUID even for the same type, `Idempotency-Key` per intentional create); answers in the v1 model (`optionCodes` for every choice, `value` otherwise); edit via PATCH answers; 422 field details mapped to fields; error summary; dirty guard; no success without a persisted response.
+- [x] AI_USAGE_LOG.md updated
 
 ## Task A7R: Service instance detail, staff fields, transitions, history, independence
 Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 3.0 h (includes A9R) | Depends on: A6R | Status: not started
@@ -134,6 +134,7 @@ Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on:
 | chore: vite 8.3.5 | merged | audit fix, approved 23 Oct |
 | docs: contract v1 | merged | Bishoy's v1 contract added; docs re-baselined; code follows in A2C |
 | A2R | merged | client, mock adapter, status mapper, Vitest (39 tests) |
-| A2C | ready for review | types, client lookups and mock on v1; 50 tests |
-| A6R, A7R (+A9R), A8R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
+| A2C | merged | types, client lookups and mock on v1; 50 tests |
+| A6R | ready for review | Biomodel 15 + Conversion 11 Connect controls; create/edit; 67 tests |
+| A7R (+A9R), A8R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

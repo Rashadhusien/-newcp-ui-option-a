@@ -4,3 +4,4 @@
 
 export * from './ConfirmDialog';
 export * from './FormDialog';
+export * from './LeavePageDialog';

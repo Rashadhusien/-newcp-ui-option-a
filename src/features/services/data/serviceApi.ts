@@ -18,10 +18,16 @@ import {
   type NewCpClient,
   type TokenSource,
 } from '@/shared/api';
+import { MOCK_ORDER_UUID } from '@/mocks/serviceFixtures';
 import { createMockServiceApi } from './mockServiceApi';
 
 export interface ServiceApi extends NewCpClient {
   readonly evidence: ApiEvidence;
+  /**
+   * The order the demo works on. The contract has no order lookup yet
+   * (Q-B3), so only the mock can name one; null with the real API.
+   */
+  readonly demoOrderUuid: string | null;
 }
 
 /** Until the auth adapter exists (A4), the real API has no token to send. */
@@ -42,9 +48,13 @@ export function createServiceApi(
   tokenSource: TokenSource = noSessionToken,
 ): ServiceApi {
   if (config.useMocks) {
-    return { ...createMockServiceApi({ failWith: failStatusFromUrl() }), evidence: 'MOCK' };
+    return {
+      ...createMockServiceApi({ failWith: failStatusFromUrl() }),
+      evidence: 'MOCK',
+      demoOrderUuid: MOCK_ORDER_UUID,
+    };
   }
-  return { ...createNewCpClient(config.baseUrl, tokenSource), evidence: 'INTEGRATED' };
+  return { ...createNewCpClient(config.baseUrl, tokenSource), evidence: 'INTEGRATED', demoOrderUuid: null };
 }
 
 /** App-wide instance. */
