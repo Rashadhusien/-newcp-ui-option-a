@@ -2,7 +2,7 @@
 
 **Do not start any task until the developer says `start A<NN>`.** One task = one branch = one commit = one PR (see `GIT_WORKFLOW.md`). Base: `develop` (name to confirm, G7); stack on the previous branch while its PR is unmerged. Update `AI_USAGE_LOG.md` right after every subtask group.
 Sources of truth (highest first): the v0.9 handoff package in `docs/newcp-ai/`, `CLAUDE.md`, `docs/PLAN.md`. Unknown means `[NEEDS VERIFICATION]`; log gaps in `docs/DEVIATIONS.md`.
-Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00): 16 h planned for about 14 h left; cut order in PLAN section 8; if we slip, A9R merges into A7R.
+Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00), then again after Bishoy's v1 contract: 13.5 h of work for 12 h left (25-27 Oct) after folding A9R into A7R and reducing A5R; cut order for the last 1.5 h in PLAN section 8.
 
 ## Task A1: Bootstrap the repo from the existing mui POC
 Branch: build/fe-a-a01-bootstrap | Gate: D1 | Date: Tue 20 Oct | Estimate: 2.0 h | Depends on: sources available | Status: ready for review
@@ -62,18 +62,26 @@ Branch: feat/fe-a-a02r-api-adapter | Date: 23/25 Oct | Estimate: 2.0 h | Depends
 - [x] A2R.4 After G1: Vitest + jsdom + React Testing Library; `npm run test` in `verify`; unit tests for the client error mapping, the mock adapter and the status mapper.
 - [x] AI_USAGE_LOG.md updated
 
-## Task A6R: Service forms (Biomodel and Conversion, all controls)
-Branch: feat/fe-a-a06r-service-forms | Date: 25 Oct | Estimate: 3.0 h | Depends on: A2R | Status: not started
-- [ ] A6R.1 Typed field definitions from `form_biomodel.json` (28) and `form_conversion.json` (21), served by the mock `formSchema`; one form host (react-hook-form + zod) rendering radio/select/text/number/boolean with labels and `aria-describedby`.
-- [ ] A6R.2 Conditional and nested controls (digital design deliverables, printer brand/model, arch customisation and colour, software/format, model scan -> intra-oral); only UI-attached validators (VAL-CONV-001/002/004/005, VAL-BIO-001/002/003); VAL-CONV-003 as a warning.
-- [ ] A6R.3 Create on an existing order (new UUID even for the same type, `Idempotency-Key` per intentional create); edit via PATCH answers; 422 field details mapped to fields; error summary; dirty guard; no success without a persisted response.
+## Task A2C: Adopt contract v1 in the code
+Branch: feat/fe-a-a2c-contract-v1 | Date: 25 Oct | Estimate: 1.0 h | Depends on: contract v1 docs PR | Status: not started
+- [ ] A2C.1 `src/shared/api/types.ts` to v1: `FormAnswer { fieldCode, value?, optionCodes? }`; Create/Patch add `quantity`, `isBillable`, `zeroChargeReasonCode`, `zeroChargeNote`; Patch adds `holdType`, `holdReasonCode`; `ServiceItem` adds the money breakdown, hold, zero-charge, `redoOfItemUuid`, `createdAt`, `updatedAt` (and the new required fields); `ZeroChargeReason`, `HoldReason`.
+- [ ] A2C.2 Client: `zeroChargeReasons()`, `holdReasons(holdType?)`; mock: lookups with synthetic codes, new item fields, `holdType` only while `on_hold`, quantity >= 1.
+- [ ] A2C.3 Update the tests; `npm run verify`.
 - [ ] AI_USAGE_LOG.md updated
 
-## Task A7R: Service instance detail, staff fields, transitions, history
-Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 2.5 h | Depends on: A6R | Status: not started
+## Task A6R: Service forms (Biomodel and Conversion, all controls)
+Branch: feat/fe-a-a06r-service-forms | Date: 25 Oct | Estimate: 3.0 h | Depends on: A2C | Status: not started
+- [ ] A6R.1 Typed field definitions from `form_biomodel.json` (28) and `form_conversion.json` (21), served by the mock `formSchema`; one form host (react-hook-form + zod) rendering radio/select/text/number/boolean with labels and `aria-describedby`.
+- [ ] A6R.2 Conditional and nested controls (digital design deliverables, printer brand/model, arch customisation and colour, software/format, model scan -> intra-oral); only UI-attached validators (VAL-CONV-001/002/004/005, VAL-BIO-001/002/003); VAL-CONV-003 as a warning.
+- [ ] A6R.3 Create on an existing order (new UUID even for the same type, `Idempotency-Key` per intentional create); answers in the v1 model (`optionCodes` for every choice, `value` otherwise); edit via PATCH answers; 422 field details mapped to fields; error summary; dirty guard; no success without a persisted response.
+- [ ] AI_USAGE_LOG.md updated
+
+## Task A7R: Service instance detail, staff fields, transitions, history, independence
+Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 3.0 h (includes A9R) | Depends on: A6R | Status: not started
 - [ ] A7R.1 Order services list: one row per instance with UUID (short) and line number; open one instance.
-- [ ] A7R.2 Staff fields: Redo, pending reason, service notes via PATCH; cost, rush, currency, zero-charge read-only or mock-saved (G5), labelled.
+- [ ] A7R.2 Staff fields via PATCH: Redo and redo-of, service notes, pending reason, quantity, billable, zero-charge reason (lookup) and note, hold type and reason (lookup, only while on hold). Read-only and labelled: unit price, currency, rush, cost, fields/discount/voucher amounts, line total.
 - [ ] A7R.3 Status: actions from `available-transitions` only (label from the API), confirm, 409/422 leave the status unchanged; history timeline from the history endpoint.
+- [ ] A7R.4 (was A9R) Two same-type instances stay independent (edit, transition, payer); 401 -> login, 403 -> read-only, tenant-masked 404 without data leakage.
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A8R: Service-level Bill To (F07, mock)
@@ -83,18 +91,15 @@ Branch: feat/fe-a-a08r-bill-to | Date: 26 Oct | Estimate: 1.0 h | Depends on: A7
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A9R: Same-type independence and denied states
-Branch: feat/fe-a-a09r-independence-access | Date: 26 Oct | Estimate: 1.0 h | Depends on: A8R | Status: not started (merges into A7R if we slip)
-- [ ] A9R.1 Two same-type instances: edit, transition or payer change on one leaves the other unchanged (UI and mock state).
-- [ ] A9R.2 401 -> login, 403 -> read-only/forbidden state, tenant-masked 404 without data leakage.
-- [ ] AI_USAGE_LOG.md updated
+Status: folded into A7R (A7R.4) on 23 Oct to fit 12 h; no separate branch.
 
 ## Task A5R: Report re-key
-Branch: feat/fe-a-a05r-report-rekey | Date: 26 Oct | Estimate: 1.0 h | Depends on: A2R | Status: not started
+Branch: feat/fe-a-a05r-report-rekey | Date: 26 Oct | Estimate: 0.5 h | Depends on: A2C | Status: not started
 - [ ] A5R.1 Remove obsolete fields (option, arch, quantity, `ORD-` strings, provisional statuses); rows from the mock adapter's service items; status via the mapper; MOCK label; no report endpoint yet (G3).
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A11: Tests
-Branch: test/fe-a-a11-tests | Date: 26 Oct | Estimate: 2.0 h | Depends on: A2R.4 (G1), A6R to A9R | Status: not started
+Branch: test/fe-a-a11-tests | Date: 26 Oct | Estimate: 2.0 h | Depends on: A6R, A7R, A8R | Status: not started
 - [ ] A11.1 Component tests: form conditions and attached validators, 422 mapping, Bill To single-instance patch, two-instance independence, transitions from the API, error/empty/loading states, read-only on 403. Mock data only.
 - [ ] AI_USAGE_LOG.md updated
 
@@ -126,7 +131,8 @@ Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on:
 | A5 | merged | on provisional fixtures; re-key in A5R |
 | A00 | merged | docs only |
 | chore: ignore handoff package (G4) | merged | developer commit |
-| chore: vite 8.3.5 | ready for review | audit fix, approved 23 Oct |
+| chore: vite 8.3.5 | merged | audit fix, approved 23 Oct |
+| docs: contract v1 | ready for review | Bishoy's v1 contract added; docs re-baselined; code follows in A2C |
 | A2R | merged | client, mock adapter, status mapper, Vitest (39 tests) |
-| A6R, A7R, A8R, A9R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
+| A2C, A6R, A7R (+A9R), A8R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

@@ -24,9 +24,10 @@ Model is reference only. Two same-type services in one order are independent: di
 status, history, payer and report rows. Never a type-level identifier.
 
 ## Contract and API
-- Contract: `docs/newcp-ai/references/f07/integration/newcp-demo-f07.openapi.yaml` + typed client. PROVISIONAL.
+- Contract: `docs/openapi/newcp-v1.openapi.yaml` (Bishoy, v1.0.0, 23 Oct; still `NOT_FINAL`). It supersedes the
+  package's v0.9 F07 contract for endpoints and fields (D-33); the v0.9 file and typed client are archival.
   Never invent an endpoint, field or error code.
-- One shared client in `src/shared/api/` (ported from the typed client; auth via token source; no token storage).
+- One shared client in `src/shared/api/` (types follow the v1 contract; auth via token source; no token storage).
 - Feature adapter: `src/features/services/data/serviceApi.ts`, with a mock and a real implementation behind one interface.
 - `VITE_USE_MOCKS=true` uses the mock adapter (contract-shaped data and Problem errors: 400/401/403/404/409/422/5xx).
 - Mocks stay until a real API is demonstrated. The UI shows an evidence label: MOCK or INTEGRATED.
@@ -38,7 +39,10 @@ status, history, payer and report rows. Never a type-level identifier.
   reason/detail, rush, currency, Bill To, internal comment).
 - Enforce only validators the source actually attached (02_Validation_Rule_Matrix: UI-attached).
   DEFINED_NOT_ATTACHED rules are not enforced; display-only warnings stay warnings.
-- Staff fields with no PATCH property in the contract are read-only or mock-saved, labelled as such.
+- Answers use the v1 model: `{ fieldCode, value?, optionCodes? }` (`optionCodes` for every choice field, `[]` when cleared).
+- Staff fields the v1 PATCH accepts: Redo, redo-of, notes, pending reason, quantity, billable, hold type/reason
+  (lookup), zero-charge reason (lookup)/note, Bill To. Fields it does not accept (unit price, currency, rush, cost)
+  are read-only, labelled as such.
 - Do not copy legacy hard-coded prices or one-service-per-type limits.
 
 ## Status
