@@ -1,10 +1,9 @@
 /**
  * New CP API client: the only place that calls `fetch`.
  *
- * Ported from the package's framework-independent typed client
- * (references/f07/integration/newcp-demo-client-f07.ts): same paths, verbs,
- * headers and query parameters, with the response types taken from the
- * OpenAPI (./types). No token is stored here; the caller supplies a token
+ * Paths, verbs, headers and query parameters follow the v1 contract
+ * (docs/openapi/newcp-v1.openapi.yaml); the structure was ported from the
+ * package's typed client (v0.9, archival). Response types: ./types. No token is stored here; the caller supplies a token
  * source. Response bodies are trusted to match the contract at this one
  * boundary; contract drift shows up in the typed adapter and its tests.
  */
@@ -17,10 +16,13 @@ import type {
   CreateServiceItem,
   FormDefinition,
   HistoryEvent,
+  HoldReason,
+  HoldType,
   PatchServiceItem,
   ServiceItem,
   TransitionRequest,
   TransitionResult,
+  ZeroChargeReason,
 } from './types';
 
 export type TokenSource = () => Promise<string> | string;
@@ -49,6 +51,8 @@ export interface NewCpClient {
     options?: RequestOptions,
   ): Promise<TransitionResult>;
   history(serviceItemUuid: string, options?: RequestOptions): Promise<HistoryEvent[]>;
+  zeroChargeReasons(options?: RequestOptions): Promise<ZeroChargeReason[]>;
+  holdReasons(holdType?: HoldType, options?: RequestOptions): Promise<HoldReason[]>;
 }
 
 export function createNewCpClient(
@@ -119,5 +123,11 @@ export function createNewCpClient(
       }),
     history: (serviceItemUuid, options) =>
       invoke(`/api/v1/services/${esc(serviceItemUuid)}/history`, { signal: options?.signal }),
+    zeroChargeReasons: (options) =>
+      invoke('/api/v1/lookups/zero-charge-reasons', { signal: options?.signal }),
+    holdReasons: (holdType, options) =>
+      invoke(`/api/v1/lookups/hold-reasons${holdType ? `?holdType=${esc(holdType)}` : ''}`, {
+        signal: options?.signal,
+      }),
   };
 }

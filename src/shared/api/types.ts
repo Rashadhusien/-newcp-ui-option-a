@@ -1,10 +1,10 @@
 /**
  * Contract types for the New CP service-instance API.
  *
- * Source: docs/newcp-ai/payload/references/f07/integration/newcp-demo-f07.openapi.yaml
- * (v0.9.0-draft, PROVISIONAL), `components.schemas`. Names and optionality
- * follow the YAML exactly; nothing here is invented. When the contract
- * changes, change this file first.
+ * Source: docs/openapi/newcp-v1.openapi.yaml (Bishoy, v1.0.0, NOT_FINAL),
+ * `components.schemas`. Names and optionality follow the YAML exactly;
+ * nothing here is invented. When the contract changes, change this file
+ * first.
  */
 
 /** Error body for 400/422 (and, by convention, other 4xx/5xx when present). */
@@ -49,16 +49,16 @@ export interface FormDefinition {
   evidence?: string;
 }
 
-/** Exactly one value carrier per field, except supported multi-select. */
+/**
+ * One answer (v1 model): choice fields send `optionCodes` (exactly one code
+ * for single-select, several for multi-select, `[]` when cleared); free-form
+ * fields send `value` (text or ISO date as a string, number, or boolean).
+ */
 export interface FormAnswer {
+  /** Stable machine code of the form question (catalog.fields.code). */
   fieldCode: string;
-  optionCode?: string;
+  value?: string | number | boolean;
   optionCodes?: string[];
-  valueText?: string;
-  valueNumber?: number;
-  valueBoolean?: boolean;
-  /** ISO date (yyyy-mm-dd). */
-  valueDate?: string;
 }
 
 export interface CreateServiceItem {
@@ -69,12 +69,20 @@ export interface CreateServiceItem {
   serviceNotes?: string;
   /** Payer for THIS item only; omitted = order default copied once (F07). */
   billedToContactUuid?: string;
+  /** Strictly positive; default 1 (decimals: Q-B13). */
+  quantity?: number;
+  /** Default true; false = unbilled internal remake or courtesy (meaning: Q-B14). */
+  isBillable?: boolean;
+  /** Required by the server when the line total is zero (code from /lookups/zero-charge-reasons). */
+  zeroChargeReasonCode?: string;
+  zeroChargeNote?: string;
 }
 
+export type HoldType = 'customer' | 'internal';
+
 /**
- * PATCH body. Follows the OpenAPI schema, which also allows `pendingReason`
- * and `redoOfItemUuid` (the package's typed client omits them, Q-B4).
- * Never includes billedPartyOrigin or tenantId.
+ * PATCH body (at least one property). Never includes billedPartyOrigin or
+ * tenantId, and never a status: status changes go through transitions.
  */
 export interface PatchServiceItem {
   answers?: FormAnswer[];
@@ -83,6 +91,14 @@ export interface PatchServiceItem {
   serviceNotes?: string;
   pendingReason?: string;
   billedToContactUuid?: string;
+  quantity?: number;
+  isBillable?: boolean;
+  /** Only meaningful while the item is on hold (flow: Q-B9). */
+  holdType?: HoldType;
+  /** Code from /lookups/hold-reasons. */
+  holdReasonCode?: string;
+  zeroChargeReasonCode?: string;
+  zeroChargeNote?: string;
 }
 
 export type BilledPartyOrigin =
@@ -96,21 +112,36 @@ export interface ServiceItem {
   uuid: string;
   orderUuid: string;
   sellableItemUuid: string;
-  lineNumber?: number;
+  lineNumber: number;
+  quantity: number;
   /** Status value from the workflow; mapped for display by shared/status. */
   status: string;
+  isBillable: boolean;
   isRedo?: boolean;
   isInvoiced?: boolean;
   currencyCode?: string;
-  /** Decimal string, not floating point. */
+  /** Money amounts are decimal strings, not floating point. */
   unitPrice?: string;
   lineTotal?: string;
+  fieldsAmount?: string;
+  discountAmount?: string;
+  voucherAmount?: string;
   answers: FormAnswer[];
   serviceNotes?: string;
   billedToContactUuid: string;
   billedPartyOrigin: BilledPartyOrigin;
   /** Server hint only; the backend always enforces the rule. */
   canEditBilledParty?: boolean;
+  /** Item this line remakes. */
+  redoOfItemUuid?: string | null;
+  pendingReason?: string | null;
+  holdType?: HoldType | null;
+  holdReasonCode?: string | null;
+  zeroChargeReasonCode?: string | null;
+  zeroChargeNote?: string | null;
+  /** ISO date-time. */
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AvailableTransition {
@@ -150,4 +181,18 @@ export interface BilledPartyChoice {
   role: 'doctor' | 'scanning_center';
   /** Approved display label; no PHI. */
   label: string;
+}
+
+export interface ZeroChargeReason {
+  code: string;
+  label: string;
+  description?: string | null;
+  active: boolean;
+}
+
+export interface HoldReason {
+  code: string;
+  label: string;
+  holdType: HoldType;
+  active: boolean;
 }

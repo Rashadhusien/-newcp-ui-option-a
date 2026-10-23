@@ -66,3 +66,22 @@ describe('createNewCpClient', () => {
     await expect(client.item('i')).rejects.toMatchObject({ kind: 'network', status: 0 });
   });
 });
+
+describe('createNewCpClient lookups (v1)', () => {
+  it('calls the zero-charge reasons lookup', async () => {
+    const { client, fetchImpl } = setup(jsonResponse(200, []));
+    await client.zeroChargeReasons();
+    expect(requestOf(fetchImpl).url).toBe('https://api.example.test/api/v1/lookups/zero-charge-reasons');
+  });
+
+  it('filters hold reasons by hold type only when one is given', async () => {
+    const filtered = setup(jsonResponse(200, []));
+    await filtered.client.holdReasons('internal');
+    expect(requestOf(filtered.fetchImpl).url).toBe(
+      'https://api.example.test/api/v1/lookups/hold-reasons?holdType=internal',
+    );
+    const all = setup(jsonResponse(200, []));
+    await all.client.holdReasons();
+    expect(requestOf(all.fetchImpl).url).toBe('https://api.example.test/api/v1/lookups/hold-reasons');
+  });
+});

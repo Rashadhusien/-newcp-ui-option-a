@@ -8,7 +8,13 @@
  *   explicit one must be eligible for the order and is `user_selected`;
  * - payer changes on an invoiced item are rejected with 409, and with 403
  *   when the item says the user may not edit the payer;
- * - only listed transitions are accepted, and each one adds a history event.
+ * - only listed transitions are accepted, and each one adds a history event;
+ * - quantity must be >= 1 (decimals: Q-B13); zero-charge and hold reason
+ *   codes must come from the lookups; a hold type/reason can only be set
+ *   while the item is `on_hold`, a reason needs a type of the same kind, and
+ *   leaving `on_hold` clears both (V3 checks `ck_order_items__hold_*`; the
+ *   real hold flow is Q-B9);
+ * - every change moves `updatedAt`.
  * Problem `code` values are mock-only (`mock.*`) until Q-B7.
  *
  * Data is copied in and out, so callers can never mutate the store, and one
@@ -22,6 +28,7 @@ import {
   type CatalogService,
   type FormDefinition,
   type HistoryEvent,
+  type HoldType,
   type NewCpClient,
   type Problem,
   type ServiceItem,
@@ -30,8 +37,10 @@ import {
   MOCK_BILLED_PARTIES,
   MOCK_CATALOG,
   MOCK_DOCTOR_UUID,
+  MOCK_HOLD_REASONS,
   MOCK_SERVICE_ITEMS,
   MOCK_TRANSITIONS,
+  MOCK_ZERO_CHARGE_REASONS,
 } from '@/mocks/serviceFixtures';
 
 export interface MockOptions {
@@ -97,6 +106,45 @@ export function createMockServiceApi(options: MockOptions = {}): NewCpClient {
     }
   }
 
+  function invalid(field: string, message: string): ApiError {
+    return new ApiError(422, problem('mock.invalid_field', message, { field }));
+  }
+
+  function assertQuantity(quantity: number | undefined): void {
+    if (quantity !== undefined && !(Number.isFinite(quantity) && quantity >= 1)) {
+      throw invalid('quantity', 'Quantity must be 1 or more.');
+    }
+  }
+
+  function assertZeroChargeReason(code: string | undefined): void {
+    if (code !== undefined && !MOCK_ZERO_CHARGE_REASONS.some((reason) => reason.code === code && reason.active)) {
+      throw invalid('zeroChargeReasonCode', 'Choose a zero-charge reason from the list.');
+    }
+  }
+
+  /** Hold rules for the item as it would be after the patch. */
+  function assertHold(
+    item: ServiceItem,
+    holdType: HoldType | null | undefined,
+    reasonCode: string | null | undefined,
+  ): void {
+    const touchesHold = holdType != null || reasonCode != null;
+    if (touchesHold && item.status !== 'on_hold') {
+      throw new ApiError(
+        409,
+        problem('mock.not_on_hold', 'Hold details can only be set while the service is on hold.'),
+      );
+    }
+    if (reasonCode != null) {
+      const reason = MOCK_HOLD_REASONS.find((entry) => entry.code === reasonCode && entry.active);
+      if (!reason) throw invalid('holdReasonCode', 'Choose a hold reason from the list.');
+      if (holdType == null) throw invalid('holdType', 'Choose the hold type before the reason.');
+      if (reason.holdType !== holdType) {
+        throw invalid('holdReasonCode', 'This reason belongs to the other hold type.');
+      }
+    }
+  }
+
   function transitionsFor(item: ServiceItem): AvailableTransition[] {
     return (MOCK_TRANSITIONS[item.status] ?? []).map((move) => {
       const key = `${move.fromCode}->${move.toCode}`;
@@ -132,7 +180,7 @@ export function createMockServiceApi(options: MockOptions = {}): NewCpClient {
       respond(() =>
         [...items.values()]
           .filter((item) => item.orderUuid === orderUuid)
-          .sort((a, b) => (a.lineNumber ?? 0) - (b.lineNumber ?? 0)),
+          .sort((a, b) => a.lineNumber - b.lineNumber),
       ),
 
     create: (orderUuid, request, idempotencyKey) =>
@@ -148,21 +196,31 @@ export function createMockServiceApi(options: MockOptions = {}): NewCpClient {
           );
         }
         if (request.billedToContactUuid) assertEligiblePayer(orderUuid, request.billedToContactUuid);
+        assertQuantity(request.quantity);
+        assertZeroChargeReason(request.zeroChargeReasonCode);
         const lines = [...items.values()]
           .filter((item) => item.orderUuid === orderUuid)
-          .map((item) => item.lineNumber ?? 0);
+          .map((item) => item.lineNumber);
+        const timestamp = now().toISOString();
         const created: ServiceItem = {
           uuid: newUuid(),
           orderUuid,
           sellableItemUuid: request.sellableItemUuid,
           lineNumber: Math.max(0, ...lines) + 1,
+          quantity: request.quantity ?? 1,
           status: 'submitted',
+          isBillable: request.isBillable ?? true,
           isRedo: request.isRedo ?? false,
           isInvoiced: false,
           answers: copy(request.answers),
           billedToContactUuid: request.billedToContactUuid ?? MOCK_DOCTOR_UUID,
           billedPartyOrigin: request.billedToContactUuid ? 'user_selected' : 'order_default',
           canEditBilledParty: true,
+          redoOfItemUuid: request.redoOfItemUuid ?? null,
+          zeroChargeReasonCode: request.zeroChargeReasonCode ?? null,
+          zeroChargeNote: request.zeroChargeNote ?? null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
         };
         if (request.serviceNotes !== undefined) created.serviceNotes = request.serviceNotes;
         items.set(created.uuid, created);
@@ -190,11 +248,24 @@ export function createMockServiceApi(options: MockOptions = {}): NewCpClient {
           }
           assertEligiblePayer(item.orderUuid, patch.billedToContactUuid);
         }
+        assertQuantity(patch.quantity);
+        assertZeroChargeReason(patch.zeroChargeReasonCode);
+        assertHold(item, patch.holdType ?? item.holdType, patch.holdReasonCode ?? item.holdReasonCode);
         // Validate everything before changing anything: no partial update.
-        const updated: ServiceItem = { ...item };
+        const updated: ServiceItem = { ...item, updatedAt: now().toISOString() };
         if (patch.answers !== undefined) updated.answers = copy(patch.answers);
         if (patch.isRedo !== undefined) updated.isRedo = patch.isRedo;
+        if (patch.redoOfItemUuid !== undefined) updated.redoOfItemUuid = patch.redoOfItemUuid;
         if (patch.serviceNotes !== undefined) updated.serviceNotes = patch.serviceNotes;
+        if (patch.pendingReason !== undefined) updated.pendingReason = patch.pendingReason;
+        if (patch.quantity !== undefined) updated.quantity = patch.quantity;
+        if (patch.isBillable !== undefined) updated.isBillable = patch.isBillable;
+        if (patch.holdType !== undefined) updated.holdType = patch.holdType;
+        if (patch.holdReasonCode !== undefined) updated.holdReasonCode = patch.holdReasonCode;
+        if (patch.zeroChargeReasonCode !== undefined) {
+          updated.zeroChargeReasonCode = patch.zeroChargeReasonCode;
+        }
+        if (patch.zeroChargeNote !== undefined) updated.zeroChargeNote = patch.zeroChargeNote;
         if (patch.billedToContactUuid !== undefined) {
           updated.billedToContactUuid = patch.billedToContactUuid;
           updated.billedPartyOrigin = 'user_selected';
@@ -217,7 +288,13 @@ export function createMockServiceApi(options: MockOptions = {}): NewCpClient {
           );
         }
         const changedAt = now().toISOString();
-        items.set(item.uuid, { ...item, status: move.toCode });
+        const moved: ServiceItem = { ...item, status: move.toCode, updatedAt: changedAt };
+        // Resuming from a hold clears its type and reason (V3 ck_order_items__hold_only_when_on_hold).
+        if (move.toCode !== 'on_hold') {
+          moved.holdType = null;
+          moved.holdReasonCode = null;
+        }
+        items.set(item.uuid, moved);
         const event: HistoryEvent = {
           fromCode: move.fromCode,
           toCode: move.toCode,
@@ -240,5 +317,15 @@ export function createMockServiceApi(options: MockOptions = {}): NewCpClient {
         getItem(serviceItemUuid);
         return history.get(serviceItemUuid) ?? [];
       }),
+
+    zeroChargeReasons: () =>
+      respond(() => MOCK_ZERO_CHARGE_REASONS.filter((reason) => reason.active)),
+
+    holdReasons: (holdType) =>
+      respond(() =>
+        MOCK_HOLD_REASONS.filter(
+          (reason) => reason.active && (holdType === undefined || reason.holdType === holdType),
+        ),
+      ),
   };
 }

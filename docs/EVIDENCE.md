@@ -28,3 +28,5 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-23 | chore vite | Dev server smoke: `/reporting` loads, MOCK badge, 10 rows, no console errors | pass | Port 5174 (5173 was busy). |
 | 2026-10-23 | contract v1 | Structural diff v1 vs v0.9 F07 contract (operations, schemas, properties, required) with PyYAML | done | Results in DEVIATIONS D-33. |
 | 2026-10-23 | contract v1 | `npm run verify` after the docs changes | pass | Docs only; code still on v0.9 types until A2C (D-34). |
+| 2026-10-23 | A2C | `npm run verify` (lint, typecheck, build, check-tokens, test) | pass | 6 files, 50 tests: v1 lookups, defaults, answers, quantity, zero-charge, hold rules, `updatedAt`. |
+| 2026-10-23 | A2C | Real API with v1 | NOT RUN | No backend (R08); no token until A4. |
