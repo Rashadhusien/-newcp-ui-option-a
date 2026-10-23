@@ -2,18 +2,13 @@
  * Report filtering and per-status counts (pure functions).
  *
  * Every row is one service instance, so every count here is an instance
- * count, never an order count.
+ * count, never an order count. Statuses are taken from the data, never from
+ * a hard-coded list (D-23).
  */
 
 import { filterRows } from '@/shared/lib/table';
-import {
-  ALL_SERVICE_STATUSES,
-  STATUS_ORDER,
-  type ServiceStatus,
-  type ServiceType,
-  type StatusValue,
-} from '@/shared/status/status';
-import type { ReportRow } from './types';
+import { presentStatus } from '@/shared/status/status';
+import type { ReportRow, ServiceType } from './types';
 
 export const SERVICE_TYPES: readonly ServiceType[] = ['models', 'conversion'];
 
@@ -21,8 +16,8 @@ export interface ReportFilters {
   search: string;
   /** '' = all service types. */
   serviceType: ServiceType | '';
-  /** '' = all statuses. A label shared by both types (In Progress) matches both. */
-  status: StatusValue | '';
+  /** '' = all statuses. */
+  status: string;
 }
 
 const SEARCH_FIELDS: readonly ((row: ReportRow) => unknown)[] = [
@@ -37,16 +32,16 @@ export function isServiceType(value: string): value is ServiceType {
   return (SERVICE_TYPES as readonly string[]).includes(value);
 }
 
-/** Statuses offered by the status filter for the chosen type (or all types). */
-export function statusOptions(serviceType: ServiceType | ''): StatusValue[] {
-  const types = serviceType === '' ? SERVICE_TYPES : [serviceType];
-  const labels: StatusValue[] = [];
-  types.forEach((type) => {
-    STATUS_ORDER[type].forEach((status) => {
-      if (!labels.includes(status)) labels.push(status);
-    });
-  });
-  return labels;
+function byLabel(a: string, b: string): number {
+  return presentStatus(a).label.localeCompare(presentStatus(b).label);
+}
+
+/** Statuses present in the data for the chosen type (or all types), by label. */
+export function statusOptions(rows: readonly ReportRow[], serviceType: ServiceType | ''): string[] {
+  const values = new Set(
+    rows.filter((row) => serviceType === '' || row.serviceType === serviceType).map((row) => row.status),
+  );
+  return [...values].sort(byLabel);
 }
 
 /** Search and service type only: the base the status counts are taken from. */
@@ -65,21 +60,31 @@ export function filterReport(rows: readonly ReportRow[], filters: ReportFilters)
   );
 }
 
+export interface StatusCountKey {
+  service: ServiceType;
+  status: string;
+}
+
 export interface StatusCount {
-  key: ServiceStatus;
+  key: StatusCountKey;
   count: number;
 }
 
-/** One entry per status of each shown service type, in PLAN order, zeros included. */
+/**
+ * One entry per (service type, status) pair found in `allRows` for the shown
+ * type(s), counted over `matchingRows`; zeros stay, so chips don't jump while
+ * searching.
+ */
 export function countByStatus(
-  rows: readonly ReportRow[],
+  allRows: readonly ReportRow[],
+  matchingRows: readonly ReportRow[],
   serviceType: ServiceType | '',
 ): StatusCount[] {
-  return ALL_SERVICE_STATUSES.filter(
-    (key) => serviceType === '' || key.service === serviceType,
-  ).map((key) => ({
-    key,
-    count: rows.filter((row) => row.serviceType === key.service && row.status === key.status)
-      .length,
-  }));
+  const types = serviceType === '' ? SERVICE_TYPES : [serviceType];
+  return types.flatMap((service) =>
+    statusOptions(allRows, service).map((status) => ({
+      key: { service, status },
+      count: matchingRows.filter((row) => row.serviceType === service && row.status === status).length,
+    })),
+  );
 }

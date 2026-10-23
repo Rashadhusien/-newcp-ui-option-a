@@ -19,3 +19,7 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-21 | A5 | At 390 px the fields, pager and buttons are 44 px tall | pass | Theme rule D-14. |
 | 2026-10-21 | A5 | Status badge colours from tokens in light (`#E3F5EA`) and dark (translucent), icon + label in both | pass | |
 | 2026-10-23 | A00 | `npm run verify` after the docs changes and the ESLint ignore for reference folders | pass | Docs only; first run failed on the package's reference .ts files (D-29). |
+| 2026-10-23 | A2R | `npm run verify` (lint, typecheck, build, check-tokens, test) | pass | 6 test files, 39 tests (mock adapter, client, errors, config, status mapper, EvidenceBadge). |
+| 2026-10-23 | A2R | Browser: header shows "MOCK" with icon and aria-label "Data source: MOCK. Mock data: nothing is saved…"; report renders 10 rows, no console errors | pass | 1024 px; report statuses use the neutral fallback until A5R (D-31c). |
+| 2026-10-23 | A2R | Browser: 390 px, badge visible, `scrollWidth` 390 | pass | |
+| 2026-10-23 | A2R | Real API adapter | NOT RUN | No backend (R08) and no token source until A4 (D-31e). |

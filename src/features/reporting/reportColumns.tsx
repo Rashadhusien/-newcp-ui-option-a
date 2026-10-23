@@ -9,14 +9,8 @@
 import { StatusBadge } from '@/shared/components/basic';
 import type { DataColumn } from '@/shared/components/data-display';
 import { formatDate } from '@/shared/lib/formatters';
-import { SERVICE_TYPE_LABEL, statusIndex, type ServiceStatus } from '@/shared/status/status';
-import type { ReportRow } from './types';
-
-function serviceStatus(row: ReportRow): ServiceStatus {
-  return row.serviceType === 'models'
-    ? { service: 'models', status: row.status }
-    : { service: 'conversion', status: row.status };
-}
+import { presentStatus } from '@/shared/status/status';
+import { SERVICE_TYPE_LABEL, type ReportRow } from './types';
 
 export const REPORT_COLUMNS: readonly DataColumn<ReportRow>[] = [
   {
@@ -39,9 +33,9 @@ export const REPORT_COLUMNS: readonly DataColumn<ReportRow>[] = [
     header: 'Status',
     priority: 'primary',
     role: 'status',
-    render: (row) => <StatusBadge value={serviceStatus(row)} size="sm" />,
-    // Service type first, then listed position, so sorting follows the flow.
-    sortValue: (row) => `${row.serviceType}-${String(statusIndex(serviceStatus(row)))}`,
+    render: (row) => <StatusBadge status={row.status} size="sm" />,
+    // No workflow order is known on the client (statuses come from the API), so sort by label.
+    sortValue: (row) => presentStatus(row.status).label,
   },
   {
     id: 'dueDate',

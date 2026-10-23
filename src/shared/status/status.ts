@@ -1,113 +1,86 @@
 /**
- * Status presentation: the ONLY place that names a service status and maps
- * it to a label, an icon and a semantic tone. Never hard-code a status
- * string elsewhere.
+ * Status presentation: maps a status VALUE from the API to a chip label, an
+ * icon and a semantic tone. It never decides which statuses exist or which
+ * moves are allowed: statuses come from the API (`ServiceItem.status`) and
+ * moves from `available-transitions` (handoff package v0.9; D-23).
+ *
+ * Known values: the V3 order-item summary vocabulary (16 codes, V3 docs
+ * `orders.order_items.status`, D-17). Whether the API sends these or
+ * workflow state codes is Q-B1, so any other value still renders: as a
+ * humanised label with a neutral tone. Labels and tones below are
+ * CANDIDATE_UNVERIFIED display choices, not business rules.
  *
  * UI components (StatusBadge) map tone -> theme tokens. Status is never
- * color-only: StatusBadge always renders icon + label.
- *
- * Statuses are provisional (docs/PLAN.md section 4) and keyed by their
- * display label. The wire values, the initial status and the permitted
- * transitions are [NEEDS VERIFICATION] until the OpenAPI contract and Q2
- * are answered (docs/DEVIATIONS.md D-9, D-11). The `order` below is the
- * order PLAN lists them in, used for filters and sorting only; it is NOT a
- * transition rule.
+ * colour-only: StatusBadge always renders icon + label.
  */
 
 import type { SvgIconComponent } from '@mui/icons-material';
+import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
+import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import DesignServicesOutlinedIcon from '@mui/icons-material/DesignServicesOutlined';
+import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined';
+import PrecisionManufacturingOutlinedIcon from '@mui/icons-material/PrecisionManufacturingOutlined';
+import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import AutorenewIcon from '@mui/icons-material/Autorenew';
+import MarkunreadMailboxOutlinedIcon from '@mui/icons-material/MarkunreadMailboxOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
-import CloudOffOutlinedIcon from '@mui/icons-material/CloudOffOutlined';
-import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutlined';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 
 /**
  * Six tones shared by every status:
- * - neutral: not started / inactive
+ * - neutral: not started / unknown
  * - info: queued or informational stage
  * - primary: work actively in progress
- * - warning: waiting on a person (missing input)
- * - success: done / ready
- * - error: failed or blocked
+ * - warning: waiting on a person (missing input, hold, approval)
+ * - success: done / delivered
+ * - error: cancelled or rejected
  */
 export type StatusSemantic = 'neutral' | 'info' | 'primary' | 'warning' | 'success' | 'error';
 
-export interface StatusMeta {
+export interface StatusPresentation {
   label: string;
   semantic: StatusSemantic;
   icon: SvgIconComponent;
+  /** false = value not in the known vocabulary; shown with the neutral fallback. */
+  known: boolean;
 }
 
-export type ServiceType = 'models' | 'conversion';
+type KnownStatus = Omit<StatusPresentation, 'known'>;
 
-export const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  models: 'Models',
-  conversion: 'Conversion',
+const KNOWN_STATUS: Readonly<Record<string, KnownStatus>> = {
+  draft: { label: 'Draft', semantic: 'neutral', icon: EditNoteOutlinedIcon },
+  submitted: { label: 'Submitted', semantic: 'info', icon: InboxOutlinedIcon },
+  pending_information: { label: 'Pending information', semantic: 'warning', icon: HourglassEmptyIcon },
+  in_review: { label: 'In review', semantic: 'info', icon: FactCheckOutlinedIcon },
+  confirmed: { label: 'Confirmed', semantic: 'info', icon: ThumbUpOutlinedIcon },
+  in_design: { label: 'In design', semantic: 'primary', icon: DesignServicesOutlinedIcon },
+  awaiting_approval: { label: 'Awaiting approval', semantic: 'warning', icon: PendingActionsOutlinedIcon },
+  in_production: { label: 'In production', semantic: 'primary', icon: PrecisionManufacturingOutlinedIcon },
+  quality_check: { label: 'Quality check', semantic: 'primary', icon: VerifiedOutlinedIcon },
+  ready_to_ship: { label: 'Ready to ship', semantic: 'info', icon: Inventory2OutlinedIcon },
+  shipped: { label: 'Shipped', semantic: 'success', icon: LocalShippingOutlinedIcon },
+  delivered: { label: 'Delivered', semantic: 'success', icon: MarkunreadMailboxOutlinedIcon },
+  completed: { label: 'Completed', semantic: 'success', icon: CheckCircleOutlineIcon },
+  on_hold: { label: 'On hold', semantic: 'warning', icon: PauseCircleOutlineIcon },
+  cancelled: { label: 'Cancelled', semantic: 'error', icon: CancelOutlinedIcon },
+  not_indicated: { label: 'Not indicated', semantic: 'error', icon: BlockOutlinedIcon },
 };
 
-const MODELS_STATUS = {
-  'Awaiting Models': { label: 'Awaiting Models', semantic: 'warning', icon: HourglassEmptyIcon },
-  'On its way': { label: 'On its way', semantic: 'info', icon: LocalShippingOutlinedIcon },
-  'In Progress': { label: 'In Progress', semantic: 'primary', icon: AutorenewIcon },
-  Done: { label: 'Done', semantic: 'success', icon: CheckCircleOutlineIcon },
-} as const satisfies Record<string, StatusMeta>;
-
-const CONVERSION_STATUS = {
-  'No Scans': { label: 'No Scans', semantic: 'warning', icon: CloudOffOutlinedIcon },
-  'In Progress': { label: 'In Progress', semantic: 'primary', icon: AutorenewIcon },
-  Download: { label: 'Download', semantic: 'success', icon: DownloadOutlinedIcon },
-} as const satisfies Record<string, StatusMeta>;
-
-export type ModelsStatus = keyof typeof MODELS_STATUS;
-export type ConversionStatus = keyof typeof CONVERSION_STATUS;
-
-export interface StatusByService {
-  models: ModelsStatus;
-  conversion: ConversionStatus;
+/** "pending_information" -> "Pending information"; "In Progress" stays as it is. */
+export function humanizeStatus(value: string): string {
+  const text = value.replace(/[_-]+/g, ' ').trim();
+  return text === '' ? 'Unknown' : text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-export type StatusValue = StatusByService[ServiceType];
-
-const STATUS_META: { [S in ServiceType]: Record<StatusByService[S], StatusMeta> } = {
-  models: MODELS_STATUS,
-  conversion: CONVERSION_STATUS,
-};
-
-/** Statuses of one service type, in the order PLAN lists them. */
-export const STATUS_ORDER: { [S in ServiceType]: readonly StatusByService[S][] } = {
-  models: ['Awaiting Models', 'On its way', 'In Progress', 'Done'],
-  conversion: ['No Scans', 'In Progress', 'Download'],
-};
-
-/** A status together with its service type, narrowed on `service`. */
-export type ServiceStatus = {
-  [S in ServiceType]: { service: S; status: StatusByService[S] };
-}[ServiceType];
-
-/** Every service-type/status pair, in PLAN order (Models first). */
-export const ALL_SERVICE_STATUSES: readonly ServiceStatus[] = [
-  ...STATUS_ORDER.models.map((status) => ({ service: 'models' as const, status })),
-  ...STATUS_ORDER.conversion.map((status) => ({ service: 'conversion' as const, status })),
-];
-
-export function presentStatus(value: ServiceStatus): StatusMeta {
-  return value.service === 'models'
-    ? MODELS_STATUS[value.status]
-    : CONVERSION_STATUS[value.status];
-}
-
-/** Position in the listed order, for sorting only (not a transition rule). */
-export function statusIndex(value: ServiceStatus): number {
-  return value.service === 'models'
-    ? STATUS_ORDER.models.indexOf(value.status)
-    : STATUS_ORDER.conversion.indexOf(value.status);
-}
-
-/** Narrows an untrusted value (e.g. from the API) to a known status of the service. */
-export function isStatusOf<S extends ServiceType>(
-  service: S,
-  value: unknown,
-): value is StatusByService[S] {
-  return typeof value === 'string' && Object.hasOwn(STATUS_META[service], value);
+export function presentStatus(value: string): StatusPresentation {
+  const known = Object.hasOwn(KNOWN_STATUS, value) ? KNOWN_STATUS[value] : undefined;
+  if (known) return { ...known, known: true };
+  return { label: humanizeStatus(value), semantic: 'neutral', icon: HelpOutlineIcon, known: false };
 }

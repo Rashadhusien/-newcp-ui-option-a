@@ -55,12 +55,12 @@ Branch: docs/fe-a-a00-adopt-handoff-v09 (stacked on docs/fe-a-a02-v3-findings) |
 - [x] AI_USAGE_LOG.md updated
 
 ## Task A2R: Shared API client, mock adapter, status mapper, test runner
-Branch: feat/fe-a-a02r-api-adapter | Date: 23/25 Oct | Estimate: 2.0 h | Depends on: A00; G1 for the test runner | Status: not started
-- [ ] A2R.1 `src/shared/api/`: client ported from `newcp-demo-client-f07.ts` with types from the OpenAPI (CatalogService, FormDefinition, ServiceItem, AvailableTransition, HistoryEvent, BilledPartyChoice, Problem); token source; `ApiError` normalised from `Problem` + status (400/401/403/404/409/422/5xx/network).
-- [ ] A2R.2 `src/features/services/data/serviceApi.ts`: one interface, mock implementation on the F07 synthetic fixtures (two same-type items with different payers, every error status, latency, `?fail=`); real implementation wired to the client but off (`VITE_USE_MOCKS`). Evidence label MOCK/INTEGRATED.
-- [ ] A2R.3 Rewrite `src/shared/status/status.ts` as a mapper (API value -> label/icon/tone, neutral fallback); remove the provisional statuses; adapt `StatusBadge` and the report.
-- [ ] A2R.4 After G1: Vitest + jsdom + React Testing Library; `npm run test` in `verify`; unit tests for the client error mapping, the mock adapter and the status mapper.
-- [ ] AI_USAGE_LOG.md updated
+Branch: feat/fe-a-a02r-api-adapter | Date: 23/25 Oct | Estimate: 2.0 h | Depends on: A00; G1 for the test runner | Status: ready for review
+- [x] A2R.1 `src/shared/api/`: client ported from `newcp-demo-client-f07.ts` with types from the OpenAPI (CatalogService, FormDefinition, ServiceItem, AvailableTransition, HistoryEvent, BilledPartyChoice, Problem); token source; `ApiError` normalised from `Problem` + status (400/401/403/404/409/422/5xx/network).
+- [x] A2R.2 `src/features/services/data/serviceApi.ts`: one interface, mock implementation on the F07 synthetic fixtures (two same-type items with different payers, every error status, latency, `?fail=`); real implementation wired to the client but off (`VITE_USE_MOCKS`). Evidence label MOCK/INTEGRATED.
+- [x] A2R.3 Rewrite `src/shared/status/status.ts` as a mapper (API value -> label/icon/tone, neutral fallback); remove the provisional statuses; adapt `StatusBadge` and the report.
+- [x] A2R.4 After G1: Vitest + jsdom + React Testing Library; `npm run test` in `verify`; unit tests for the client error mapping, the mock adapter and the status mapper.
+- [x] AI_USAGE_LOG.md updated
 
 ## Task A6R: Service forms (Biomodel and Conversion, all controls)
 Branch: feat/fe-a-a06r-service-forms | Date: 25 Oct | Estimate: 3.0 h | Depends on: A2R | Status: not started
@@ -124,6 +124,7 @@ Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on:
 | A1 | merged | |
 | A2 | part 1 (A2.4) merged; part 2a (V3 findings) in review | A2.1-A2.3 replaced by A2R |
 | A5 | merged | on provisional fixtures; re-key in A5R |
-| A00 | ready for review | docs only |
-| A2R, A6R, A7R, A8R, A9R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
+| A00 | merged | docs only |
+| A2R | ready for review | client, mock adapter, status mapper, Vitest (39 tests) |
+| A6R, A7R, A8R, A9R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

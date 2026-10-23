@@ -1,5 +1,5 @@
 /**
- * StatusBadge: icon + label pill for a Models or Conversion status.
+ * StatusBadge: icon + label pill for a status value from the API.
  *
  * Status is never color-only. Status -> label/icon/tone lives in
  * shared/status/status.ts; the soft pill colors live in statusBadgeTokens
@@ -13,16 +13,16 @@
 import Chip from '@mui/material/Chip';
 import Skeleton from '@mui/material/Skeleton';
 import { statusBadgeTokens } from '@/theme/tokens';
-import { presentStatus, type ServiceStatus } from '@/shared/status/status';
+import { presentStatus } from '@/shared/status/status';
 
 export interface StatusBadgeProps {
-  /** Status with its service type ("In Progress" exists in both). */
-  value: ServiceStatus;
+  /** Status value as the API sends it (e.g. `in_design`). */
+  status: string;
   size?: 'sm' | 'md';
   loading?: boolean;
 }
 
-export function StatusBadge({ value, size = 'md', loading = false }: StatusBadgeProps) {
+export function StatusBadge({ status, size = 'md', loading = false }: StatusBadgeProps) {
   if (loading) {
     return (
       <Skeleton
@@ -35,7 +35,7 @@ export function StatusBadge({ value, size = 'md', loading = false }: StatusBadge
     );
   }
 
-  const meta = presentStatus(value);
+  const meta = presentStatus(status);
   const tone = statusBadgeTokens[meta.semantic];
   const Icon = meta.icon;
 

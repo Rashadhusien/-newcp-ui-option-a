@@ -8,20 +8,15 @@
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import {
-  SERVICE_TYPE_LABEL,
-  presentStatus,
-  type ServiceStatus,
-  type ServiceType,
-  type StatusValue,
-} from '@/shared/status/status';
-import type { StatusCount } from './filterReport';
+import { presentStatus } from '@/shared/status/status';
+import type { StatusCount, StatusCountKey } from './filterReport';
+import { SERVICE_TYPE_LABEL, type ServiceType } from './types';
 
 export interface StatusCountsProps {
   counts: readonly StatusCount[];
   activeType: ServiceType | '';
-  activeStatus: StatusValue | '';
-  onSelect: (key: ServiceStatus) => void;
+  activeStatus: string;
+  onSelect: (key: StatusCountKey) => void;
 }
 
 export function StatusCounts({ counts, activeType, activeStatus, onSelect }: StatusCountsProps) {
@@ -42,7 +37,7 @@ export function StatusCounts({ counts, activeType, activeStatus, onSelect }: Sta
           {counts
             .filter((entry) => entry.key.service === type)
             .map((entry) => {
-              const meta = presentStatus(entry.key);
+              const meta = presentStatus(entry.key.status);
               const Icon = meta.icon;
               const pressed =
                 activeStatus === entry.key.status && (activeType === '' || activeType === type);

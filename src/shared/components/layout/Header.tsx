@@ -18,7 +18,11 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
+import { evidenceOf, readApiConfig } from '@/shared/api';
+import { EvidenceBadge } from '@/shared/components/feedback/EvidenceBadge';
 import { UserMenu } from './UserMenu';
+
+const EVIDENCE = evidenceOf(readApiConfig());
 
 type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -63,6 +67,8 @@ export function Header({ onMenuClick, navigationExpanded }: HeaderProps) {
         </Tooltip>
 
         <Box sx={{ flexGrow: 1 }} />
+
+        <EvidenceBadge evidence={EVIDENCE} />
 
         <Tooltip title={`Color mode: ${activeOption?.label ?? 'System'}`}>
           <IconButton

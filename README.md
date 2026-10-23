@@ -25,7 +25,8 @@ Until Google login lands (A4), the login page has a single **Sign in (mock)** bu
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm run check-tokens` | Fails on any colour literal outside `src/theme/tokens.ts` |
-| `npm run verify` | lint + typecheck + build + check-tokens; must pass before every PR |
+| `npm run test` | Unit and component tests (Vitest + React Testing Library, jsdom) |
+| `npm run verify` | lint + typecheck + build + check-tokens + test; must pass before every PR |
 
 Contrast helper: `node scripts/contrast.mjs "#RRGGBB" "#RRGGBB"` prints the WCAG ratio.
 

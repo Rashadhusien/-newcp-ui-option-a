@@ -22,11 +22,7 @@ import {
   useUrlFiltersUpdater,
   useUrlTableControls,
 } from '@/shared/hooks/useUrlTableControls';
-import {
-  SERVICE_TYPE_LABEL,
-  type ServiceType,
-  type StatusValue,
-} from '@/shared/status/status';
+import { presentStatus } from '@/shared/status/status';
 import {
   SERVICE_TYPES,
   countByStatus,
@@ -37,6 +33,7 @@ import {
 } from './filterReport';
 import { REPORT_COLUMNS } from './reportColumns';
 import { StatusCounts } from './StatusCounts';
+import { SERVICE_TYPE_LABEL, type ServiceType } from './types';
 import { useReportRows } from './useReportRows';
 
 const ALL = 'all';
@@ -59,13 +56,12 @@ export default function ReportingPage() {
 
   // URL values are untrusted: anything unknown reads as "all".
   const serviceType: ServiceType | '' = isServiceType(typeParam) ? typeParam : '';
-  const statuses = statusOptions(serviceType);
-  const status: StatusValue | '' =
-    statuses.find((value) => value === statusParam) ?? '';
+  const statuses = statusOptions(rows, serviceType);
+  const status = statuses.find((value) => value === statusParam) ?? '';
 
   const filters = { search, serviceType, status };
   const filtered = filterReport(rows, filters);
-  const counts = countByStatus(filterBySearchAndType(rows, filters), serviceType);
+  const counts = countByStatus(rows, filterBySearchAndType(rows, filters), serviceType);
   const controls = useUrlTableControls({
     initialSort: { column: 'dueDate', direction: 'asc' },
     pageSize: 10,
@@ -74,7 +70,7 @@ export default function ReportingPage() {
 
   const statusSelectOptions: AppSelectOption<string>[] = [
     { value: ALL, label: 'All statuses' },
-    ...statuses.map((value) => ({ value, label: value })),
+    ...statuses.map((value) => ({ value, label: presentStatus(value).label })),
   ];
 
   const chips: FilterChip[] = [];
@@ -89,7 +85,7 @@ export default function ReportingPage() {
     });
   }
   if (status !== '') {
-    chips.push({ key: 'status', label: `Status: ${status}`, onDelete: () => { setStatusParam(''); } });
+    chips.push({ key: 'status', label: `Status: ${presentStatus(status).label}`, onDelete: () => { setStatusParam(''); } });
   }
   const clearAll = () => {
     updateFilters({ q: '', type: '', status: '' });
@@ -120,7 +116,7 @@ export default function ReportingPage() {
                 onChange={(value) => {
                   const next = value == null || value === ALL ? '' : value;
                   // A status the new type doesn't have is dropped with it.
-                  const keep = next === '' || statusOptions(isServiceType(next) ? next : '').some((option) => option === status);
+                  const keep = next === '' || statusOptions(rows, isServiceType(next) ? next : '').some((option) => option === status);
                   updateFilters({ type: next, status: keep ? status : '' });
                 }}
               />
