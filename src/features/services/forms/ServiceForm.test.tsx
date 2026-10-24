@@ -43,7 +43,10 @@ describe('ServiceForm (create, Biomodel)', () => {
 
     fireEvent.click(submit);
     const summary = (await screen.findByText(/1 problem to fix/)).closest('[role="alert"]');
-    expect(summary).toHaveFocus();
+    // Focus moves in an effect just after the summary renders; wait for it (was flaky under load).
+    await waitFor(() => {
+      expect(summary).toHaveFocus();
+    });
     // The MOCK evidence note is a status, not an alert.
     expect(screen.getByRole('status', { name: '' })).toHaveTextContent(/MOCK: fields from the v0\.6/);
 

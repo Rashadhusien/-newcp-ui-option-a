@@ -2,11 +2,14 @@
 Owner: Rashad (FE intern). Mentor/reviewer: Aya Adel. Contract author: Bishoy. Option B: Abdo (separate UI, same API).
 
 ## Authority (highest first)
-1. AI Development Handoff Package v0.9 (F07) in `docs/newcp-ai/`: policy/, tasks/04 + 07 + 06, F07 contract and client.
+1. AI Development Handoff Package v0.9.2.2 in `docs/newcp-ai/` (v0.9.1 baseline + v0.9.2 overlays): policy/
+   (APPROVED_QB8_QB15_DECISIONS, CURRENT_V3_DATABASE_STATUS, IS_BILLABLE_AND_BILL_TO_DECISION,
+   V092_IMPLEMENTATION_ROLLOUT_AND_DB_SAFETY), tasks/04 + 07 + 06, F07 contract and client.
 2. Explicit New CP decisions > evidenced legacy rules (Connect create, CP clerk edit) > developer proposals.
 3. This file, then docs/PLAN.md and TASKS.md. Where they disagree with 1, 1 wins; log it in docs/DEVIATIONS.md.
 V0.7 files are archival. V0.6 form specs are the source for form controls.
-Until G4 is decided, the package sits untracked under `docs/newcp-ai/payload/`; package paths below are relative to that root.
+The package is a local, git-ignored copy under `docs/newcp-ai/payload/` (G4 decided, D-32; the v0.9 copy is kept in
+`payload-v0.9/`); package paths below are relative to `payload/`.
 
 ## Working rules
 - Never start a task before the developer writes `start A<NN>`. One task = one branch = one commit = one PR.
@@ -24,10 +27,12 @@ Model is reference only. Two same-type services in one order are independent: di
 status, history, payer and report rows. Never a type-level identifier.
 
 ## Contract and API
-- Contract: `docs/openapi/newcp-v1.openapi.yaml` (Bishoy, v1.0.0, 23 Oct; still `NOT_FINAL`). It supersedes the
-  package's v0.9 F07 contract for endpoints and fields (D-33); the v0.9 file and typed client are archival.
-  Never invent an endpoint, field or error code.
-- One shared client in `src/shared/api/` (types follow the v1 contract; auth via token source; no token storage).
+- Contract: `references/f07/integration/newcp-demo-f07.openapi.yaml` (v0.9.2-draft, `NOT_FINAL`) + typed client. Q-B15:
+  the package reference wins over Bishoy's `docs/openapi/newcp-v1.openapi.yaml`, which stays a draft the backend
+  reconciles into one snapshot (D-40). Never invent an endpoint, field or error code.
+- One shared client in `src/shared/api/` (types follow the reference contract; auth via token source; no token storage).
+- Concurrency (Q-B8): keep the item ETag; send `If-Match` on every PATCH and transition. 412 = changed by someone
+  else: keep the user's edits and offer a reload. 428 = precondition missing (a bug). 409 = workflow/financial conflict.
 - Feature adapter: `src/features/services/data/serviceApi.ts`, with a mock and a real implementation behind one interface.
 - `VITE_USE_MOCKS=true` uses the mock adapter (contract-shaped data and Problem errors: 400/401/403/404/409/422/5xx).
 - Mocks stay until a real API is demonstrated. The UI shows an evidence label: MOCK or INTEGRATED.
@@ -39,15 +44,21 @@ status, history, payer and report rows. Never a type-level identifier.
   reason/detail, rush, currency, Bill To, internal comment).
 - Enforce only validators the source actually attached (02_Validation_Rule_Matrix: UI-attached).
   DEFINED_NOT_ATTACHED rules are not enforced; display-only warnings stay warnings.
-- Answers use the v1 model: `{ fieldCode, value?, optionCodes? }` (`optionCodes` for every choice field, `[]` when cleared).
-- Staff fields the v1 PATCH accepts: Redo, redo-of, notes, pending reason, quantity, billable, hold type/reason
-  (lookup), zero-charge reason (lookup)/note, Bill To. Fields it does not accept (unit price, currency, rush, cost)
-  are read-only, labelled as such.
+- Answers follow the reference contract (v0.9.2: `optionCode`/`optionCodes`, `valueText`/`valueNumber`/`valueBoolean`/
+  `valueDate`); one conversion function maps form values to the wire format, so a change after Bishoy's answer
+  (Q-B16) stays local. Field types are the 8 canonical types (Q-B11); radio vs select is presentation only.
+- Staff fields (PATCH): Redo, redo-of, notes, pending reason, quantity (> 0, decimals allowed; demo default 1, Q-B13),
+  Billable Yes/No (`canEditBillability`, Q-B14), unit price override (`canEditPrice`, Q-B10), zero-charge reason/note
+  (a zero final total needs a reason: 422 `ZERO_CHARGE_REASON_REQUIRED` on `zeroChargeReasonCode`), Bill To (mock).
+  Read-only, labelled: currency, rush. Hold type/reason are set only by the On Hold transition.
 - Do not copy legacy hard-coded prices or one-service-per-type limits.
 
 ## Status
 - Statuses come from the API: `status` string + `available-transitions` (transitionId, label). Never hard-code
   status IDs or legacy numeric codes; never PATCH a status directly.
+- On Hold (Q-B9): a transition into `on_hold` opens a dialog that requires hold type (customer/internal) and one
+  reason from `GET /catalog/hold-reasons?holdType=`; type and reason travel in the SAME transition request. Reasons
+  are synthetic and must be labelled "Demo only".
 - `src/shared/status/status.ts` only maps an API value to chip label/icon/tone, with a neutral fallback.
   Status is never shown by colour alone.
 
@@ -56,7 +67,10 @@ status, history, payer and report rows. Never a type-level identifier.
 - Send `billedToContactUuid` for ONE service on create/patch. Never send billedPartyOrigin or tenantId.
   Never copy an order-level Bill To.
 - Honour `canEditBilledParty`; render 403/409/422. Never show success unless the API persisted it.
-- Real persistence stays disabled until the F07 gate is confirmed by the backend owner (F07-01..05).
+- Current V3 has `is_billable` but NOT `billed_to_contact_id` / `billed_party_origin` (CURRENT_V3_DATABASE_STATUS):
+  Bill To is MOCK only. With mocks off, the adapter never calls the payer endpoint or sends a payer, and the UI says
+  BLOCKED; Bill To is never shown as INTEGRATED until the DB owner confirms F07 (F07-01..05).
+- Billable and Bill To are independent: changing one never changes the other.
 
 ## Stack (pinned; every dependency approved)
 React + TS strict + Vite, React Router, react-hook-form + zod, MUI (@mui/material, @mui/x-date-pickers,

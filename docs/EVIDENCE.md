@@ -35,3 +35,8 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-23 | A6R | Browser, Conversion: format 1-5 for Simplant, 8-9 and reset to 8 for coDiagnostiX, hidden for BSB; maxilla shows segmentation; model scan Yes shows and requires the intra-oral question; both-arches warning only while both None | pass | |
 | 2026-10-23 | A6R | Browser: dirty guard (Stay keeps the form, Leave page navigates); edit save stays on page with toast; 390 px no horizontal scroll | pass | |
 | 2026-10-23 | A6R | Real API create/edit | NOT RUN | No backend (R08); field codes unresolved (R02). |
+| 2026-10-24 | A00b | `test_qb8_qb15_contract.py` (package offline check) | pass | 13 tests. |
+| 2026-10-24 | A00b | `scripts/check_handoff.py` | pass | Handoff structure and F07 overlays present. |
+| 2026-10-24 | A00b | `test_f07_contract.py`, `v07/tests/test_static_contract.py` | NOT RUN | Python `jsonschema` not installed; installing needs approval. |
+| 2026-10-24 | A00b | Local package copy equals v0.9.2.2 (`diff -rq` empty, no stale files) | pass | Git-ignored; v0.9 kept in `payload-v0.9/`. |
+| 2026-10-24 | A00b | `npm run verify` | pass | 67 tests; first run failed on a flaky A6R focus assertion (D-48), fixed; then 8/8 full-suite runs pass. |

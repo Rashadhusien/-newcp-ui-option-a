@@ -1,8 +1,8 @@
 # TASKS: New CP frontend, UI Option A
 
 **Do not start any task until the developer says `start A<NN>`.** One task = one branch = one commit = one PR (see `GIT_WORKFLOW.md`). Base: `develop` (name to confirm, G7); stack on the previous branch while its PR is unmerged. Update `AI_USAGE_LOG.md` right after every subtask group.
-Sources of truth (highest first): the v0.9 handoff package in `docs/newcp-ai/`, `CLAUDE.md`, `docs/PLAN.md`. Unknown means `[NEEDS VERIFICATION]`; log gaps in `docs/DEVIATIONS.md`.
-Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00), then again after Bishoy's v1 contract: 13.5 h of work for 12 h left (25-27 Oct) after folding A9R into A7R and reducing A5R; cut order for the last 1.5 h in PLAN section 8.
+Sources of truth (highest first): the v0.9.2.2 handoff package in `docs/newcp-ai/payload/`, `CLAUDE.md`, `docs/PLAN.md`. Unknown means `[NEEDS VERIFICATION]`; log gaps in `docs/DEVIATIONS.md`.
+Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00), after Bishoy's v1 contract, and on 24 Oct (A00b) after package v0.9.2.2: 12.0 h of work for 12 h left (25-27 Oct) with the typed-rules evaluator cut; cut order in PLAN section 8.
 
 ## Task A1: Bootstrap the repo from the existing mui POC
 Branch: build/fe-a-a01-bootstrap | Gate: D1 | Date: Tue 20 Oct | Estimate: 2.0 h | Depends on: sources available | Status: ready for review
@@ -76,31 +76,45 @@ Branch: feat/fe-a-a06r-service-forms | Date: 25 Oct | Estimate: 3.0 h | Depends 
 - [x] A6R.3 Create on an existing order (new UUID even for the same type, `Idempotency-Key` per intentional create); answers in the v1 model (`optionCodes` for every choice, `value` otherwise); edit via PATCH answers; 422 field details mapped to fields; error summary; dirty guard; no success without a persisted response.
 - [x] AI_USAGE_LOG.md updated
 
+## Task A00b: Adopt package v0.9.2.2 (docs only)
+Branch: docs/fe-a-a00b-adopt-v0922 | Date: 24 Oct | Estimate: 0.25 h | Status: ready for review
+- [x] A00b.1 Refresh the local, git-ignored package copy (`docs/newcp-ai/payload/` = v0.9.2.2; v0.9 kept in `payload-v0.9/`); run the offline checks.
+- [x] A00b.2 CLAUDE.md, PLAN.md and this file: reference contract, ETag/If-Match, On Hold, price/Billable/zero-charge, quantity, Bill To MOCK only, 12 h plan.
+- [x] A00b.3 DEVIATIONS D-40 to D-48; questions answered and new questions; flaky A6R focus test fixed (D-48).
+- [x] AI_USAGE_LOG.md updated
+
+## Task A2D: Move client and mock to the v0.9.2 reference contract
+Branch: feat/fe-a-a2d-contract-v092 | Date: 25 Oct | Estimate: 1.5 h | Depends on: A00b | Status: not started
+- [ ] A2D.1 Types and client from the reference YAML: `item()` returns `{ data, etag }`; `edit()` and `transition()` take `ifMatch`; 412/428 as their own error kinds; `GET /catalog/hold-reasons?holdType=`; transition carries `holdType`/`holdReasonCode`; PATCH/create `unitPrice`; `canEditPrice`, `canEditBillability`, `etag`; canonical field types; answer carriers (Q-B16).
+- [ ] A2D.2 Mock: ETag per item, If-Match checks (412/428, plus `?fail=412`), On Hold only through a transition with type + reason, the four "Demo only" hold reasons from the package fixture, a labelled mock contract price (G9) and zero-total 422 `ZERO_CHARGE_REASON_REQUIRED`, quantity > 0 with decimals, Bill To endpoints never called with mocks off.
+- [ ] A2D.3 A6R form: answers through one conversion function in the reference format, canonical types, quantity 1 on create, edit with If-Match and a 412 banner that keeps the user's edits. Tests updated; `npm run verify`.
+- [ ] AI_USAGE_LOG.md updated
+
 ## Task A7R: Service instance detail, staff fields, transitions, history, independence
-Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 3.0 h (includes A9R) | Depends on: A6R | Status: not started
+Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 4.0 h (includes A9R; +1 h for v0.9.2.2) | Depends on: A2D | Status: not started
 - [ ] A7R.1 Order services list: one row per instance with UUID (short) and line number; open one instance.
-- [ ] A7R.2 Staff fields via PATCH: Redo and redo-of, service notes, pending reason, quantity, billable, zero-charge reason (lookup) and note, hold type and reason (lookup, only while on hold). Read-only and labelled: unit price, currency, rush, cost, fields/discount/voucher amounts, line total.
-- [ ] A7R.3 Status: actions from `available-transitions` only (label from the API), confirm, 409/422 leave the status unchanged; history timeline from the history endpoint.
+- [ ] A7R.2 Staff fields via PATCH with If-Match: Redo and redo-of, service notes, pending reason, quantity (> 0, decimals), Billable Yes/No (`canEditBillability`), unit price override (`canEditPrice`; contract price shown first), zero-charge reason and note (422 on the field). Read-only and labelled: currency, rush, line total. 412 -> keep edits, offer reload.
+- [ ] A7R.3 Status: actions from `available-transitions` only (label from the API), with If-Match; a move into On Hold opens a dialog requiring hold type and a "Demo only" reason, sent in the same transition; 409/412/422 leave the status unchanged; history timeline from the history endpoint.
 - [ ] A7R.4 (was A9R) Two same-type instances stay independent (edit, transition, payer); 401 -> login, 403 -> read-only, tenant-masked 404 without data leakage.
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A8R: Service-level Bill To (F07, mock)
 Branch: feat/fe-a-a08r-bill-to | Date: 26 Oct | Estimate: 1.0 h | Depends on: A7R | Status: not started
 - [ ] A8R.1 Doctor/Scanning Center selector from `eligible-billed-parties`; `billedToContactUuid` for ONE service on create/patch; never send provenance or tenant; never copy an order-level Bill To.
-- [ ] A8R.2 `canEditBilledParty` -> read-only with an explanation; 403/409/422 rendered; no success unless persisted; real save disabled until the F07 gate (shown in the UI).
+- [ ] A8R.2 `canEditBilledParty` -> read-only with an explanation; 403/409/412/422 rendered; no success unless persisted. MOCK only: with mocks off the control shows BLOCKED (F07 columns absent in current V3) and nothing is sent. Billable and Bill To never change each other.
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A9R: Same-type independence and denied states
 Status: folded into A7R (A7R.4) on 23 Oct to fit 12 h; no separate branch.
 
 ## Task A5R: Report re-key
-Branch: feat/fe-a-a05r-report-rekey | Date: 26 Oct | Estimate: 0.5 h | Depends on: A2C | Status: not started
+Branch: feat/fe-a-a05r-report-rekey | Date: 27 Oct | Estimate: 0.5 h | Depends on: A2D | Status: not started (cut item 4 if we slip)
 - [ ] A5R.1 Remove obsolete fields (option, arch, quantity, `ORD-` strings, provisional statuses); rows from the mock adapter's service items; status via the mapper; MOCK label; no report endpoint yet (G3).
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A11: Tests
-Branch: test/fe-a-a11-tests | Date: 26 Oct | Estimate: 2.0 h | Depends on: A6R, A7R, A8R | Status: not started
-- [ ] A11.1 Component tests: form conditions and attached validators, 422 mapping, Bill To single-instance patch, two-instance independence, transitions from the API, error/empty/loading states, read-only on 403. Mock data only.
+Branch: test/fe-a-a11-tests | Date: 26/27 Oct | Estimate: 2.0 h | Depends on: A7R, A8R | Status: not started
+- [ ] A11.1 Component tests: form conditions and attached validators, 422 mapping, Bill To single-instance patch, two-instance independence, transitions from the API, error/empty/loading states, read-only on 403; v0.9.2.2 acceptance cases: 412 stale edit keeps edits, 428, On Hold without type/reason rejected, price override kept ($20 -> $18 mock), zero total needs a reason, Billable and Bill To independent (package fixture). Mock data only.
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A4: Auth (reduced)
@@ -135,6 +149,7 @@ Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on:
 | docs: contract v1 | merged | Bishoy's v1 contract added; docs re-baselined; code follows in A2C |
 | A2R | merged | client, mock adapter, status mapper, Vitest (39 tests) |
 | A2C | merged | types, client lookups and mock on v1; 50 tests |
-| A6R | ready for review | Biomodel 15 + Conversion 11 Connect controls; create/edit; 67 tests |
-| A7R (+A9R), A8R, A5R, A11, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
+| A6R | merged | Biomodel 15 + Conversion 11 Connect controls; create/edit; 67 tests |
+| A00b | ready for review | package v0.9.2.2 adopted in docs; 12 h plan |
+| A2D, A7R (+A9R), A8R, A11, A5R, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
