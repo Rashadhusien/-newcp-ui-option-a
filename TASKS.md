@@ -172,6 +172,7 @@ A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light)
 | A15 | merged | session context, Pending Access, IAM errors, capability gating, mock access checks; 104 tests |
 | A7R (lite) | merged | order services list, instance detail, staff fields with If-Match, transitions + On Hold dialog, history, denied states; 110 tests |
 | A14-lite | merged; tag v0.1.0-rc.1 | verify, smoke 1440/390, rehearsal script `docs/REHEARSAL.md`; RC tag proposed |
-| A16 (analysis) | ready for review | `docs/DESIGN_ALIGNMENT.md`: design gaps, token mapping, staged plan A16a/b/c (6.25 h); awaiting hours |
+| A16 (analysis) | merged | `docs/DESIGN_ALIGNMENT.md`: design gaps, token mapping, staged plan A16a/b/c (6.25 h); awaiting hours |
+| A16a | ready for review | DS token alignment (darkHover, onFillDark, spacing 20, smDark, fieldHeight), Outfit import removed, D-59 to D-62, flaky On Hold test fixed (10/10) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

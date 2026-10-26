@@ -57,3 +57,6 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-27 | A14 | Dark mode, 768 and 1024 px, real API, Google sign-in, TEN-01..30 | NOT RUN / BLOCKED | Cut item 7; no backend (R08); Q-B20/Q-B21. |
 | 2026-10-27 | A16 | Script comparison of DS `tokens.json` with `src/theme/tokens.ts` | done | All 114 colour values equal; dark `shadow-sm`, spacing 20, two named slots missing; no motion/z-index in either (DESIGN_ALIGNMENT section 3). |
 | 2026-10-27 | A16 | `npm run verify` | pass (flaky test noted) | First run: lint failed on `refrences/` (ignored, D-63). Then 13 files, 110 tests; the A7R On Hold test failed in 2 of ~14 full runs, passed 3/3 alone (D-63). |
+| 2026-10-27 | A16a | `npm run verify` | pass | 13 files, 110 tests; check-tokens ok. |
+| 2026-10-27 | A16a | Full test suite 10 runs after the On Hold test fix | pass | 10/10 (before: 2 failures in ~14 runs, D-63). |
+| 2026-10-27 | A16a | Browser, service detail line 1: light and dark at 1440 and 390; no horizontal scroll; input min height 40 (1440) / 44 (390); dark `--mui-palette-primary-dark` = #93C5F5, primary button text #0A0F17; only Inter loaded (no Outfit); no console errors | pass | Screenshots in `.handoff/a16a-screens/` (git-ignored). |

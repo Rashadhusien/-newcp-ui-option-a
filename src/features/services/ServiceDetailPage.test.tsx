@@ -11,6 +11,18 @@ import { serviceApi } from './data/serviceApi';
 import { staffPatch, staffValuesOf } from './detail/staffFields';
 import ServiceDetailPage from './ServiceDetailPage';
 
+// The app's mock adapter waits 300 ms per call; this page chains several calls, which made the
+// On Hold test load-sensitive (D-63). Here the mock answers without delay, so every wait below
+// depends only on rendered state, never on wall-clock time.
+vi.mock('./data/mockServiceApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./data/mockServiceApi')>();
+  return {
+    ...actual,
+    createMockServiceApi: (options: Parameters<typeof actual.createMockServiceApi>[0] = {}) =>
+      actual.createMockServiceApi({ ...options, latencyMs: 0 }),
+  };
+});
+
 const [LINE_1, LINE_2] = MOCK_SERVICE_ITEMS.map((item) => item.uuid);
 const SLOW = { timeout: 4000 };
 

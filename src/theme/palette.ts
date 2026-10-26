@@ -11,7 +11,7 @@ import { colorTokens } from './tokens';
 // On-color text: white on the deep light-scheme fills, graphite on the
 // pastel dark-scheme fills. Both >= 5:1 against their fill.
 const ON_LIGHT_FILL = colorTokens.text.onFillLight;
-const ON_DARK_FILL = colorTokens.background.dark; // #0A0F17
+const ON_DARK_FILL = colorTokens.text.onFillDark;
 
 // ============================================================================
 // LIGHT COLOR SCHEME
@@ -80,6 +80,7 @@ export const darkPalette = {
 
   primary: {
     main: colorTokens.primary.dark,
+    dark: colorTokens.primary.darkHover,
     contrastText: ON_DARK_FILL,
   },
 

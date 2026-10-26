@@ -13,7 +13,10 @@
  * NOTE: all export names and object shapes are unchanged from the previous
  * version so existing imports keep compiling. New keys are additive only:
  * colorTokens.inputBorder, colorTokens.action, focusTokens.colorDark,
- * tableTokens.rowSelected, layoutTokens, scrollbarTokens.
+ * tableTokens.rowSelected, layoutTokens, scrollbarTokens; A16a (DS alignment,
+ * docs/DESIGN_ALIGNMENT.md section 3): colorTokens.primary.darkHover,
+ * colorTokens.text.onFillDark, spacing 20, shadowTokens.smDark,
+ * layoutTokens.fieldHeight.
  */
 
 // ============================================================================
@@ -27,6 +30,7 @@ export const colorTokens = {
     lightHover: '#0B4A85', // 8.9:1 on white
     lightTint: '#E6F0FB', // soft selected / hover background
     dark: '#6FB2F2', // 7.9:1 on dark surface
+    darkHover: '#93C5F5', // DS primary-hover (dark): hover/pressed fill
   },
 
   // Secondary neutral color (slate)
@@ -121,6 +125,8 @@ export const colorTokens = {
     },
     // On-color text: white on the deep light-scheme fills (>= 5:1).
     onFillLight: '#FFFFFF',
+    // DS on-primary (dark): graphite on the luminous dark-scheme fills (>= 5:1).
+    onFillDark: '#0A0F17',
   },
 } as const;
 
@@ -174,7 +180,7 @@ export const spacingTokens = {
   unit: 4,
 
   // Spacing scale (multiples of unit)
-  scale: [4, 8, 12, 16, 24, 32, 48],
+  scale: [4, 8, 12, 16, 20, 24, 32, 48],
 
   // Specific spacing values
   pagePadding: {
@@ -200,6 +206,7 @@ export const layoutTokens = {
   contentMaxWidth: 1440, // px
   gridGap: 24, // px between dashboard cards
   cardGap: 20, // px inside card groups
+  fieldHeight: 40, // px, min control height at 768 and wider (DS field-height)
 } as const;
 
 // ============================================================================
@@ -225,6 +232,7 @@ export const radiusTokens = {
 // deeper and neutral because tinted shadows vanish on graphite.
 export const shadowTokens = {
   sm: '0 1px 2px 0 rgb(16 24 40 / 0.05)',
+  smDark: '0 1px 2px 0 rgb(0 0 0 / 0.35)',
   md: '0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04)',
   lg: '0 16px 32px -8px rgb(16 24 40 / 0.16), 0 4px 8px -2px rgb(16 24 40 / 0.05)',
   mdDark: '0 8px 24px -4px rgb(0 0 0 / 0.45)',
