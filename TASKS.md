@@ -105,13 +105,13 @@ Branch: feat/fe-a-a15-session-access | Date: 27 Oct | Estimate: 1.5 h | Depends 
 - [x] AI_USAGE_LOG.md updated
 
 ## Task A7R: Service instance detail, staff fields, transitions, history, independence
-Branch: feat/fe-a-a07r-instance-detail | Date: 27 Oct | Estimate: **1.75 h (A7R-lite, 26 Oct)**, was 4.0 h | Depends on: A15 | Status: not started
+Branch: feat/fe-a-a07r-instance-detail | Date: 27 Oct | Estimate: **1.75 h (A7R-lite, 26 Oct)**, was 4.0 h | Depends on: A15 | Status: ready for review
 A7R-lite scope (26 Oct): A7R.1, A7R.2 without Redo, redo-of, pending reason and notes (cut item 3), A7R.3, A7R.4; actions hidden by capability; payer stays out (A8R cut).
-- [ ] A7R.1 Order services list: one row per instance with UUID (short) and line number; open one instance.
-- [ ] A7R.2 Staff fields via PATCH with If-Match: Redo and redo-of, service notes, pending reason, quantity (> 0, decimals), Billable Yes/No (`canEditBillability`), unit price override (`canEditPrice`; contract price shown first), zero-charge reason and note (422 on the field). Read-only and labelled: currency, rush, line total. 412 -> keep edits, offer reload.
-- [ ] A7R.3 Status: actions from `available-transitions` only (label from the API), with If-Match; a move into On Hold opens a dialog requiring hold type and a "Demo only" reason, sent in the same transition; 409/412/422 leave the status unchanged; history timeline from the history endpoint.
-- [ ] A7R.4 (was A9R) Two same-type instances stay independent (edit, transition, payer); 401 -> login, 403 -> read-only, tenant-masked 404 without data leakage.
-- [ ] AI_USAGE_LOG.md updated
+- [x] A7R.1 Order services list: one row per instance with UUID (short) and line number; open one instance.
+- [x] A7R.2 Staff fields via PATCH with If-Match: Redo and redo-of, service notes, pending reason, quantity (> 0, decimals), Billable Yes/No (`canEditBillability`), unit price override (`canEditPrice`; contract price shown first), zero-charge reason and note (422 on the field). Read-only and labelled: currency, rush, line total. 412 -> keep edits, offer reload.
+- [x] A7R.3 Status: actions from `available-transitions` only (label from the API), with If-Match; a move into On Hold opens a dialog requiring hold type and a "Demo only" reason, sent in the same transition; 409/412/422 leave the status unchanged; history timeline from the history endpoint.
+- [x] A7R.4 (was A9R) Two same-type instances stay independent (edit, transition, payer); 401 -> login, 403 -> read-only, tenant-masked 404 without data leakage.
+- [x] AI_USAGE_LOG.md updated
 
 ## Task A8R: Service-level Bill To (F07, mock)
 Branch: feat/fe-a-a08r-bill-to | Date: - | Estimate: 1.0 h | Depends on: A7R | Status: **cut 26 Oct** (cut item 1; first to restore; mock and adapter guard from A2D stay)
@@ -169,7 +169,8 @@ A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light)
 | A00b | merged | package v0.9.2.2 adopted in docs; 12 h plan |
 | A2D | merged | reference contract v0.9.2 in client, mock and form; 80 tests |
 | A00c | merged | v0.9.7 IAM overlay in docs; 4 h plan |
-| A15 | ready for review | session context, Pending Access, IAM errors, capability gating, mock access checks; 104 tests |
-| A7R-lite, A14-lite | not started | 27 Oct, 2.25 h |
+| A15 | merged | session context, Pending Access, IAM errors, capability gating, mock access checks; 104 tests |
+| A7R (lite) | ready for review | order services list, instance detail, staff fields with If-Match, transitions + On Hold dialog, history, denied states; 110 tests |
+| A14-lite | not started | 27 Oct, 0.5 h |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

@@ -3,17 +3,33 @@
  */
 
 export const ROUTES = {
-  root: '/',
-  login: '/login',
-  reporting: '/reporting',
-  orders: '/orders',
-  models: '/models',
-  conversion: '/conversion',
-  settings: '/settings',
+  root: "/",
+  login: "/login",
+  reporting: "/reporting",
+  orders: "/orders",
+  models: "/models",
+  conversion: "/conversion",
+  settings: "/settings",
   /** Create a service instance of one catalog service on an order. */
   serviceNew: (orderUuid: string, serviceUuid: string) =>
     `/orders/${encodeURIComponent(orderUuid)}/services/new/${encodeURIComponent(serviceUuid)}`,
+  /** One service instance: staff fields, status, history. */
+  serviceDetail: (serviceItemUuid: string) =>
+    `/services/${encodeURIComponent(serviceItemUuid)}`,
   /** Edit one service instance. */
-  serviceEdit: (serviceItemUuid: string) => `/services/${encodeURIComponent(serviceItemUuid)}/edit`,
-  notFound: '*',
-} as const;
+  serviceEdit: (serviceItemUuid: string) =>
+    `/services/${encodeURIComponent(serviceItemUuid)}/edit`,
+  notFound: "*",
+} satisfies {
+  root: string;
+  login: string;
+  reporting: string;
+  orders: string;
+  models: string;
+  conversion: string;
+  settings: string;
+  serviceNew: (orderUuid: string, serviceUuid: string) => string;
+  serviceDetail: (serviceItemUuid: string) => string;
+  serviceEdit: (serviceItemUuid: string) => string;
+  notFound: string;
+};
