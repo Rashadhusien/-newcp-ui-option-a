@@ -55,3 +55,5 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-27 | A14 | Browser smoke, 1440 px (CS): `/reporting`, `/orders`, `/services/...14`, `/models` render with no horizontal scroll and no console errors | pass | Mock. |
 | 2026-10-27 | A14 | Browser smoke, 390 px: `/orders` and `/services/...15` `scrollWidth` 390; no visible button under 40 px; On Hold dialog full screen, focus inside, Escape closes and returns focus to "Put on hold" | pass | Mock. |
 | 2026-10-27 | A14 | Dark mode, 768 and 1024 px, real API, Google sign-in, TEN-01..30 | NOT RUN / BLOCKED | Cut item 7; no backend (R08); Q-B20/Q-B21. |
+| 2026-10-27 | A16 | Script comparison of DS `tokens.json` with `src/theme/tokens.ts` | done | All 114 colour values equal; dark `shadow-sm`, spacing 20, two named slots missing; no motion/z-index in either (DESIGN_ALIGNMENT section 3). |
+| 2026-10-27 | A16 | `npm run verify` | pass (flaky test noted) | First run: lint failed on `refrences/` (ignored, D-63). Then 13 files, 110 tests; the A7R On Hold test failed in 2 of ~14 full runs, passed 3/3 alone (D-63). |

@@ -7,8 +7,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  // docs/ and local_docs/ hold read-only reference .ts files (handoff package), never app code.
-  globalIgnores(['dist', 'node_modules', 'scripts/*.mjs', 'docs/**', 'local_docs/**']),
+  // docs/, local_docs/ and refrences/ hold read-only reference code (handoff package, earlier POCs), never app code.
+  globalIgnores(['dist', 'node_modules', 'scripts/*.mjs', 'docs/**', 'local_docs/**', 'refrences/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
