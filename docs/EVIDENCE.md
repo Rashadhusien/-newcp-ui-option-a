@@ -43,3 +43,5 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-25 | A2D | `npm run verify` | pass | 9 files, 80 tests: client ETag/If-Match/412/428, hold lookup; mock acceptance cases from the v0.9.2 rollout guide (stale edit, missing If-Match, hold without type/reason, $20 -> $18 override kept, zero total needs a reason, Billable and Bill To independent, locks); adapter blocks Bill To and strips the payer with mocks off; form 412 banner keeps edits. |
 | 2026-10-25 | A2D | Browser: two consecutive edit saves on a fixture service both succeed, no console errors | pass | Mock; shows the form uses the new version after each save. |
 | 2026-10-25 | A2D | Real API with ETag/If-Match | NOT RUN | No backend (R08); no token until A4. |
+| 2026-10-26 | A00c | Service OpenAPI YAML/JSON and typed client v0.9.7 vs local v0.9.2.2 copy (`cmp`, SHA-256) | pass | Identical; payload differs only by the IAM files and README. |
+| 2026-10-26 | A00c | `npm run verify` | pass | Docs only; 9 files, 80 tests. |

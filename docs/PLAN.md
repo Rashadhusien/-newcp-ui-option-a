@@ -1,6 +1,6 @@
 # PLAN: New CP frontend, UI Option A
 
-Status: re-baselined 23 Oct 2026 (A00) on the AI Development Handoff Package v0.9 (F07), and again on 24 Oct (A00b) on its v0.9.2.2 update (approved Q-B8 to Q-B15). The package is the highest authority for the contract, the form fields and the business rules (see `CLAUDE.md`, "Authority"). The 20 Oct plan is superseded where it disagrees; the superseded parts are logged in `docs/DEVIATIONS.md` (D-22 to D-27, D-40 to D-47). Anything not traceable to a source is marked `[NEEDS VERIFICATION]`.
+Status: re-baselined 23 Oct 2026 (A00) on the AI Development Handoff Package v0.9 (F07), again on 24 Oct (A00b) on its v0.9.2.2 update (approved Q-B8 to Q-B15), and on 26 Oct (A00c) on the v0.9.7 IAM overlay (session context, access states, error codes, capabilities; service OpenAPI unchanged), with 4 h left (D-50 to D-55). The package is the highest authority for the contract, the form fields and the business rules (see `CLAUDE.md`, "Authority"). The 20 Oct plan is superseded where it disagrees; the superseded parts are logged in `docs/DEVIATIONS.md` (D-22 to D-27, D-40 to D-47). Anything not traceable to a source is marked `[NEEDS VERIFICATION]`.
 
 ## 1. Context
 - Customer: 3D Diagnostix (dental, AI-assisted platform). Project: **New CP**, a rebuild of the legacy CP (Case Portal) web app.
@@ -14,6 +14,7 @@ Status: re-baselined 23 Oct 2026 (A00) on the AI Development Handoff Package v0.
 Browser (React + MUI, this repo)  --HTTPS-->  Express + TypeScript + Drizzle + Zod  -->  PostgreSQL V3
         Google login  ---------------------->  token validated by the backend
 ```
+- **Access (IAM v0.9.7):** Google authenticates only; PostgreSQL IAM + Casbin authorize on the server; one active tenant per session, resolved by the backend from an explicit grant. The UI reads a session context (AUTHORIZED / PENDING, tenant label, roles, capability flags; endpoint not in the OpenAPI, Q-B20, so MOCK only), never sends a tenant, and uses capabilities for display only. Transport (Bearer vs HttpOnly cookie) is open (Q-B21).
 - The frontend never talks to the database and never holds tenant logic. Tenant isolation, authorization, RLS and PHI protection are backend responsibilities. The UI reflects them (401, 403, cross-tenant 404).
 - **Contract:** the package's `references/f07/integration/newcp-demo-f07.openapi.yaml` (v0.9.2-draft, `NOT_FINAL`). Q-B15 makes it the reference over Bishoy's `docs/openapi/newcp-v1.openapi.yaml` (v1.0.0), which the backend reconciles into one snapshot (D-40). Endpoints: catalog services, form schema, hold reasons (`/catalog/hold-reasons?holdType=`), order services (list, create), service item (get with ETag, patch with If-Match), available transitions, transition (If-Match; carries hold type/reason), history, eligible billed parties. No zero-charge reasons endpoint (Q-B17).
 - **Database facts (24 Oct, Technical Lead):** current V3 has `orders.order_items.is_billable`; F07's `billed_to_contact_id` and `billed_party_origin` do NOT exist yet. Billable is real; Bill To stays MOCK and disabled outside the mock (D-44).
@@ -21,7 +22,7 @@ Browser (React + MUI, this repo)  --HTTPS-->  Express + TypeScript + Drizzle + Z
 - The reference contract still has **no report endpoint and no order list, search or get** (G3, Q-B3): the report stays on mock data, labelled MOCK, and the demo order is a known synthetic UUID.
 
 ## 3. Demo scope (what Option A must show)
-1. Login; every route protected; logout. Real Google sign-in is blocked on the auth adapter (R06); the token source and 401 handling are built.
+1. Login; every route protected; logout. Session context on load: AUTHORIZED shows the workspace with a read-only tenant badge; PENDING shows Pending Access; 401 returns to sign-in with a safe return path. In mock mode a mock identity picker (CS, OPS, ADMIN, FINANCE, QC, PENDING) shows the role differences. Real Google sign-in is backend-driven and blocked (R06, Q-B21).
 2. Combined Models/Conversion report, counted by service **instance**, with filters, sort, paging (mock, labelled).
 3. Biomodel ("Models") and Conversion services on an existing order: create, edit, reopen, status transition (from `available-transitions`), per-instance history.
 4. All form controls: Biomodel 28, Conversion 21, including conditional and nested ones, plus CP staff fields (Redo, status, pending, pending reason, unit price override, Billable Yes/No, quantity, zero-charge reason/detail, rush, currency, Bill To, internal comment).
@@ -30,7 +31,7 @@ Browser (React + MUI, this repo)  --HTTPS-->  Express + TypeScript + Drizzle + Z
 7. **On Hold** (Q-B9): putting a service on hold asks for hold type and a "Demo only" reason in one step.
 8. Invalid input leaves no partial record and shows an actionable error (422 field details, 409 conflict, 403 read-only).
 9. Two same-type services in one order are independent: distinct UUIDs and line numbers, separate edits, status, history, payer and report rows.
-10. Unauthorized or cross-tenant access is denied with a clear state.
+10. Unauthorized or cross-tenant access is denied with a clear state, using the IAM codes: `ACCESS_NOT_ASSIGNED`/`TENANT_NOT_ASSIGNED` -> Pending Access, other 403 -> access denied (context refreshed), 404 -> generic "not available". Actions the role lacks are hidden (FINANCE/QC: reports only, G11 open).
 11. Loading, empty and error states on every screen; responsive desktop, tablet, mobile.
 
 Out of scope: Implant Analog Model (reference only), new-order wizard, export, uploads, email, teeth chart, billing operations, Grafana link.
@@ -42,6 +43,15 @@ Out of scope: Implant Analog Model (reference only), new-order wizard, export, u
 - Error cases the UI must handle: 400, 401, 403, 404 (incl. tenant-masked), 409 (workflow/financial conflict: lock, invoiced, payer after charge), 412 (stale ETag), 428 (missing If-Match), 422 (validation, ineligible payer, zero-charge reason), 5xx, network. Body shape: `Problem {code, message, requestId?, details?}`.
 
 ## 5. Calendar (24 h)
+**Re-baselined 26 Oct (A00c), approved by the developer.** A2D was finished on 25 Oct; A7R did not start on 25/26 Oct. Left before the rehearsal: **Tue 27 Oct, 4 h**. Open work was 10.25 h + about 1.5 h of IAM work, so about 7.75 h is cut (section 8).
+
+| Day | Tasks | Hours | What is demonstrated |
+|---|---|---|---|
+| Mon 26 Oct | A00c (docs only) | 0.25 | v0.9.7 IAM overlay adopted in docs; plan re-baselined |
+| Tue 27 Oct | A15, A7R-lite, A14-lite | 1.5 + 1.75 + 0.5 = 3.75 | session context and access states with mock identities, IAM error codes, capability gating; instance detail with price, Billable, zero-charge and quantity (If-Match), transitions and the On Hold dialog, history, denied states, two same-type instances; verify, smoke check, rehearsal script |
+
+The 25 Oct calendar below is kept for the record and superseded.
+
 Re-baselined 24 Oct (A00b) after package v0.9.2.2. Done: A1, A2.4, A5, V3 findings, Task 00, A00, A2R, vite bump, contract v1 docs, A2C, A6R (hours are written by the developer). Remaining dev days: 25, 26, 27 Oct = **12 h**. Remaining work: **12.0 h** with the typed-rules evaluator cut (13.0 h without the cut).
 
 | Day | Tasks | Hours | What is demonstrated |
@@ -64,11 +74,13 @@ A10 (live API) has 0 h: blocked by R08 (no running backend) and the F07 gate. If
 6. Bill To is MOCK only until the DB owner applies and verifies F07 (D-44).
 
 ## 8. Risks and cut order
-R1 no buffer: 12.0 h of work in 12 h. **Applied now (24 Oct):** the generic typed-rules evaluator is cut (1 h; local rules stay, D-46); A9R stays folded into A7R; A13 stays trimmed. **Cut order if we slip:** (1) dark-mode checks (0.5 h), (2) tablet polish (0.5 h), (3) the Sonar step (0.25 h), (4) A5R: leave the report as it is, labelled MOCK (0.5 h), (5) history pagination (not planned). Never cut: the core flow, the forms, the On Hold dialog, 412 handling, Bill To on the mock.
+**R1 (26 Oct, A00c): applied cuts, in order; restored in the same order if hours appear:** (1) A8R Bill To UI (1 h; breaks the earlier "never cut Bill To" and the IAM live Bill To scenario M03/M04, accepted by the developer; mock and adapter guard stay), (2) A11 as its own task (2 h; only tests written inside each task), (3) A7R staff fields Redo, redo-of, pending reason and notes (0.5 h), (4) A13 Docker and README (0.75 h), (5) A12 CI (0.5 h), (6) A5R report re-key (0.5 h; report stays labelled MOCK), (7) dark-mode and tablet checks, the Sonar step, history pagination. A4 (0.5 h) is replaced by A15. Never cut: session/access states, the forms, the On Hold dialog, 412 handling, capability gating.
+Earlier R1 (24 Oct, superseded): no buffer: 12.0 h of work in 12 h. **Applied now (24 Oct):** the generic typed-rules evaluator is cut (1 h; local rules stay, D-46); A9R stays folded into A7R; A13 stays trimmed. **Cut order if we slip:** (1) dark-mode checks (0.5 h), (2) tablet polish (0.5 h), (3) the Sonar step (0.25 h), (4) A5R: leave the report as it is, labelled MOCK (0.5 h), (5) history pagination (not planned). Never cut: the core flow, the forms, the On Hold dialog, 412 handling, Bill To on the mock.
 R2 contract provisional and changing (v0.9.2 vs Bishoy's v1, Q-B15/Q-B16): one shared client, one adapter interface, one answer-conversion function, typed from the reference OpenAPI.
 R3 no backend (R08) and unresolved catalog/field/transition mappings (R01-R03): everything runs on the mock and is labelled MOCK; no INTEGRATED or PASS claims without executed evidence.
 R4 R14 decided against MUI: the UI layer would need a rewrite; business logic, adapter and tests carry over.
 
 ## 9. Open questions
+New on 26 Oct (A00c): for Bishoy Q-B20 (session context endpoint and capability code format), Q-B21 (Bearer vs cookie, CSRF, sign-in and logout endpoints), Q-B22 (error envelope; `TENANT_NOT_ASSIGNED`, `WORKFLOW_CONFLICT` final?), Q-B23 (report export endpoint); for Aya G11 (where FINANCE edits price/Bill To/Billable; do FINANCE/QC get service pages), G12 (cut list vs live Bill To), G13 (mock identity picker for the rehearsal). G1 is closed.
 For Aya (still open): G2 R14 ADR and which repo is "Option A"; G7 integration branch name and `local_docs` history clean-up; new G8 (Q-B15 reverses D-33: confirm), G9 (mock contract price from the package example), G10 (keep local form rules, cut the typed-rules evaluator). G1, G3, G4, G5, G6 are settled.
 For Bishoy (still open): Q-B1 status label, Q-B2 (only currency and rush now), Q-B3 report/list/order endpoints, Q-B5 field/option codes and catalog UUIDs, Q-B6 actor names, Q-B7 Problem codes other than `ZERO_CHARGE_REASON_REQUIRED`; new Q-B16 (answer wire format), Q-B17 (zero-charge reasons source), Q-B18 (hold/pending/redo display fields), Q-B19 (ETag exposed through CORS). Q-B4 and Q-B8 to Q-B15 are answered. Details: `docs/DEVIATIONS.md`, "Questions after package v0.9.2.2".

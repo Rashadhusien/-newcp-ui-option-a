@@ -1,8 +1,8 @@
 # TASKS: New CP frontend, UI Option A
 
 **Do not start any task until the developer says `start A<NN>`.** One task = one branch = one commit = one PR (see `GIT_WORKFLOW.md`). Base: `develop` (name to confirm, G7); stack on the previous branch while its PR is unmerged. Update `AI_USAGE_LOG.md` right after every subtask group.
-Sources of truth (highest first): the v0.9.2.2 handoff package in `docs/newcp-ai/payload/`, `CLAUDE.md`, `docs/PLAN.md`. Unknown means `[NEEDS VERIFICATION]`; log gaps in `docs/DEVIATIONS.md`.
-Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00), after Bishoy's v1 contract, and on 24 Oct (A00b) after package v0.9.2.2: 12.0 h of work for 12 h left (25-27 Oct) with the typed-rules evaluator cut; cut order in PLAN section 8.
+Sources of truth (highest first): the v0.9.2.2 handoff package with the v0.9.7 IAM overlay in `docs/newcp-ai/payload/`, `CLAUDE.md`, `docs/PLAN.md`. Unknown means `[NEEDS VERIFICATION]`; log gaps in `docs/DEVIATIONS.md`.
+Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00), after Bishoy's v1 contract, and on 24 Oct (A00b) after package v0.9.2.2: 12.0 h of work for 12 h left (25-27 Oct) with the typed-rules evaluator cut. **Re-baselined 26 Oct (A00c) after the v0.9.7 IAM overlay: 4 h left (27 Oct) for A15, A7R-lite and A14-lite; A8R, A11, A4, A5R, A12 and A13 cut (PLAN section 8).**
 
 ## Task A1: Bootstrap the repo from the existing mui POC
 Branch: build/fe-a-a01-bootstrap | Gate: D1 | Date: Tue 20 Oct | Estimate: 2.0 h | Depends on: sources available | Status: ready for review
@@ -90,8 +90,23 @@ Branch: feat/fe-a-a2d-contract-v092 | Date: 25 Oct | Estimate: 1.5 h | Depends o
 - [x] A2D.3 A6R form: answers through one conversion function in the reference format, canonical types, quantity 1 on create, edit with If-Match and a 412 banner that keeps the user's edits. Tests updated; `npm run verify`.
 - [x] AI_USAGE_LOG.md updated
 
+## Task A00c: Adopt the v0.9.7 IAM overlay (docs only)
+Branch: docs/fe-a-a00c-adopt-v097-iam | Date: 26 Oct | Estimate: 0.25 h | Depends on: A2D | Status: ready for review
+- [x] A00c.1 IAM files copied into the git-ignored package copy (v0.9.2.2 READMEs and manifest kept as `*_v0.9.2.2.*`); service OpenAPI and client confirmed byte-identical (D-50).
+- [x] A00c.2 CLAUDE.md (authority, errors, "Session and access"), PLAN.md (4 h calendar, cut order), this file, DEVIATIONS D-50 to D-55 and new questions.
+- [x] AI_USAGE_LOG.md updated
+
+## Task A15: Session context, access states, IAM errors, capability gating (replaces A4)
+Branch: feat/fe-a-a15-session-access | Date: 27 Oct | Estimate: 1.5 h | Depends on: A00c | Status: not started
+- [ ] A15.1 Errors: `asProblem` accepts the flat Problem and `{error:{...}}`; `ApiError` keeps `code`; kind `accessNotAssigned` for 403 `ACCESS_NOT_ASSIGNED`/`TENANT_NOT_ASSIGNED`; other 403 stay `forbidden`; 404 text generic (no existence leak).
+- [ ] A15.2 Session: `src/mocks/sessionFixtures.ts` (CS, OPS, ADMIN, FINANCE, QC, PENDING; synthetic UUIDs, tenant label "Demo tenant (mock)", capabilities from ROLE_CAPABILITY_MATRIX, CANDIDATE_UNVERIFIED); a session provider holding the context in memory, loaded on app start and refreshed after a 403; with mocks off the context is BLOCKED (endpoint not in the OpenAPI, Q-B20). Replaces the localStorage flag in `session.ts`.
+- [ ] A15.3 UI: AUTHORIZED -> workspace with a read-only tenant badge; PENDING -> Pending Access page with no features; 401 -> sign-in keeping only a safe in-app path; mock identity picker on the sign-in page only when evidence is MOCK.
+- [ ] A15.4 Gating and mock enforcement: `can(context, code)` for nav and actions (FINANCE/QC: Reporting only); the mock returns 403 `ACCESS_NOT_ASSIGNED` for PENDING and 403 `PERMISSION_DENIED` for actions the role lacks; no export control (D-54). Tests: both envelopes, Pending/denied routing, no `tenantId`/`X-Tenant-Id` ever sent, picker absent with mocks off.
+- [ ] AI_USAGE_LOG.md updated
+
 ## Task A7R: Service instance detail, staff fields, transitions, history, independence
-Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 4.0 h (includes A9R; +1 h for v0.9.2.2) | Depends on: A2D | Status: not started
+Branch: feat/fe-a-a07r-instance-detail | Date: 27 Oct | Estimate: **1.75 h (A7R-lite, 26 Oct)**, was 4.0 h | Depends on: A15 | Status: not started
+A7R-lite scope (26 Oct): A7R.1, A7R.2 without Redo, redo-of, pending reason and notes (cut item 3), A7R.3, A7R.4; actions hidden by capability; payer stays out (A8R cut).
 - [ ] A7R.1 Order services list: one row per instance with UUID (short) and line number; open one instance.
 - [ ] A7R.2 Staff fields via PATCH with If-Match: Redo and redo-of, service notes, pending reason, quantity (> 0, decimals), Billable Yes/No (`canEditBillability`), unit price override (`canEditPrice`; contract price shown first), zero-charge reason and note (422 on the field). Read-only and labelled: currency, rush, line total. 412 -> keep edits, offer reload.
 - [ ] A7R.3 Status: actions from `available-transitions` only (label from the API), with If-Match; a move into On Hold opens a dialog requiring hold type and a "Demo only" reason, sent in the same transition; 409/412/422 leave the status unchanged; history timeline from the history endpoint.
@@ -99,7 +114,7 @@ Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 4.0 h (incl
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A8R: Service-level Bill To (F07, mock)
-Branch: feat/fe-a-a08r-bill-to | Date: 26 Oct | Estimate: 1.0 h | Depends on: A7R | Status: not started
+Branch: feat/fe-a-a08r-bill-to | Date: - | Estimate: 1.0 h | Depends on: A7R | Status: **cut 26 Oct** (cut item 1; first to restore; mock and adapter guard from A2D stay)
 - [ ] A8R.1 Doctor/Scanning Center selector from `eligible-billed-parties`; `billedToContactUuid` for ONE service on create/patch; never send provenance or tenant; never copy an order-level Bill To.
 - [ ] A8R.2 `canEditBilledParty` -> read-only with an explanation; 403/409/412/422 rendered; no success unless persisted. MOCK only: with mocks off the control shows BLOCKED (F07 columns absent in current V3) and nothing is sent. Billable and Bill To never change each other.
 - [ ] AI_USAGE_LOG.md updated
@@ -108,17 +123,17 @@ Branch: feat/fe-a-a08r-bill-to | Date: 26 Oct | Estimate: 1.0 h | Depends on: A7
 Status: folded into A7R (A7R.4) on 23 Oct to fit 12 h; no separate branch.
 
 ## Task A5R: Report re-key
-Branch: feat/fe-a-a05r-report-rekey | Date: 27 Oct | Estimate: 0.5 h | Depends on: A2D | Status: not started (cut item 4 if we slip)
+Branch: feat/fe-a-a05r-report-rekey | Date: - | Estimate: 0.5 h | Depends on: A2D | Status: **cut 26 Oct** (cut item 6; report stays labelled MOCK)
 - [ ] A5R.1 Remove obsolete fields (option, arch, quantity, `ORD-` strings, provisional statuses); rows from the mock adapter's service items; status via the mapper; MOCK label; no report endpoint yet (G3).
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A11: Tests
-Branch: test/fe-a-a11-tests | Date: 26/27 Oct | Estimate: 2.0 h | Depends on: A7R, A8R | Status: not started
+Branch: test/fe-a-a11-tests | Date: - | Estimate: 2.0 h | Depends on: A7R, A8R | Status: **cut 26 Oct** (cut item 2; tests are written inside A15 and A7R)
 - [ ] A11.1 Component tests: form conditions and attached validators, 422 mapping, Bill To single-instance patch, two-instance independence, transitions from the API, error/empty/loading states, read-only on 403; v0.9.2.2 acceptance cases: 412 stale edit keeps edits, 428, On Hold without type/reason rejected, price override kept ($20 -> $18 mock), zero total needs a reason, Billable and Bill To independent (package fixture). Mock data only.
 - [ ] AI_USAGE_LOG.md updated
 
 ## Task A4: Auth (reduced)
-Branch: feat/fe-a-a04-auth-token | Date: 27 Oct | Estimate: 0.5 h | Depends on: A2R | Status: not started
+Branch: feat/fe-a-a04-auth-token | Date: - | Estimate: 0.5 h | Depends on: A2R | Status: **replaced 26 Oct by A15** (token vs cookie open, Q-B21)
 - [ ] A4.1 Token source for the client from the session; 401 anywhere sends the user to login with the return path. Real Google sign-in blocked (R06).
 - [ ] AI_USAGE_LOG.md updated
 
@@ -126,15 +141,16 @@ Branch: feat/fe-a-a04-auth-token | Date: 27 Oct | Estimate: 0.5 h | Depends on: 
 Status: BLOCKED (R08 no running backend; F07-01 to F07-05 for Bill To). 0 h planned. If unblocked, it replaces A14 time.
 
 ## Task A12: CI
-Branch: ci/fe-a-a12-ci | Date: 27 Oct | Estimate: 0.5 h | Depends on: A11 | Status: not started
+Branch: ci/fe-a-a12-ci | Date: - | Estimate: 0.5 h | Depends on: A11 | Status: **cut 26 Oct** (cut item 5)
 - [ ] A12.1 GitHub Actions: install, lint, typecheck, test, build, check-tokens. Sonar step only if access exists (cut item 4).
 
 ## Task A13: Docker and README
-Branch: build/fe-a-a13-docker-docs | Date: 27 Oct | Estimate: 0.75 h (trimmed 23 Oct) | Depends on: A12 | Status: not started
+Branch: build/fe-a-a13-docker-docs | Date: - | Estimate: 0.75 h (trimmed 23 Oct) | Depends on: A12 | Status: **cut 26 Oct** (cut item 4)
 - [ ] A13.1 Multi-stage Dockerfile + nginx (SPA fallback), `.dockerignore`. [ ] A13.2 README final. (A13.3 `docs/ux-rationale.md` dropped by the developer on 23 Oct to fit 12 h.)
 
 ## Task A14: Stabilize and release candidate
-Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on: A13 | Status: not started
+Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: **0.5 h (A14-lite, 26 Oct)**, was 1.0 h | Depends on: A7R | Status: not started
+A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light), EVIDENCE, rehearsal script with each mock identity; A14.3 kept.
 - [ ] A14.1 Review fixes. [ ] A14.2 Demo acceptance checklist and rehearsal script (MOCK/INTEGRATED stated honestly). [ ] A14.3 Propose the RC tag to the developer (Claude never tags).
 
 ## Phase log
@@ -151,6 +167,8 @@ Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on:
 | A2C | merged | types, client lookups and mock on v1; 50 tests |
 | A6R | merged | Biomodel 15 + Conversion 11 Connect controls; create/edit; 67 tests |
 | A00b | merged | package v0.9.2.2 adopted in docs; 12 h plan |
-| A2D | ready for review | reference contract v0.9.2 in client, mock and form; 80 tests |
-| A7R (+A9R), A8R, A11, A5R, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
+| A2D | ready for review | reference contract v0.9.2 in client, mock and form; 80 tests; pushed, PR not merged yet |
+| A00c | ready for review | v0.9.7 IAM overlay in docs; 4 h plan; stacked on A2D |
+| A15, A7R-lite, A14-lite | not started | 27 Oct, 3.75 h |
+| A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
