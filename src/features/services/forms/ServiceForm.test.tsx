@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { ApiError, type CatalogService } from '@/shared/api';
+import { ApiError, type CatalogService, type ServiceItem } from '@/shared/api';
 import { ToastProvider } from '@/shared/components/feedback';
-import { MOCK_ORDER_UUID } from '@/mocks/serviceFixtures';
+import { MOCK_ORDER_UUID, MOCK_SERVICE_ITEMS } from '@/mocks/serviceFixtures';
 import { serviceApi } from '../data/serviceApi';
 import { BIOMODEL_SPEC } from './formSpecs';
 import { mockFormDefinition } from './mockFormDefinition';
@@ -16,13 +16,22 @@ const BIOMODEL: CatalogService = {
   itemKind: 'service',
 };
 
-function renderCreateForm() {
+function renderForm(item: ServiceItem | null = null, etag: string | null = null, onReload = vi.fn()) {
   const definition = mockFormDefinition(BIOMODEL, BIOMODEL_SPEC);
   const router = createMemoryRouter(
     [
       {
         path: '/new',
-        element: <ServiceForm spec={BIOMODEL_SPEC} definition={definition} item={null} orderUuid={MOCK_ORDER_UUID} />,
+        element: (
+          <ServiceForm
+            spec={BIOMODEL_SPEC}
+            definition={definition}
+            item={item}
+            etag={etag}
+            orderUuid={MOCK_ORDER_UUID}
+            onReload={onReload}
+          />
+        ),
       },
       { path: '/services/:serviceItemUuid/edit', element: <p>Edit page</p> },
     ],
@@ -33,7 +42,11 @@ function renderCreateForm() {
       <RouterProvider router={router} />
     </ToastProvider>,
   );
-  return { router };
+  return { router, onReload };
+}
+
+function renderCreateForm() {
+  return renderForm();
 }
 
 describe('ServiceForm (create, Biomodel)', () => {
@@ -87,5 +100,33 @@ describe('ServiceForm (create, Biomodel)', () => {
 
     expect(await screen.findByText('The order is locked by another user. Nothing was saved.')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/new');
+  });
+});
+
+describe('ServiceForm (edit, Q-B8 concurrency)', () => {
+  const ITEM = MOCK_SERVICE_ITEMS.at(0);
+  if (!ITEM) throw new Error('fixture missing');
+
+  it('sends the loaded version as If-Match', async () => {
+    const edit = vi.spyOn(serviceApi, 'edit').mockResolvedValue({ data: ITEM, etag: '"rev-2"' });
+    renderForm(ITEM, '"rev-1"');
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Customization (mandible)' })).getByLabelText('Q-L'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => {
+      expect(edit).toHaveBeenCalledWith(ITEM.uuid, expect.objectContaining({ answers: expect.any(Array) as unknown }), '"rev-1"');
+    });
+  });
+
+  it('on 412 keeps the edits, saves nothing and offers a reload', async () => {
+    vi.spyOn(serviceApi, 'edit').mockRejectedValue(new ApiError(412, { code: 'stale', message: 'Changed.' }));
+    const { onReload } = renderForm(ITEM, '"rev-1"');
+    const mandible = within(screen.getByRole('radiogroup', { name: 'Customization (mandible)' }));
+    fireEvent.click(mandible.getByLabelText('Q-L'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByText(/Someone else changed this service/)).toBeInTheDocument();
+    expect(mandible.getByLabelText('Q-L')).toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: 'Reload latest' }));
+    expect(onReload).toHaveBeenCalledTimes(1);
   });
 });

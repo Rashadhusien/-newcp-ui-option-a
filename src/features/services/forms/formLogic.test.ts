@@ -8,6 +8,7 @@ import {
   optionsFor,
   resolveFields,
   toAnswers,
+  unsupportedFields,
   validate,
   warnings,
 } from './formLogic';
@@ -34,14 +35,29 @@ describe('resolveFields', () => {
     const definition: FormDefinition = {
       service: SERVICE,
       fields: [
-        { uuid: 'u1', code: 'software', label: 'Server software', required: true, options: [{ code: '1', label: 'S' }] },
+        {
+          uuid: 'u1',
+          code: 'software',
+          label: 'Server software',
+          type: 'single_select',
+          required: true,
+          options: [{ code: '1', label: 'S' }],
+        },
         { uuid: 'u2', code: 'brandNew', label: 'Server-only field', type: 'text', required: false, options: [] },
+        { uuid: 'u3', code: 'teeth', label: 'Teeth chart', type: 'tooth_chart', required: false, options: [] },
       ],
     };
     const fields = resolveFields(CONVERSION_SPEC, definition);
     expect(fields.map((field) => field.spec.code)).toEqual(['software', 'brandNew']);
     expect(fields[0]).toMatchObject({ label: 'Server software', options: [{ code: '1', label: 'S' }] });
     expect(fields[1]?.spec).toMatchObject({ key: 'extra_brandNew', control: 'text', section: 'Other' });
+    // A canonical type with no demo widget is listed, not rendered.
+    expect(unsupportedFields(CONVERSION_SPEC, definition).map((field) => field.code)).toEqual(['teeth']);
+  });
+
+  it('serves canonical field types (Q-B11)', () => {
+    const types = new Set(mockFormDefinition(SERVICE, BIOMODEL_SPEC).fields.map((field) => field.type));
+    expect([...types].sort()).toEqual(['boolean', 'single_select', 'text']);
   });
 });
 
@@ -97,25 +113,25 @@ describe('dependent options and resets', () => {
   });
 });
 
-describe('answers (contract v1 model)', () => {
-  it('sends choices as optionCodes, checkboxes as booleans, text only when filled, and skips hidden fields', () => {
+describe('answers (reference carriers, D-41)', () => {
+  it('sends choices as optionCode, checkboxes as valueBoolean, text only when filled, and skips hidden fields', () => {
     const fields = fieldsOf(BIOMODEL_SPEC);
     const answers = toAnswers(fields, valuesOf(BIOMODEL_SPEC, { customizationMaxilla: '1', rxNote: '  ' }));
-    expect(answers).toContainEqual({ fieldCode: 'customizationMaxilla', optionCodes: ['1'] });
-    expect(answers).toContainEqual({ fieldCode: 'hasRequiredFiles', value: false });
+    expect(answers).toContainEqual({ fieldCode: 'customizationMaxilla', optionCode: '1' });
+    expect(answers).toContainEqual({ fieldCode: 'hasRequiredFiles', valueBoolean: false });
     expect(answers.find((answer) => answer.fieldCode === 'rxNote')).toBeUndefined();
     // Digital-only fields are hidden while digital design is No.
     expect(answers.find((answer) => answer.fieldCode === 'printerGroup.printerBrand')).toBeUndefined();
   });
 
-  it('sends an empty optionCodes array for an unchosen choice', () => {
+  it('omits an unchosen single choice (one carrier per field)', () => {
     const answers = toAnswers(fieldsOf(BIOMODEL_SPEC), valuesOf(BIOMODEL_SPEC, { isDigitalDesign: 'true' }));
-    expect(answers).toContainEqual({ fieldCode: 'printerGroup.printerBrand', optionCodes: [] });
+    expect(answers.find((answer) => answer.fieldCode === 'printerGroup.printerBrand')).toBeUndefined();
   });
 
   it('sends the hidden BSB format 13 the source sets programmatically', () => {
     const answers = toAnswers(fieldsOf(CONVERSION_SPEC), valuesOf(CONVERSION_SPEC, { software: '6', format: '13' }));
-    expect(answers).toContainEqual({ fieldCode: 'format', optionCodes: ['13'] });
+    expect(answers).toContainEqual({ fieldCode: 'format', optionCode: '13' });
   });
 
   it('reopens saved answers as the same values', () => {

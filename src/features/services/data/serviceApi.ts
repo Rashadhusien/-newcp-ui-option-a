@@ -1,12 +1,19 @@
 /**
  * Service-instance data adapter: the one entry point the services feature
  * uses for API data. Mock and real implementations share one interface
- * (the contract client's), plus the evidence label the UI must show.
+ * (the contract client's), plus what the UI must know to stay honest:
+ * the evidence label, the demo order, and which parts are unavailable.
  *
  * Mock is the default (`VITE_USE_MOCKS`, see shared/api/config). For manual
  * checks the mock reads `?fail=<status>` from the page URL and fails every
- * call with that status (400, 401, 403, 404, 409, 422, 500, or 0 for a
- * network failure).
+ * call with that status (400, 401, 403, 404, 409, 412, 422, 428, 500, or 0
+ * for a network failure).
+ *
+ * Bill To (D-44): current V3 has no `billed_to_contact_id` /
+ * `billed_party_origin`, so with the real API the adapter never calls
+ * eligible-billed-parties and never sends `billedToContactUuid`; the UI
+ * shows Bill To as BLOCKED. Zero-charge reasons have no endpoint in the
+ * reference contract (Q-B17), so only the mock lists them.
  */
 
 import {
@@ -17,6 +24,7 @@ import {
   type ApiEvidence,
   type NewCpClient,
   type TokenSource,
+  type ZeroChargeReason,
 } from '@/shared/api';
 import { MOCK_ORDER_UUID } from '@/mocks/serviceFixtures';
 import { createMockServiceApi } from './mockServiceApi';
@@ -28,6 +36,10 @@ export interface ServiceApi extends NewCpClient {
    * (Q-B3), so only the mock can name one; null with the real API.
    */
   readonly demoOrderUuid: string | null;
+  /** false = Bill To is BLOCKED (F07 columns absent); the UI must not offer it as real. */
+  readonly billToAvailable: boolean;
+  /** Mock only; with the real API this rejects with kind `blocked` (Q-B17). */
+  zeroChargeReasons(): Promise<ZeroChargeReason[]>;
 }
 
 /** Until the auth adapter exists (A4), the real API has no token to send. */
@@ -35,12 +47,26 @@ const noSessionToken: TokenSource = () => {
   throw new ApiError(401, null);
 };
 
+function blocked(message: string): ApiError {
+  return new ApiError(0, { code: 'client.blocked', message }, 'blocked');
+}
+
+const BILL_TO_BLOCKED =
+  'Bill To is not available yet: the payer columns are missing in the current database (F07 not applied).';
+
 function failStatusFromUrl(): number | undefined {
   if (typeof window === 'undefined') return undefined;
   const value = new URLSearchParams(window.location.search).get('fail');
   if (value == null) return undefined;
   const status = Number.parseInt(value, 10);
   return Number.isInteger(status) ? status : undefined;
+}
+
+/** Removes the payer from a request body: never sent while F07 is absent. */
+function withoutPayer<T extends { billedToContactUuid?: string }>(body: T): T {
+  const rest = { ...body };
+  delete rest.billedToContactUuid;
+  return rest;
 }
 
 export function createServiceApi(
@@ -52,9 +78,23 @@ export function createServiceApi(
       ...createMockServiceApi({ failWith: failStatusFromUrl() }),
       evidence: 'MOCK',
       demoOrderUuid: MOCK_ORDER_UUID,
+      billToAvailable: true,
     };
   }
-  return { ...createNewCpClient(config.baseUrl, tokenSource), evidence: 'INTEGRATED', demoOrderUuid: null };
+  const client = createNewCpClient(config.baseUrl, tokenSource);
+  return {
+    ...client,
+    eligibleBilledParties: () => Promise.reject(blocked(BILL_TO_BLOCKED)),
+    create: (orderUuid, item, idempotencyKey, options) =>
+      client.create(orderUuid, withoutPayer(item), idempotencyKey, options),
+    edit: (serviceItemUuid, patch, ifMatch, options) =>
+      client.edit(serviceItemUuid, withoutPayer(patch), ifMatch, options),
+    zeroChargeReasons: () =>
+      Promise.reject(blocked('Zero-charge reasons are not in the API contract yet (question Q-B17).')),
+    evidence: 'INTEGRATED',
+    demoOrderUuid: null,
+    billToAvailable: false,
+  };
 }
 
 /** App-wide instance. */

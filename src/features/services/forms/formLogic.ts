@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod';
-import type { FormAnswer, FormDefinition, FormField, FormOption } from '@/shared/api';
+import type { CanonicalFieldType, FormAnswer, FormDefinition, FormField, FormOption } from '@/shared/api';
 import {
   FORMAT_FOR_SOFTWARE,
   type ControlType,
@@ -29,14 +29,31 @@ export interface FieldIssue {
   message: string;
 }
 
-const CONTROL_FOR_TYPE: Readonly<Record<string, ControlType>> = {
-  radio: 'radio',
-  select: 'select',
-  checkbox: 'checkbox',
+/**
+ * Widget for a server field the local specs don't know, by canonical type
+ * (Q-B11). Types this demo cannot edit (multi-select, file, tooth chart)
+ * have no widget and are listed by `unsupportedFields`.
+ */
+const CONTROL_FOR_TYPE: Readonly<Partial<Record<CanonicalFieldType, ControlType>>> = {
+  single_select: 'select',
   boolean: 'checkbox',
-  textarea: 'textarea',
   text: 'text',
+  number: 'text',
+  date: 'text',
 };
+
+/** Canonical data type of a local control (Q-B11: radio vs select is presentation only). */
+export function canonicalTypeOf(control: ControlType): CanonicalFieldType {
+  if (control === 'radio' || control === 'select') return 'single_select';
+  if (control === 'checkbox') return 'boolean';
+  return 'text';
+}
+
+/** Server fields the specs don't know and this demo has no widget for. */
+export function unsupportedFields(spec: FormSpec, definition: FormDefinition): FormField[] {
+  const specCodes = new Set(spec.fields.map((fieldSpec) => fieldSpec.code));
+  return definition.fields.filter((field) => !specCodes.has(field.code) && CONTROL_FOR_TYPE[field.type] === undefined);
+}
 
 /** Field key for a server field the local specs don't know (dots are not allowed in form keys). */
 function keyFor(code: string): string {
@@ -63,9 +80,9 @@ export function resolveFields(spec: FormSpec, definition: FormDefinition): Rende
   });
   const specCodes = new Set(spec.fields.map((fieldSpec) => fieldSpec.code));
   const extra = definition.fields
-    .filter((field) => !specCodes.has(field.code))
+    .filter((field) => !specCodes.has(field.code) && CONTROL_FOR_TYPE[field.type] !== undefined)
     .map((field): RenderField => {
-      const control = CONTROL_FOR_TYPE[field.type ?? ''] ?? (field.options.length > 0 ? 'select' : 'text');
+      const control = CONTROL_FOR_TYPE[field.type] ?? 'text';
       return {
         spec: {
           key: keyFor(field.code),
@@ -109,11 +126,11 @@ export function initialValues(fields: readonly RenderField[], answers?: readonly
     if (!answer) {
       values[spec.key] = spec.defaultValue;
     } else if (spec.control === 'radio' || spec.control === 'select') {
-      values[spec.key] = answer.optionCodes?.[0] ?? '';
+      values[spec.key] = answer.optionCode ?? answer.optionCodes?.[0] ?? '';
     } else if (spec.control === 'checkbox') {
-      values[spec.key] = answer.value === true;
+      values[spec.key] = answer.valueBoolean === true;
     } else {
-      values[spec.key] = typeof answer.value === 'string' ? answer.value : '';
+      values[spec.key] = answer.valueText ?? '';
     }
   }
   return values;
@@ -189,10 +206,12 @@ export function formSchema(formKey: FormKey, fields: readonly RenderField[]) {
 }
 
 /**
- * Contract v1 answers: choice fields send `optionCodes` (one code, or `[]`
- * when nothing is chosen), checkboxes a boolean `value`, text a string
- * `value` (omitted when empty). Hidden fields are not sent, except values
- * the source sets programmatically (`sendWhenHidden`).
+ * Answers in the reference contract's carriers (D-41): single choices send
+ * `optionCode` (omitted when nothing is chosen), checkboxes `valueBoolean`,
+ * text `valueText` (omitted when empty). Hidden fields are not sent, except
+ * values the source sets programmatically (`sendWhenHidden`). This is the
+ * ONE place that knows the wire format, so Bishoy's answer to Q-B16 only
+ * changes this function and `initialValues`.
  */
 export function toAnswers(fields: readonly RenderField[], values: FormValues): FormAnswer[] {
   const answers: FormAnswer[] = [];
@@ -201,11 +220,11 @@ export function toAnswers(fields: readonly RenderField[], values: FormValues): F
     if (!shown) continue;
     const value = values[spec.key];
     if (spec.control === 'radio' || spec.control === 'select') {
-      answers.push({ fieldCode: spec.code, optionCodes: typeof value === 'string' && value !== '' ? [value] : [] });
+      if (typeof value === 'string' && value !== '') answers.push({ fieldCode: spec.code, optionCode: value });
     } else if (spec.control === 'checkbox') {
-      answers.push({ fieldCode: spec.code, value: value === true });
+      answers.push({ fieldCode: spec.code, valueBoolean: value === true });
     } else if (typeof value === 'string' && value.trim() !== '') {
-      answers.push({ fieldCode: spec.code, value });
+      answers.push({ fieldCode: spec.code, valueText: value });
     }
   }
   return answers;

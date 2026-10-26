@@ -4,19 +4,24 @@
  * examples (references/f07/fixtures/f07_synthetic_contract_examples.json);
  * the catalog UUIDs and codes are invented placeholders until R01.
  *
- * Status values use the V3 order-item summary vocabulary (V3 docs,
- * `orders.order_items.status`, D-17). Whether the API sends summary or
- * workflow values is Q-B1; the mock transitions are illustrative, not the
- * real workflow (R03). No prices are invented: money fields stay empty.
- * Lookup codes are `mock-*`; the zero-charge labels are the examples given
- * in the v1 contract's `ZeroChargeReason.label` description.
+ * - Status values use the V3 order-item summary vocabulary (V3 docs,
+ *   `orders.order_items.status`, D-17); the transitions are illustrative,
+ *   not the real workflow (R03, Q-B1).
+ * - Price: the package's own acceptance example (V092 rollout guide: initial
+ *   contract $20, authorized override $18), labelled mock; currency USD from
+ *   the same example (G9). No other price is invented.
+ * - Hold reasons: copied verbatim from the package fixture
+ *   references/f07/fixtures/temporary_hold_reasons_demo_mock.json ("Demo
+ *   only", synthetic, never real historical reasons; Q-B9).
+ * - Zero-charge reasons: the reference contract has no endpoint (Q-B17);
+ *   the labels are the examples in Bishoy's v1 draft, codes `mock-*`.
  */
 
 import type {
   AvailableTransition,
   BilledPartyChoice,
   CatalogService,
-  HoldReason,
+  HoldReasonOption,
   ServiceItem,
   ZeroChargeReason,
 } from '@/shared/api';
@@ -25,9 +30,12 @@ export const MOCK_ORDER_UUID = '00000000-0000-0000-0000-000000000001';
 export const MOCK_DOCTOR_UUID = '00000000-0000-0000-0000-000000000011';
 export const MOCK_SCAN_CENTER_UUID = '00000000-0000-0000-0000-000000000012';
 
+export const MOCK_BIOMODEL_UUID = '00000000-0000-0000-0000-000000000003';
+export const MOCK_CONVERSION_UUID = '00000000-0000-0000-0000-000000000004';
+
 export const MOCK_CATALOG: readonly CatalogService[] = [
   {
-    uuid: '00000000-0000-0000-0000-000000000003',
+    uuid: MOCK_BIOMODEL_UUID,
     code: 'mock-biomodel',
     name: 'Biomodel',
     itemKind: 'service',
@@ -35,7 +43,7 @@ export const MOCK_CATALOG: readonly CatalogService[] = [
     workflowCode: null,
   },
   {
-    uuid: '00000000-0000-0000-0000-000000000004',
+    uuid: MOCK_CONVERSION_UUID,
     code: 'mock-conversion',
     name: 'Conversion',
     itemKind: 'service',
@@ -44,21 +52,21 @@ export const MOCK_CATALOG: readonly CatalogService[] = [
   },
 ];
 
-export const MOCK_BIOMODEL_UUID = '00000000-0000-0000-0000-000000000003';
-export const MOCK_CONVERSION_UUID = '00000000-0000-0000-0000-000000000004';
-
 export const MOCK_BILLED_PARTIES: readonly BilledPartyChoice[] = [
   { contactUuid: MOCK_DOCTOR_UUID, role: 'doctor', label: 'Synthetic Doctor' },
   { contactUuid: MOCK_SCAN_CENTER_UUID, role: 'scanning_center', label: 'Synthetic Scanning Center' },
 ];
 
+/** Initial contract price for every mock service (package acceptance example). */
+export const MOCK_CONTRACT_UNIT_PRICE = '20.00';
+export const MOCK_CURRENCY = 'USD';
+
 /**
  * One order with two same-type Biomodel items (different payers, as in the
- * F07 example `sameTypeInstancesDifferentPayers`) and one invoiced
- * Conversion item, whose payer can no longer change.
+ * F07 example `sameTypeInstancesDifferentPayers`; the second one's clerk may
+ * not change price) and one invoiced Conversion item, which is financially
+ * locked.
  */
-const CREATED_AT = '2026-10-20T09:00:00.000Z';
-
 export const MOCK_SERVICE_ITEMS: readonly ServiceItem[] = [
   {
     uuid: '00000000-0000-0000-0000-000000000014',
@@ -66,16 +74,19 @@ export const MOCK_SERVICE_ITEMS: readonly ServiceItem[] = [
     sellableItemUuid: MOCK_BIOMODEL_UUID,
     lineNumber: 1,
     quantity: 1,
-    isBillable: true,
     status: 'submitted',
+    isBillable: true,
+    canEditBillability: true,
     isRedo: false,
     isInvoiced: false,
+    currencyCode: MOCK_CURRENCY,
+    unitPrice: MOCK_CONTRACT_UNIT_PRICE,
+    lineTotal: MOCK_CONTRACT_UNIT_PRICE,
+    canEditPrice: true,
     answers: [],
     billedToContactUuid: MOCK_DOCTOR_UUID,
     billedPartyOrigin: 'order_default',
     canEditBilledParty: true,
-    createdAt: CREATED_AT,
-    updatedAt: CREATED_AT,
   },
   {
     uuid: '00000000-0000-0000-0000-000000000015',
@@ -83,16 +94,19 @@ export const MOCK_SERVICE_ITEMS: readonly ServiceItem[] = [
     sellableItemUuid: MOCK_BIOMODEL_UUID,
     lineNumber: 2,
     quantity: 1,
-    isBillable: true,
     status: 'in_design',
+    isBillable: true,
+    canEditBillability: true,
     isRedo: false,
     isInvoiced: false,
+    currencyCode: MOCK_CURRENCY,
+    unitPrice: MOCK_CONTRACT_UNIT_PRICE,
+    lineTotal: MOCK_CONTRACT_UNIT_PRICE,
+    canEditPrice: false,
     answers: [],
     billedToContactUuid: MOCK_SCAN_CENTER_UUID,
     billedPartyOrigin: 'user_selected',
     canEditBilledParty: true,
-    createdAt: CREATED_AT,
-    updatedAt: CREATED_AT,
   },
   {
     uuid: '00000000-0000-0000-0000-000000000016',
@@ -100,29 +114,54 @@ export const MOCK_SERVICE_ITEMS: readonly ServiceItem[] = [
     sellableItemUuid: MOCK_CONVERSION_UUID,
     lineNumber: 3,
     quantity: 1,
-    isBillable: true,
     status: 'completed',
+    isBillable: true,
+    canEditBillability: false,
     isRedo: false,
     isInvoiced: true,
+    currencyCode: MOCK_CURRENCY,
+    unitPrice: MOCK_CONTRACT_UNIT_PRICE,
+    lineTotal: MOCK_CONTRACT_UNIT_PRICE,
+    canEditPrice: false,
     answers: [],
     billedToContactUuid: MOCK_DOCTOR_UUID,
     billedPartyOrigin: 'order_default',
     canEditBilledParty: false,
-    createdAt: CREATED_AT,
-    updatedAt: CREATED_AT,
   },
 ];
 
 export const MOCK_ZERO_CHARGE_REASONS: readonly ZeroChargeReason[] = [
-  { code: 'mock-redo', label: 'Redo / Remake', description: null, active: true },
-  { code: 'mock-courtesy', label: 'Promotional Courtesy', description: null, active: true },
-  { code: 'mock-voucher', label: 'Voucher Full Coverage', description: null, active: true },
+  { code: 'mock-redo', label: 'Redo / Remake (mock)', description: null, active: true },
+  { code: 'mock-courtesy', label: 'Promotional Courtesy (mock)', description: null, active: true },
+  { code: 'mock-voucher', label: 'Voucher Full Coverage (mock)', description: null, active: true },
 ];
 
-export const MOCK_HOLD_REASONS: readonly HoldReason[] = [
-  { code: 'mock-hold-client-files', label: 'Waiting for client files (mock)', holdType: 'customer', active: true },
-  { code: 'mock-hold-client-approval', label: 'Waiting for client approval (mock)', holdType: 'customer', active: true },
-  { code: 'mock-hold-internal-review', label: 'Internal review (mock)', holdType: 'internal', active: true },
+/** Verbatim from the package fixture temporary_hold_reasons_demo_mock.json. */
+export const MOCK_HOLD_REASONS: readonly HoldReasonOption[] = [
+  {
+    code: 'SYNTHETIC_CUSTOMER_AWAITING_INPUT',
+    label: 'Demo only — Awaiting customer input',
+    holdType: 'customer',
+    isTemporary: true,
+  },
+  {
+    code: 'SYNTHETIC_CUSTOMER_FILE_REUPLOAD',
+    label: 'Demo only — Awaiting file resubmission',
+    holdType: 'customer',
+    isTemporary: true,
+  },
+  {
+    code: 'SYNTHETIC_INTERNAL_REVIEW',
+    label: 'Demo only — Internal review',
+    holdType: 'internal',
+    isTemporary: true,
+  },
+  {
+    code: 'SYNTHETIC_INTERNAL_CAPACITY',
+    label: 'Demo only — Internal capacity',
+    holdType: 'internal',
+    isTemporary: true,
+  },
 ];
 
 /** Illustrative manual moves per current status (not the real workflow, R03). */

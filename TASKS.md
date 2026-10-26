@@ -84,11 +84,11 @@ Branch: docs/fe-a-a00b-adopt-v0922 | Date: 24 Oct | Estimate: 0.25 h | Status: r
 - [x] AI_USAGE_LOG.md updated
 
 ## Task A2D: Move client and mock to the v0.9.2 reference contract
-Branch: feat/fe-a-a2d-contract-v092 | Date: 25 Oct | Estimate: 1.5 h | Depends on: A00b | Status: not started
-- [ ] A2D.1 Types and client from the reference YAML: `item()` returns `{ data, etag }`; `edit()` and `transition()` take `ifMatch`; 412/428 as their own error kinds; `GET /catalog/hold-reasons?holdType=`; transition carries `holdType`/`holdReasonCode`; PATCH/create `unitPrice`; `canEditPrice`, `canEditBillability`, `etag`; canonical field types; answer carriers (Q-B16).
-- [ ] A2D.2 Mock: ETag per item, If-Match checks (412/428, plus `?fail=412`), On Hold only through a transition with type + reason, the four "Demo only" hold reasons from the package fixture, a labelled mock contract price (G9) and zero-total 422 `ZERO_CHARGE_REASON_REQUIRED`, quantity > 0 with decimals, Bill To endpoints never called with mocks off.
-- [ ] A2D.3 A6R form: answers through one conversion function in the reference format, canonical types, quantity 1 on create, edit with If-Match and a 412 banner that keeps the user's edits. Tests updated; `npm run verify`.
-- [ ] AI_USAGE_LOG.md updated
+Branch: feat/fe-a-a2d-contract-v092 | Date: 25 Oct | Estimate: 1.5 h | Depends on: A00b | Status: ready for review
+- [x] A2D.1 Types and client from the reference YAML: `item()` returns `{ data, etag }`; `edit()` and `transition()` take `ifMatch`; 412/428 as their own error kinds; `GET /catalog/hold-reasons?holdType=`; transition carries `holdType`/`holdReasonCode`; PATCH/create `unitPrice`; `canEditPrice`, `canEditBillability`, `etag`; canonical field types; answer carriers (Q-B16).
+- [x] A2D.2 Mock: ETag per item, If-Match checks (412/428, plus `?fail=412`), On Hold only through a transition with type + reason, the four "Demo only" hold reasons from the package fixture, a labelled mock contract price (G9) and zero-total 422 `ZERO_CHARGE_REASON_REQUIRED`, quantity > 0 with decimals, Bill To endpoints never called with mocks off.
+- [x] A2D.3 A6R form: answers through one conversion function in the reference format, canonical types, quantity 1 on create, edit with If-Match and a 412 banner that keeps the user's edits. Tests updated; `npm run verify`.
+- [x] AI_USAGE_LOG.md updated
 
 ## Task A7R: Service instance detail, staff fields, transitions, history, independence
 Branch: feat/fe-a-a07r-instance-detail | Date: 25/26 Oct | Estimate: 4.0 h (includes A9R; +1 h for v0.9.2.2) | Depends on: A2D | Status: not started
@@ -150,6 +150,7 @@ Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: 1.0 h | Depends on:
 | A2R | merged | client, mock adapter, status mapper, Vitest (39 tests) |
 | A2C | merged | types, client lookups and mock on v1; 50 tests |
 | A6R | merged | Biomodel 15 + Conversion 11 Connect controls; create/edit; 67 tests |
-| A00b | ready for review | package v0.9.2.2 adopted in docs; 12 h plan |
-| A2D, A7R (+A9R), A8R, A11, A5R, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
+| A00b | merged | package v0.9.2.2 adopted in docs; 12 h plan |
+| A2D | ready for review | reference contract v0.9.2 in client, mock and form; 80 tests |
+| A7R (+A9R), A8R, A11, A5R, A4, A12-A14 | not started | 16 h incl. A00; hours are written by the developer |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

@@ -1,11 +1,12 @@
 /**
  * New CP API client: the only place that calls `fetch`.
  *
- * Paths, verbs, headers and query parameters follow the v1 contract
- * (docs/openapi/newcp-v1.openapi.yaml); the structure was ported from the
- * package's typed client (v0.9, archival). Response types: ./types. No token is stored here; the caller supplies a token
- * source. Response bodies are trusted to match the contract at this one
- * boundary; contract drift shows up in the typed adapter and its tests.
+ * Paths, verbs, headers and query parameters follow the reference contract
+ * (package v0.9.2, references/f07/integration/newcp-demo-f07.openapi.yaml)
+ * and its typed starter client. Q-B8: reading one item returns its ETag;
+ * PATCH and transitions send it back as If-Match and return the new one.
+ * No token is stored here; the caller supplies a token source. Response
+ * bodies are trusted to match the contract at this one boundary.
  */
 
 import { ApiError, asProblem } from './apiError';
@@ -16,13 +17,13 @@ import type {
   CreateServiceItem,
   FormDefinition,
   HistoryEvent,
-  HoldReason,
+  HoldReasonOption,
   HoldType,
   PatchServiceItem,
   ServiceItem,
   TransitionRequest,
   TransitionResult,
-  ZeroChargeReason,
+  WithVersion,
 } from './types';
 
 export type TokenSource = () => Promise<string> | string;
@@ -34,6 +35,7 @@ export interface RequestOptions {
 export interface NewCpClient {
   catalog(categoryCode?: string, options?: RequestOptions): Promise<CatalogService[]>;
   formSchema(serviceUuid: string, options?: RequestOptions): Promise<FormDefinition>;
+  holdReasons(holdType: HoldType, options?: RequestOptions): Promise<HoldReasonOption[]>;
   eligibleBilledParties(orderUuid: string, options?: RequestOptions): Promise<BilledPartyChoice[]>;
   orderItems(orderUuid: string, options?: RequestOptions): Promise<ServiceItem[]>;
   create(
@@ -42,17 +44,49 @@ export interface NewCpClient {
     idempotencyKey?: string,
     options?: RequestOptions,
   ): Promise<ServiceItem>;
-  item(serviceItemUuid: string, options?: RequestOptions): Promise<ServiceItem>;
-  edit(serviceItemUuid: string, patch: PatchServiceItem, options?: RequestOptions): Promise<ServiceItem>;
+  item(serviceItemUuid: string, options?: RequestOptions): Promise<WithVersion<ServiceItem>>;
+  edit(
+    serviceItemUuid: string,
+    patch: PatchServiceItem,
+    ifMatch: string,
+    options?: RequestOptions,
+  ): Promise<WithVersion<ServiceItem>>;
   availableTransitions(serviceItemUuid: string, options?: RequestOptions): Promise<AvailableTransition[]>;
   transition(
     serviceItemUuid: string,
     request: TransitionRequest,
+    ifMatch: string,
     options?: RequestOptions,
-  ): Promise<TransitionResult>;
+  ): Promise<WithVersion<TransitionResult>>;
   history(serviceItemUuid: string, options?: RequestOptions): Promise<HistoryEvent[]>;
-  zeroChargeReasons(options?: RequestOptions): Promise<ZeroChargeReason[]>;
-  holdReasons(holdType?: HoldType, options?: RequestOptions): Promise<HoldReason[]>;
+}
+
+/**
+ * The app never sends a write without the version it edited (a 428 would be
+ * our bug). Rejects, like every other failure, instead of throwing.
+ */
+function withIfMatch<T>(ifMatch: string, run: () => Promise<T>): Promise<T> {
+  if (ifMatch.trim() === '') {
+    return Promise.reject(
+      new ApiError(
+        0,
+        { code: 'client.if_match_missing', message: 'The service version is missing. Reload and try again.' },
+        'preconditionRequired',
+      ),
+    );
+  }
+  return run();
+}
+
+function etagFrom(response: Response, body: unknown): string {
+  const header = response.headers.get('ETag');
+  if (header) return header;
+  // Q-B19: the header may not be exposed through CORS; the body copy is the fallback.
+  if (typeof body === 'object' && body !== null) {
+    const etag = (body as Record<string, unknown>).etag;
+    if (typeof etag === 'string' && etag !== '') return etag;
+  }
+  throw new ApiError(0, { code: 'client.missing_etag', message: 'The server did not send the service version (ETag).' }, 'server');
 }
 
 export function createNewCpClient(
@@ -63,7 +97,7 @@ export function createNewCpClient(
   const root = baseUrl.replace(/\/$/, '');
   const esc = encodeURIComponent;
 
-  async function invoke<T>(path: string, init: RequestInit = {}): Promise<T> {
+  async function send(path: string, init: RequestInit = {}): Promise<{ response: Response; body: unknown }> {
     const token = await tokenSource();
     const headers = new Headers(init.headers);
     headers.set('Authorization', `Bearer ${token}`);
@@ -81,7 +115,16 @@ export function createNewCpClient(
 
     const body: unknown = await response.json().catch(() => null);
     if (!response.ok) throw new ApiError(response.status, asProblem(body));
-    return body as T;
+    return { response, body };
+  }
+
+  async function invoke<T>(path: string, init: RequestInit = {}): Promise<T> {
+    return (await send(path, init)).body as T;
+  }
+
+  async function versioned<T>(path: string, init: RequestInit = {}): Promise<WithVersion<T>> {
+    const { response, body } = await send(path, init);
+    return { data: body as T, etag: etagFrom(response, body) };
   }
 
   return {
@@ -92,6 +135,8 @@ export function createNewCpClient(
       ),
     formSchema: (serviceUuid, options) =>
       invoke(`/api/v1/catalog/services/${esc(serviceUuid)}/form-schema`, { signal: options?.signal }),
+    holdReasons: (holdType, options) =>
+      invoke(`/api/v1/catalog/hold-reasons?holdType=${esc(holdType)}`, { signal: options?.signal }),
     eligibleBilledParties: (orderUuid, options) =>
       invoke(`/api/v1/orders/${esc(orderUuid)}/eligible-billed-parties`, { signal: options?.signal }),
     orderItems: (orderUuid, options) =>
@@ -104,30 +149,30 @@ export function createNewCpClient(
         signal: options?.signal,
       }),
     item: (serviceItemUuid, options) =>
-      invoke(`/api/v1/services/${esc(serviceItemUuid)}`, { signal: options?.signal }),
-    edit: (serviceItemUuid, patch, options) =>
-      invoke(`/api/v1/services/${esc(serviceItemUuid)}`, {
-        method: 'PATCH',
-        body: JSON.stringify(patch),
-        signal: options?.signal,
-      }),
+      versioned(`/api/v1/services/${esc(serviceItemUuid)}`, { signal: options?.signal }),
+    edit: (serviceItemUuid, patch, ifMatch, options) =>
+      withIfMatch(ifMatch, () =>
+        versioned(`/api/v1/services/${esc(serviceItemUuid)}`, {
+          method: 'PATCH',
+          headers: { 'If-Match': ifMatch },
+          body: JSON.stringify(patch),
+          signal: options?.signal,
+        }),
+      ),
     availableTransitions: (serviceItemUuid, options) =>
       invoke(`/api/v1/services/${esc(serviceItemUuid)}/available-transitions`, {
         signal: options?.signal,
       }),
-    transition: (serviceItemUuid, request, options) =>
-      invoke(`/api/v1/services/${esc(serviceItemUuid)}/transitions`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-        signal: options?.signal,
-      }),
+    transition: (serviceItemUuid, request, ifMatch, options) =>
+      withIfMatch(ifMatch, () =>
+        versioned(`/api/v1/services/${esc(serviceItemUuid)}/transitions`, {
+          method: 'POST',
+          headers: { 'If-Match': ifMatch },
+          body: JSON.stringify(request),
+          signal: options?.signal,
+        }),
+      ),
     history: (serviceItemUuid, options) =>
       invoke(`/api/v1/services/${esc(serviceItemUuid)}/history`, { signal: options?.signal }),
-    zeroChargeReasons: (options) =>
-      invoke('/api/v1/lookups/zero-charge-reasons', { signal: options?.signal }),
-    holdReasons: (holdType, options) =>
-      invoke(`/api/v1/lookups/hold-reasons${holdType ? `?holdType=${esc(holdType)}` : ''}`, {
-        signal: options?.signal,
-      }),
   };
 }

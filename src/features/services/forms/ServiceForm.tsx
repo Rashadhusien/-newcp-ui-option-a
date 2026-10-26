@@ -6,6 +6,10 @@
  *   same type on one order); one Idempotency-Key per form, so a retried
  *   submit can't create a duplicate, while a second intentional create
  *   (a new form) gets a new key.
+ * - Create sends quantity 1 (demo default, Q-B13).
+ * - Edit sends the version it loaded as If-Match (Q-B8). On 412 the user's
+ *   edits stay in the form and a banner offers to reload the latest
+ *   version (which replaces them); nothing was saved.
  * - Success is shown only after the API returned the saved item.
  * - A 422 naming a field (`details.field`) is shown on that field; any other
  *   error is shown above the form and nothing is saved.
@@ -25,6 +29,7 @@ import {
   type FormDefinition,
   type ServiceItem,
 } from '@/shared/api';
+import Alert from '@mui/material/Alert';
 import { AppButton } from '@/shared/components/basic';
 import { LeavePageDialog } from '@/shared/components/composite';
 import { ErrorSummary, InlineAlert, useToast } from '@/shared/components/feedback';
@@ -37,6 +42,7 @@ import {
   keyForServerField,
   resolveFields,
   toAnswers,
+  unsupportedFields,
   warnings,
 } from './formLogic';
 import type { FormSpec, FormValues } from './formSpecs';
@@ -47,7 +53,11 @@ export interface ServiceFormProps {
   definition: FormDefinition;
   /** null = create on `orderUuid`. */
   item: ServiceItem | null;
+  /** Version of `item` from its ETag; null when creating. */
+  etag: string | null;
   orderUuid: string;
+  /** Reloads the item from the server (used after a 412). */
+  onReload: () => void;
 }
 
 function newIdempotencyKey(): string {
@@ -60,7 +70,7 @@ function focusField(key: string): void {
   wrapper?.querySelector<HTMLElement>('input:not([type="hidden"]), textarea, [role="combobox"]')?.focus();
 }
 
-export function ServiceForm({ spec, definition, item, orderUuid }: ServiceFormProps) {
+export function ServiceForm({ spec, definition, item, etag, orderUuid, onReload }: ServiceFormProps) {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const fields = useMemo(() => resolveFields(spec, definition), [spec, definition]);
@@ -68,6 +78,9 @@ export function ServiceForm({ spec, definition, item, orderUuid }: ServiceFormPr
   const [attempt, setAttempt] = useState(0);
   const [serverError, setServerError] = useState<string | null>(null);
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
+  const [version, setVersion] = useState(etag);
+  const [stale, setStale] = useState(false);
+  const unsupported = useMemo(() => unsupportedFields(spec, definition), [spec, definition]);
 
   const form = useForm<FormValues>({
     defaultValues: initialValues(fields, item?.answers),
@@ -91,12 +104,13 @@ export function ServiceForm({ spec, definition, item, orderUuid }: ServiceFormPr
   const submit = handleSubmit(
     async (submitted) => {
       setServerError(null);
+      setStale(false);
       const answers = toAnswers(fields, submitted);
       try {
         if (item === null) {
           const created = await serviceApi.create(
             orderUuid,
-            { sellableItemUuid: definition.service.uuid, answers },
+            { sellableItemUuid: definition.service.uuid, answers, quantity: 1 },
             idempotencyKey,
           );
           reset(initialValues(fields, created.answers));
@@ -105,14 +119,19 @@ export function ServiceForm({ spec, definition, item, orderUuid }: ServiceFormPr
           });
           setLeaveTo(ROUTES.serviceEdit(created.uuid));
         } else {
-          const saved = await serviceApi.edit(item.uuid, { answers });
-          reset(initialValues(fields, saved.answers));
+          const saved = await serviceApi.edit(item.uuid, { answers }, version ?? '');
+          setVersion(saved.etag);
+          reset(initialValues(fields, saved.data.answers));
           showToast(`${definition.service.name} service saved.`, { severity: 'success' });
         }
       } catch (error: unknown) {
         setAttempt((value) => value + 1);
         if (!isApiError(error)) {
           setServerError('Something went wrong. Nothing was saved. Try again.');
+          return;
+        }
+        if (error.kind === 'stale') {
+          setStale(true);
           return;
         }
         const fieldKey = error.kind === 'validation' ? keyForServerField(fields, error.problem?.details?.field) : undefined;
@@ -139,6 +158,24 @@ export function ServiceForm({ spec, definition, item, orderUuid }: ServiceFormPr
       sx={{ display: 'grid', gap: 3 }}
     >
       {definition.evidence !== undefined && <InlineAlert severity="info">{definition.evidence}</InlineAlert>}
+      {unsupported.length > 0 && (
+        <InlineAlert severity="info">
+          {`Not editable in this demo: ${unsupported.map((field) => field.label).join(', ')}.`}
+        </InlineAlert>
+      )}
+      {stale && (
+        <Alert
+          severity="warning"
+          action={
+            <AppButton variant="text" onClick={onReload}>
+              Reload latest
+            </AppButton>
+          }
+        >
+          Someone else changed this service since you opened it, so nothing was saved. Your edits are still in the
+          form. Reload latest to see their version (your edits will be replaced).
+        </Alert>
+      )}
       {serverError !== null && <InlineAlert severity="error">{serverError}</InlineAlert>}
       <ErrorSummary items={summary} attempt={attempt} onSelect={focusField} />
       <ServiceFormFields

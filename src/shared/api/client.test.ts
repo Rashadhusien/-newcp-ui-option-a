@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from './apiError';
 import { createNewCpClient } from './client';
 
-function jsonResponse(status: number, body: unknown): Response {
+function jsonResponse(status: number, body: unknown, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 }
 
@@ -46,12 +46,18 @@ describe('createNewCpClient', () => {
     expect(JSON.parse(body)).toEqual({ sellableItemUuid: 's', answers: [] });
   });
 
-  it('sends a transition as { transitionId }', async () => {
-    const { client, fetchImpl } = setup(jsonResponse(200, {}));
-    await client.transition('i', { transitionId: 7 });
-    const { url, body } = requestOf(fetchImpl);
+  it('sends a transition with If-Match, including hold details, and returns the new ETag', async () => {
+    const { client, fetchImpl } = setup(jsonResponse(200, {}, { ETag: '"rev-3"' }));
+    const result = await client.transition(
+      'i',
+      { transitionId: 7, holdType: 'customer', holdReasonCode: 'R' },
+      '"rev-2"',
+    );
+    const { url, body, headers } = requestOf(fetchImpl);
     expect(url).toBe('https://api.example.test/api/v1/services/i/transitions');
-    expect(JSON.parse(body)).toEqual({ transitionId: 7 });
+    expect(headers.get('If-Match')).toBe('"rev-2"');
+    expect(JSON.parse(body)).toEqual({ transitionId: 7, holdType: 'customer', holdReasonCode: 'R' });
+    expect(result.etag).toBe('"rev-3"');
   });
 
   it('rejects with ApiError carrying the Problem body', async () => {
@@ -67,21 +73,40 @@ describe('createNewCpClient', () => {
   });
 });
 
-describe('createNewCpClient lookups (v1)', () => {
-  it('calls the zero-charge reasons lookup', async () => {
+describe('createNewCpClient: reference contract v0.9.2', () => {
+  it('reads hold reasons for one hold type', async () => {
     const { client, fetchImpl } = setup(jsonResponse(200, []));
-    await client.zeroChargeReasons();
-    expect(requestOf(fetchImpl).url).toBe('https://api.example.test/api/v1/lookups/zero-charge-reasons');
+    await client.holdReasons('internal');
+    expect(requestOf(fetchImpl).url).toBe('https://api.example.test/api/v1/catalog/hold-reasons?holdType=internal');
   });
 
-  it('filters hold reasons by hold type only when one is given', async () => {
-    const filtered = setup(jsonResponse(200, []));
-    await filtered.client.holdReasons('internal');
-    expect(requestOf(filtered.fetchImpl).url).toBe(
-      'https://api.example.test/api/v1/lookups/hold-reasons?holdType=internal',
-    );
-    const all = setup(jsonResponse(200, []));
-    await all.client.holdReasons();
-    expect(requestOf(all.fetchImpl).url).toBe('https://api.example.test/api/v1/lookups/hold-reasons');
+  it('returns an item with its ETag header, falling back to the body copy', async () => {
+    const header = setup(jsonResponse(200, { uuid: 'i' }, { ETag: '"rev-1"' }));
+    expect(await header.client.item('i')).toEqual({ data: { uuid: 'i' }, etag: '"rev-1"' });
+    const body = setup(jsonResponse(200, { uuid: 'i', etag: '"rev-9"' }));
+    expect((await body.client.item('i')).etag).toBe('"rev-9"');
+  });
+
+  it('fails clearly when the server sends no version at all', async () => {
+    const { client } = setup(jsonResponse(200, { uuid: 'i' }));
+    await expect(client.item('i')).rejects.toMatchObject({ kind: 'server' });
+  });
+
+  it('sends PATCH with If-Match and refuses to send without one', async () => {
+    const { client, fetchImpl } = setup(jsonResponse(200, { uuid: 'i' }, { ETag: '"rev-2"' }));
+    const saved = await client.edit('i', { unitPrice: '18.00' }, '"rev-1"');
+    expect(requestOf(fetchImpl).headers.get('If-Match')).toBe('"rev-1"');
+    expect(saved.etag).toBe('"rev-2"');
+    await expect(client.edit('i', { unitPrice: '18.00' }, '')).rejects.toMatchObject({ kind: 'preconditionRequired' });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('maps 412 to stale and 428 to preconditionRequired', async () => {
+    const stale = setup(jsonResponse(412, { code: 'stale', message: 'Changed.' }));
+    await expect(stale.client.edit('i', { isBillable: false }, '"rev-1"')).rejects.toMatchObject({ kind: 'stale' });
+    const missing = setup(jsonResponse(428, null));
+    await expect(missing.client.transition('i', { transitionId: 1 }, '"x"')).rejects.toMatchObject({
+      kind: 'preconditionRequired',
+    });
   });
 });

@@ -53,7 +53,7 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
     );
   }
 
-  const { definition, item } = data;
+  const { definition, item, etag } = data;
   const spec = specForService(definition.service.code);
   const orderUuid = item?.orderUuid ?? (target.mode === 'create' ? target.orderUuid : '');
   const title =
@@ -81,11 +81,13 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
     <>
       <PageHeader title={title} description={description} />
       <ServiceForm
-        key={item?.uuid ?? 'new'}
+        key={`${item?.uuid ?? 'new'}|${etag ?? ''}`}
         spec={spec}
         definition={definition}
         item={item}
+        etag={etag}
         orderUuid={orderUuid}
+        onReload={retry}
       />
     </>
   );

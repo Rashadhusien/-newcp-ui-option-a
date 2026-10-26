@@ -40,3 +40,6 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-24 | A00b | `test_f07_contract.py`, `v07/tests/test_static_contract.py` | NOT RUN | Python `jsonschema` not installed; installing needs approval. |
 | 2026-10-24 | A00b | Local package copy equals v0.9.2.2 (`diff -rq` empty, no stale files) | pass | Git-ignored; v0.9 kept in `payload-v0.9/`. |
 | 2026-10-24 | A00b | `npm run verify` | pass | 67 tests; first run failed on a flaky A6R focus assertion (D-48), fixed; then 8/8 full-suite runs pass. |
+| 2026-10-25 | A2D | `npm run verify` | pass | 9 files, 80 tests: client ETag/If-Match/412/428, hold lookup; mock acceptance cases from the v0.9.2 rollout guide (stale edit, missing If-Match, hold without type/reason, $20 -> $18 override kept, zero total needs a reason, Billable and Bill To independent, locks); adapter blocks Bill To and strips the payer with mocks off; form 412 banner keeps edits. |
+| 2026-10-25 | A2D | Browser: two consecutive edit saves on a fixture service both succeed, no console errors | pass | Mock; shows the form uses the new version after each save. |
+| 2026-10-25 | A2D | Real API with ETag/If-Match | NOT RUN | No backend (R08); no token until A4. |
