@@ -49,3 +49,27 @@ describe('ApiError', () => {
     expect(ApiError.network().status).toBe(0);
   });
 });
+
+describe('IAM error envelope and codes (v0.9.7, D-52)', () => {
+  it('reads the IAM envelope as well as the flat Problem', () => {
+    expect(
+      asProblem({ error: { code: 'PERMISSION_DENIED', message: 'No access', requestId: 'req-1', details: {} } }),
+    ).toEqual({ code: 'PERMISSION_DENIED', message: 'No access', requestId: 'req-1', details: {} });
+  });
+
+  it.each(['ACCESS_NOT_ASSIGNED', 'TENANT_NOT_ASSIGNED'])('maps 403 %s to Pending Access', (code) => {
+    const error = new ApiError(403, { code, message: 'Pending' });
+    expect(error.kind).toBe('accessNotAssigned');
+    expect(error.code).toBe(code);
+  });
+
+  it('keeps other 403 codes as forbidden', () => {
+    expect(new ApiError(403, { code: 'PERMISSION_DENIED', message: 'm' }).kind).toBe('forbidden');
+    expect(new ApiError(403, { code: 'TENANT_ACCESS_DENIED', message: 'm' }).kind).toBe('forbidden');
+    expect(new ApiError(403, null).kind).toBe('forbidden');
+  });
+
+  it('never maps a Pending code on another status', () => {
+    expect(kindFromStatus(401, 'ACCESS_NOT_ASSIGNED')).toBe('unauthorized');
+  });
+});

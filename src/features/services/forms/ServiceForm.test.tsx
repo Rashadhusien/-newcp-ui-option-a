@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ApiError, type CatalogService, type ServiceItem } from '@/shared/api';
 import { ToastProvider } from '@/shared/components/feedback';
 import { MOCK_ORDER_UUID, MOCK_SERVICE_ITEMS } from '@/mocks/serviceFixtures';
+import { chooseMockIdentity, clearMockIdentity } from '@/shared/lib/session';
 import { serviceApi } from '../data/serviceApi';
 import { BIOMODEL_SPEC } from './formSpecs';
 import { mockFormDefinition } from './mockFormDefinition';
@@ -15,6 +16,14 @@ const BIOMODEL: CatalogService = {
   name: 'Biomodel',
   itemKind: 'service',
 };
+
+// The mock checks access like the server (IAM v0.9.7): sign in as a clerk with service rights.
+beforeAll(() => {
+  chooseMockIdentity('CS');
+});
+afterAll(() => {
+  clearMockIdentity();
+});
 
 function renderForm(item: ServiceItem | null = null, etag: string | null = null, onReload = vi.fn()) {
   const definition = mockFormDefinition(BIOMODEL, BIOMODEL_SPEC);

@@ -1,6 +1,7 @@
 /**
- * Header bar: navigation toggle, color mode (Light / Dark / System,
- * persisted by MUI), and the account menu.
+ * Header bar: navigation toggle, data source (MOCK / INTEGRATED), the
+ * read-only active tenant, color mode (Light / Dark / System, persisted by
+ * MUI), and the account menu.
  */
 
 import { useState } from 'react';
@@ -20,6 +21,8 @@ import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
 import { evidenceOf, readApiConfig } from '@/shared/api';
 import { EvidenceBadge } from '@/shared/components/feedback/EvidenceBadge';
+import { TenantBadge } from '@/shared/components/feedback/TenantBadge';
+import { useSession } from '@/shared/hooks/useSession';
 import { UserMenu } from './UserMenu';
 
 const EVIDENCE = evidenceOf(readApiConfig());
@@ -41,6 +44,7 @@ interface HeaderProps {
 export function Header({ onMenuClick, navigationExpanded }: HeaderProps) {
   const { mode, setMode } = useColorScheme();
   const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
+  const tenant = useSession().context?.activeTenant ?? null;
 
   const activeTheme: ThemeMode =
     mode === 'light' || mode === 'dark' || mode === 'system' ? mode : 'system';
@@ -69,6 +73,7 @@ export function Header({ onMenuClick, navigationExpanded }: HeaderProps) {
         <Box sx={{ flexGrow: 1 }} />
 
         <EvidenceBadge evidence={EVIDENCE} />
+        {tenant && <TenantBadge tenant={tenant} />}
 
         <Tooltip title={`Color mode: ${activeOption?.label ?? 'System'}`}>
           <IconButton

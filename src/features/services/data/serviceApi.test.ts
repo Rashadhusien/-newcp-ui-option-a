@@ -40,3 +40,26 @@ describe('service adapter: Bill To with the real API (D-44, F07 absent)', () => 
     await expect(createServiceApi(REAL, () => 'token').zeroChargeReasons()).rejects.toMatchObject({ kind: 'blocked' });
   });
 });
+
+describe('service adapter: never sends a tenant (IAM v0.9.7, TEN-05/06/28)', () => {
+  it('puts no tenant in any header, query or body', async () => {
+    const fetchSpy = vi.fn<typeof fetch>(() =>
+      Promise.resolve(new Response('{}', { status: 200, headers: { ETag: '"rev-2"' } })),
+    );
+    vi.stubGlobal('fetch', fetchSpy);
+    const api = createServiceApi(REAL, () => 'token');
+    await api.orderItems('o');
+    await api.create('o', { sellableItemUuid: 's', answers: [] });
+    await api.edit('i', { unitPrice: '18.00' }, '"rev-1"');
+    await api.transition('i', { transitionId: 1, holdType: 'internal', holdReasonCode: 'R' }, '"rev-1"');
+    expect(fetchSpy).toHaveBeenCalledTimes(4);
+    for (const [input, init] of fetchSpy.mock.calls) {
+      const url = input instanceof Request ? input.url : input.toString();
+      const headers = new Headers(init?.headers);
+      const body = typeof init?.body === 'string' ? init.body : '';
+      expect(url.toLowerCase()).not.toContain('tenant');
+      expect(body.toLowerCase()).not.toContain('tenant');
+      expect([...headers.keys()].some((name) => name.includes('tenant'))).toBe(false);
+    }
+  });
+});

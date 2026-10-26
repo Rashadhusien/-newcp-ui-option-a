@@ -41,10 +41,10 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
       <>
         <PageHeader title="Service" />
         <ErrorState
-          title={kind === 'notFound' ? 'Service not found' : kind === 'forbidden' ? 'No access' : 'Could not load the form'}
+          title={kind === 'notFound' ? 'Service not available' : kind === 'forbidden' ? 'No access' : 'Could not load the form'}
           message={
             kind === 'notFound'
-              ? 'This service does not exist, or you do not have access to it.'
+              ? 'This service is not available.'
               : (data.error?.message ?? 'Something went wrong. Try again.')
           }
           onRetry={denied ? undefined : retry}

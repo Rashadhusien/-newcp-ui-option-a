@@ -24,6 +24,8 @@ import Typography from '@mui/material/Typography';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import { ROUTES } from '@/app/routes';
 import { layoutTokens } from '@/theme/tokens';
+import { can } from '@/shared/api';
+import { useSession } from '@/shared/hooks/useSession';
 import { NAV_GROUPS, type NavEntry } from './navigation';
 
 const SIDEBAR_WIDTH = layoutTokens.sidebarWidth;
@@ -43,6 +45,11 @@ interface SidebarContentProps {
 
 function SidebarContent({ rail, onNavigate }: SidebarContentProps) {
   const { pathname } = useLocation();
+  const { context } = useSession();
+  const groups = NAV_GROUPS.map((group) => ({
+    ...group,
+    entries: group.entries.filter((entry) => entry.capability === undefined || can(context, entry.capability)),
+  })).filter((group) => group.entries.length > 0);
 
   const renderEntry = (entry: NavEntry) => {
     const active = isActivePath(pathname, entry.to);
@@ -111,7 +118,7 @@ function SidebarContent({ rail, onNavigate }: SidebarContentProps) {
       </Toolbar>
       <Divider />
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', py: 1 }}>
-        {NAV_GROUPS.map((group, index) => (
+        {groups.map((group, index) => (
           <Box component="section" key={group.label} aria-label={group.label}>
             {rail ? (
               index > 0 && <Divider sx={{ mx: 2, my: 1 }} />

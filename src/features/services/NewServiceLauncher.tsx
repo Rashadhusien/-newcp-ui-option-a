@@ -23,7 +23,7 @@ export interface NewServiceLauncherProps {
 
 type CatalogState =
   | { status: 'loading' }
-  | { status: 'error'; message: string }
+  | { status: 'error'; message: string; denied: boolean }
   | { status: 'ready'; service: CatalogService | null };
 
 export function NewServiceLauncher({ formKey }: NewServiceLauncherProps) {
@@ -41,7 +41,12 @@ export function NewServiceLauncher({ formKey }: NewServiceLauncherProps) {
       },
       (error: unknown) => {
         if (controller.signal.aborted) return;
-        setState({ status: 'error', message: isApiError(error) ? error.message : 'Could not load the catalog.' });
+        setState({
+          status: 'error',
+          message: isApiError(error) ? error.message : 'Could not load the catalog.',
+          // A 403 is the server's decision: retrying cannot change it.
+          denied: isApiError(error) && error.kind === 'forbidden',
+        });
       },
     );
     return () => {
@@ -53,12 +58,16 @@ export function NewServiceLauncher({ formKey }: NewServiceLauncherProps) {
   if (state.status === 'error') {
     return (
       <ErrorState
-        title="Could not load the catalog"
+        title={state.denied ? 'No access' : 'Could not load the catalog'}
         message={state.message}
-        onRetry={() => {
-          setState({ status: 'loading' });
-          setAttempt((value) => value + 1);
-        }}
+        onRetry={
+          state.denied
+            ? undefined
+            : () => {
+                setState({ status: 'loading' });
+                setAttempt((value) => value + 1);
+              }
+        }
       />
     );
   }

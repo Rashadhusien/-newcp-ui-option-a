@@ -97,12 +97,12 @@ Branch: docs/fe-a-a00c-adopt-v097-iam | Date: 26 Oct | Estimate: 0.25 h | Depend
 - [x] AI_USAGE_LOG.md updated
 
 ## Task A15: Session context, access states, IAM errors, capability gating (replaces A4)
-Branch: feat/fe-a-a15-session-access | Date: 27 Oct | Estimate: 1.5 h | Depends on: A00c | Status: not started
-- [ ] A15.1 Errors: `asProblem` accepts the flat Problem and `{error:{...}}`; `ApiError` keeps `code`; kind `accessNotAssigned` for 403 `ACCESS_NOT_ASSIGNED`/`TENANT_NOT_ASSIGNED`; other 403 stay `forbidden`; 404 text generic (no existence leak).
-- [ ] A15.2 Session: `src/mocks/sessionFixtures.ts` (CS, OPS, ADMIN, FINANCE, QC, PENDING; synthetic UUIDs, tenant label "Demo tenant (mock)", capabilities from ROLE_CAPABILITY_MATRIX, CANDIDATE_UNVERIFIED); a session provider holding the context in memory, loaded on app start and refreshed after a 403; with mocks off the context is BLOCKED (endpoint not in the OpenAPI, Q-B20). Replaces the localStorage flag in `session.ts`.
-- [ ] A15.3 UI: AUTHORIZED -> workspace with a read-only tenant badge; PENDING -> Pending Access page with no features; 401 -> sign-in keeping only a safe in-app path; mock identity picker on the sign-in page only when evidence is MOCK.
-- [ ] A15.4 Gating and mock enforcement: `can(context, code)` for nav and actions (FINANCE/QC: Reporting only); the mock returns 403 `ACCESS_NOT_ASSIGNED` for PENDING and 403 `PERMISSION_DENIED` for actions the role lacks; no export control (D-54). Tests: both envelopes, Pending/denied routing, no `tenantId`/`X-Tenant-Id` ever sent, picker absent with mocks off.
-- [ ] AI_USAGE_LOG.md updated
+Branch: feat/fe-a-a15-session-access | Date: 27 Oct | Estimate: 1.5 h | Depends on: A00c | Status: ready for review
+- [x] A15.1 Errors: `asProblem` accepts the flat Problem and `{error:{...}}`; `ApiError` keeps `code`; kind `accessNotAssigned` for 403 `ACCESS_NOT_ASSIGNED`/`TENANT_NOT_ASSIGNED`; other 403 stay `forbidden`; 404 text generic (no existence leak).
+- [x] A15.2 Session: `src/mocks/sessionFixtures.ts` (CS, OPS, ADMIN, FINANCE, QC, PENDING; synthetic UUIDs, tenant label "Demo tenant (mock)", capabilities from ROLE_CAPABILITY_MATRIX, CANDIDATE_UNVERIFIED); a session provider holding the context in memory, loaded on app start and refreshed after a 403; with mocks off the context is BLOCKED (endpoint not in the OpenAPI, Q-B20). Replaces the localStorage flag in `session.ts`.
+- [x] A15.3 UI: AUTHORIZED -> workspace with a read-only tenant badge; PENDING -> Pending Access page with no features; 401 -> sign-in keeping only a safe in-app path; mock identity picker on the sign-in page only when evidence is MOCK.
+- [x] A15.4 Gating and mock enforcement: `can(context, code)` for nav and actions (FINANCE/QC: Reporting only); the mock returns 403 `ACCESS_NOT_ASSIGNED` for PENDING and 403 `PERMISSION_DENIED` for actions the role lacks; no export control (D-54). Tests: both envelopes, Pending/denied routing, no `tenantId`/`X-Tenant-Id` ever sent, picker absent with mocks off.
+- [x] AI_USAGE_LOG.md updated
 
 ## Task A7R: Service instance detail, staff fields, transitions, history, independence
 Branch: feat/fe-a-a07r-instance-detail | Date: 27 Oct | Estimate: **1.75 h (A7R-lite, 26 Oct)**, was 4.0 h | Depends on: A15 | Status: not started
@@ -167,8 +167,9 @@ A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light)
 | A2C | merged | types, client lookups and mock on v1; 50 tests |
 | A6R | merged | Biomodel 15 + Conversion 11 Connect controls; create/edit; 67 tests |
 | A00b | merged | package v0.9.2.2 adopted in docs; 12 h plan |
-| A2D | ready for review | reference contract v0.9.2 in client, mock and form; 80 tests; pushed, PR not merged yet |
-| A00c | ready for review | v0.9.7 IAM overlay in docs; 4 h plan; stacked on A2D |
-| A15, A7R-lite, A14-lite | not started | 27 Oct, 3.75 h |
+| A2D | merged | reference contract v0.9.2 in client, mock and form; 80 tests |
+| A00c | merged | v0.9.7 IAM overlay in docs; 4 h plan |
+| A15 | ready for review | session context, Pending Access, IAM errors, capability gating, mock access checks; 104 tests |
+| A7R-lite, A14-lite | not started | 27 Oct, 2.25 h |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

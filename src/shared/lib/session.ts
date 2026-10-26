@@ -1,45 +1,95 @@
 /**
- * Mock session placeholder until Google login (A4).
+ * Session source (IAM v0.9.7, D-51).
  *
- * The signed-in flag lives in localStorage; storage access is guarded
- * because private windows or blocked site data can throw, which must read
- * as "signed out" rather than crash the app.
+ * The session context endpoint is not in the reference OpenAPI (Q-B20) and
+ * the auth transport is open (Q-B21), so:
+ * - mock mode: the context is a mock fixture for the identity chosen on the
+ *   sign-in page. The choice lives in sessionStorage (this tab only); it is
+ *   not a token, and nothing else about the session is stored.
+ * - real API: loading the context rejects as BLOCKED; no request is sent.
+ *
+ * Storage access is guarded: private windows or blocked site data can throw,
+ * which must read as "signed out" rather than crash the app.
+ *
+ * Access events: the service adapter reports every 401 and 403 here, so the
+ * session provider can return to sign-in or refresh the context (tenant
+ * spec D1.5) without each page wiring it.
  */
 
-const AUTH_KEY = 'newcp-auth';
+import { ApiError, readApiConfig, type ApiConfig, type ApiErrorKind, type SessionContext } from '@/shared/api';
+import { isMockIdentity, mockSessionContext, type MockIdentity } from '@/mocks/sessionFixtures';
 
-export interface SessionUser {
-  name: string;
-  email: string;
-}
+const IDENTITY_KEY = 'newcp-mock-identity';
 
-// Invented demo identity; never a real person.
-const MOCK_USER: SessionUser = { name: 'Demo User', email: 'demo.user@example.test' };
-
-export function isAuthenticated(): boolean {
+export function mockIdentity(): MockIdentity | null {
   try {
-    return localStorage.getItem(AUTH_KEY) === 'true';
+    const value = sessionStorage.getItem(IDENTITY_KEY);
+    return isMockIdentity(value) ? value : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function getCurrentUser(): SessionUser | null {
-  return isAuthenticated() ? MOCK_USER : null;
-}
-
-export function signIn(): void {
+export function chooseMockIdentity(identity: MockIdentity): void {
   try {
-    localStorage.setItem(AUTH_KEY, 'true');
+    sessionStorage.setItem(IDENTITY_KEY, identity);
   } catch {
-    // Session still proceeds for this page load.
+    // Without storage the choice cannot survive; the sign-in page says so by staying put.
   }
 }
 
-export function signOut(): void {
+export function clearMockIdentity(): void {
   try {
-    localStorage.removeItem(AUTH_KEY);
+    sessionStorage.removeItem(IDENTITY_KEY);
   } catch {
     // Nothing persisted to clear.
   }
+}
+
+export const SESSION_BLOCKED_MESSAGE =
+  'Sign-in is not available yet: the session context endpoint and the sign-in method are not in the API contract (Q-B20, Q-B21).';
+
+/** Resolves the current context; rejects 401 when signed out and `blocked` with the real API. */
+export function loadSessionContext(config: ApiConfig = readApiConfig()): Promise<SessionContext> {
+  if (!config.useMocks) {
+    return Promise.reject(new ApiError(0, { code: 'client.blocked', message: SESSION_BLOCKED_MESSAGE }, 'blocked'));
+  }
+  const identity = mockIdentity();
+  if (identity === null) {
+    return Promise.reject(
+      new ApiError(401, { code: 'AUTHENTICATION_REQUIRED', message: 'Sign in to continue.' }),
+    );
+  }
+  return Promise.resolve(mockSessionContext(identity));
+}
+
+export type AccessEvent = Extract<ApiErrorKind, 'unauthorized' | 'forbidden' | 'accessNotAssigned'>;
+
+const listeners = new Set<(event: AccessEvent) => void>();
+
+export function onAccessEvent(listener: (event: AccessEvent) => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/** Called by the data adapter for every rejected call. */
+export function reportAccessError(error: unknown): void {
+  if (!(error instanceof ApiError)) return;
+  const { kind } = error;
+  if (kind === 'unauthorized' || kind === 'forbidden' || kind === 'accessNotAssigned') {
+    listeners.forEach((listener) => {
+      listener(kind);
+    });
+  }
+}
+
+/**
+ * Only in-app paths survive as a return destination; never an external or
+ * protocol-relative URL (tenant spec D3: "preserve safe destination only").
+ */
+export function safeReturnPath(requested: string | null | undefined, fallback: string): string {
+  if (!requested?.startsWith('/') || requested.startsWith('//') || requested.startsWith('/\\')) return fallback;
+  return requested;
 }

@@ -1,9 +1,9 @@
 /**
- * Header account menu: the current user and sign out.
+ * Header account menu: the signed-in user, roles and tenant from the
+ * session context (display only), and sign out.
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
@@ -14,8 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { getCurrentUser, signOut } from '@/shared/lib/session';
-import { ROUTES } from '@/app/routes';
+import { useSession } from '@/shared/hooks/useSession';
 
 function initialsOf(name: string): string {
   return name
@@ -27,10 +26,11 @@ function initialsOf(name: string): string {
 }
 
 export function UserMenu() {
-  const navigate = useNavigate();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const user = getCurrentUser();
-  if (!user) return null;
+  const { context, signOut } = useSession();
+  if (!context) return null;
+  const user = { name: context.user.displayName };
+  const roles = context.roles.length > 0 ? context.roles.join(', ') : 'No role';
 
   return (
     <>
@@ -66,15 +66,19 @@ export function UserMenu() {
             {user.name}
           </Typography>
           <Typography variant="caption" color="text.secondary" component="p" noWrap>
-            {user.email}
+            Role: {roles}
           </Typography>
+          {context.activeTenant && (
+            <Typography variant="caption" color="text.secondary" component="p" noWrap>
+              Tenant: {context.activeTenant.label}
+            </Typography>
+          )}
         </Box>
         <Divider />
         <MenuItem
           onClick={() => {
             setAnchor(null);
             signOut();
-            void navigate(ROUTES.login, { replace: true });
           }}
         >
           <ListItemIcon>

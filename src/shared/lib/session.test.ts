@@ -1,0 +1,81 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ApiError, can } from '@/shared/api';
+import { MOCK_IDENTITIES, mockSessionContext } from '@/mocks/sessionFixtures';
+import {
+  chooseMockIdentity,
+  clearMockIdentity,
+  loadSessionContext,
+  onAccessEvent,
+  reportAccessError,
+  safeReturnPath,
+} from './session';
+
+const MOCK = { useMocks: true, baseUrl: '' };
+
+afterEach(() => {
+  clearMockIdentity();
+});
+
+describe('session context (IAM v0.9.7, D-51)', () => {
+  it('is signed out (401) until a mock identity is chosen, then returns its context', async () => {
+    await expect(loadSessionContext(MOCK)).rejects.toMatchObject({ kind: 'unauthorized' });
+    chooseMockIdentity('OPS');
+    await expect(loadSessionContext(MOCK)).resolves.toMatchObject({ accessStatus: 'AUTHORIZED', roles: ['OPS'] });
+  });
+
+  it('is BLOCKED with the real API and sends nothing', async () => {
+    const fetchSpy = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchSpy);
+    chooseMockIdentity('CS');
+    await expect(loadSessionContext({ useMocks: false, baseUrl: 'https://api.example.test' })).rejects.toMatchObject({
+      kind: 'blocked',
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it('gives PENDING no tenant, roles or capabilities, and every other identity one read-only tenant', () => {
+    const pending = mockSessionContext('PENDING');
+    expect(pending).toMatchObject({ accessStatus: 'PENDING', activeTenant: null, roles: [], capabilities: [] });
+    for (const identity of MOCK_IDENTITIES.filter((value) => value !== 'PENDING')) {
+      const context = mockSessionContext(identity);
+      expect(context.activeTenant?.label).toContain('mock');
+      expect(context.tenantSwitchingEnabled).toBe(false);
+    }
+  });
+
+  it('follows the capability matrix: everyone views reports, export only FINANCE/QC/ADMIN, no service edits for FINANCE/QC', () => {
+    for (const identity of ['CS', 'OPS', 'ADMIN', 'FINANCE', 'QC'] as const) {
+      expect(can(mockSessionContext(identity), 'reports.view_all')).toBe(true);
+    }
+    expect(['CS', 'OPS', 'ADMIN', 'FINANCE', 'QC'].filter((id) => can(mockSessionContext(id as 'CS'), 'reports.export'))).toEqual([
+      'ADMIN',
+      'FINANCE',
+      'QC',
+    ]);
+    expect(can(mockSessionContext('FINANCE'), 'service.read')).toBe(false);
+    expect(can(mockSessionContext('QC'), 'service.price.override')).toBe(false);
+    expect(can(mockSessionContext('PENDING'), 'reports.view_all')).toBe(false);
+    expect(can(null, 'reports.view_all')).toBe(false);
+  });
+
+  it('reports 401 and 403 to listeners, and ignores other failures', () => {
+    const events: string[] = [];
+    const stop = onAccessEvent((event) => events.push(event));
+    reportAccessError(new ApiError(401, null));
+    reportAccessError(new ApiError(403, { code: 'PERMISSION_DENIED', message: 'm' }));
+    reportAccessError(new ApiError(403, { code: 'ACCESS_NOT_ASSIGNED', message: 'm' }));
+    reportAccessError(new ApiError(409, null));
+    reportAccessError(new Error('not an api error'));
+    stop();
+    reportAccessError(new ApiError(401, null));
+    expect(events).toEqual(['unauthorized', 'forbidden', 'accessNotAssigned']);
+  });
+
+  it('keeps only safe in-app return paths', () => {
+    expect(safeReturnPath('/services/abc/edit?x=1', '/reporting')).toBe('/services/abc/edit?x=1');
+    for (const unsafe of ['https://evil.example', '//evil.example', '/\\evil.example', 'javascript:alert(1)', '', null, undefined]) {
+      expect(safeReturnPath(unsafe, '/reporting')).toBe('/reporting');
+    }
+  });
+});

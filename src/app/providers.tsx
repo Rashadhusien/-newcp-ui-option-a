@@ -1,6 +1,6 @@
 /**
  * Top-level providers: theme (light/dark/system), date pickers, toasts,
- * router.
+ * session context, router.
  */
 
 import { RouterProvider } from 'react-router-dom';
@@ -11,6 +11,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { theme } from '@/theme/theme';
 import { ToastProvider } from '@/shared/components/feedback';
 import { router } from './router';
+import { SessionProvider } from './SessionProvider';
 
 export function Providers() {
   return (
@@ -18,7 +19,9 @@ export function Providers() {
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <ToastProvider>
-          <RouterProvider router={router} />
+          <SessionProvider>
+            <RouterProvider router={router} />
+          </SessionProvider>
         </ToastProvider>
       </LocalizationProvider>
     </ThemeProvider>
