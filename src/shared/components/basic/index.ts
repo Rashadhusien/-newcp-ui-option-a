@@ -9,3 +9,4 @@ export * from './StatusBadge';
 export * from './ToneIcon';
 export * from './AppRadioGroup';
 export * from './AppCheckbox';
+export * from './ThemeModeSwitch';

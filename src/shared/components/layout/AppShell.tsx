@@ -4,8 +4,8 @@
  * Device bands:
  * - mobile (< 640): overlay drawer, opened from the header menu button
  * - tablet (640-1023): icon rail; the menu button opens the full drawer
- * - desktop (>= 1024): full sidebar; the menu button collapses it to the
- *   rail, and the choice is remembered
+ * - desktop (>= 1024): full sidebar, always shown; no menu button (design
+ *   system AppShell). The A1 collapse-to-rail preference is gone.
  */
 
 import { useState } from 'react';
@@ -18,47 +18,19 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { SkipLink } from './SkipLink';
 
-const COLLAPSED_KEY = 'newcp-sidebar-collapsed';
-
-function readCollapsed(): boolean {
-  try {
-    return localStorage.getItem(COLLAPSED_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-function writeCollapsed(value: boolean): void {
-  try {
-    localStorage.setItem(COLLAPSED_KEY, String(value));
-  } catch {
-    // Preference simply isn't remembered.
-  }
-}
-
 export function AppShell() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [overlayOpen, setOverlayOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(readCollapsed);
 
   const closeOverlay = () => {
     setOverlayOpen(false);
   };
 
   const toggleNavigation = () => {
-    if (isDesktop) {
-      setCollapsed((current) => {
-        writeCollapsed(!current);
-        return !current;
-      });
-      return;
-    }
     setOverlayOpen((current) => !current);
   };
-
-  const navigationExpanded = isDesktop ? !collapsed : overlayOpen;
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -66,7 +38,7 @@ export function AppShell() {
       {isMobile ? (
         <Sidebar variant="overlay" open={overlayOpen} onClose={closeOverlay} />
       ) : isDesktop ? (
-        <Sidebar variant={collapsed ? 'rail' : 'full'} open={false} onClose={closeOverlay} />
+        <Sidebar variant="full" open={false} onClose={closeOverlay} />
       ) : (
         <>
           <Sidebar variant="rail" open={false} onClose={closeOverlay} />
@@ -74,7 +46,7 @@ export function AppShell() {
         </>
       )}
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-        <Header onMenuClick={toggleNavigation} navigationExpanded={navigationExpanded} />
+        <Header onMenuClick={toggleNavigation} navigationExpanded={overlayOpen} />
         <Container
           component="main"
           id="main-content"

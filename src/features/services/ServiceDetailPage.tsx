@@ -10,32 +10,17 @@
 
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import Link from '@mui/material/Link';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import { ROUTES } from '@/app/routes';
 import { can } from '@/shared/api';
 import { StatusBadge } from '@/shared/components/basic';
-import { DetailList } from '@/shared/components/data-display';
+import { DetailList, SectionCard } from '@/shared/components/data-display';
 import { ErrorState, LoadingState } from '@/shared/components/feedback';
 import { PageHeader } from '@/shared/components/layout';
 import { useSession } from '@/shared/hooks/useSession';
 import { StaffFieldsForm } from './detail/StaffFieldsForm';
 import { StatusPanel } from './detail/StatusPanel';
 import { useServiceDetail } from './detail/useServiceDetail';
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Paper variant="outlined" component="section" aria-label={title} sx={{ p: { xs: 2, sm: 3 } }}>
-      <Stack spacing={2}>
-        <Typography variant="h2" component="h2">
-          {title}
-        </Typography>
-        {children}
-      </Stack>
-    </Paper>
-  );
-}
 
 function ServiceDetail({ serviceItemUuid }: { serviceItemUuid: string }) {
   const { state, reload } = useServiceDetail(serviceItemUuid);
@@ -77,9 +62,10 @@ function ServiceDetail({ serviceItemUuid }: { serviceItemUuid: string }) {
       <PageHeader
         title={`${serviceName} service, ${lineLabel}`}
         description="This instance only: its own staff fields, status and history."
+        evidence
       />
       <Stack spacing={3}>
-        <Section title="Instance">
+        <SectionCard title="Instance">
           <DetailList
             columns={3}
             items={[
@@ -106,11 +92,11 @@ function ServiceDetail({ serviceItemUuid }: { serviceItemUuid: string }) {
               },
             ]}
           />
-        </Section>
-        <Section title="Staff fields">
+        </SectionCard>
+        <SectionCard title="Staff fields">
           <StaffFieldsForm key={etag} item={item} etag={etag} onSaved={reload} onReload={reload} />
-        </Section>
-        <Section title="Status">
+        </SectionCard>
+        <SectionCard title="Status">
           <StatusPanel
             key={etag}
             serviceItemUuid={item.uuid}
@@ -121,7 +107,7 @@ function ServiceDetail({ serviceItemUuid }: { serviceItemUuid: string }) {
             history={history}
             onChanged={reload}
           />
-        </Section>
+        </SectionCard>
       </Stack>
     </>
   );

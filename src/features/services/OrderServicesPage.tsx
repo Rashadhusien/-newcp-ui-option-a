@@ -103,6 +103,7 @@ export default function OrderServicesPage() {
       <PageHeader
         title="Order services"
         description="Every service on the demo order. Two services of the same type are two separate instances."
+        evidence
       />
       {orderUuid === null ? (
         <InlineAlert severity="info">

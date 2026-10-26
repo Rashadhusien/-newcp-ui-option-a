@@ -8,7 +8,7 @@ import { NewServiceLauncher } from './NewServiceLauncher';
 export default function BiomodelPage() {
   return (
     <>
-      <PageHeader title="Models (Biomodel)" />
+      <PageHeader title="Models (Biomodel)" evidence />
       <NewServiceLauncher formKey="biomodel" />
     </>
   );
