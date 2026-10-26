@@ -51,3 +51,7 @@ Proof per task: the command or check, the result, and where to see it. Screensho
 | 2026-10-27 | A7R | `npm run verify` | pass | 13 files, 110 tests: staff patch only changed fields; On Hold needs type and reason, sent in one transition, twin instance unchanged; zero total 422 on the reason field and nothing saved; 412 keeps the value with Reload latest; price read-only where `canEditPrice` is false; FINANCE gets No access without Retry. |
 | 2026-10-27 | A7R | Browser (mock, CS): `/orders` shows lines 1-3 with their own IDs and statuses; line 2 unit price read-only; line 1 price 20.00 -> 18.00 saved, line total 18.00 USD; 375 px `scrollWidth` 375; no console errors | pass | Dark mode not re-checked (cut item 7). |
 | 2026-10-27 | A7R | Real API edit/transition/history | NOT RUN | No backend (R08); session BLOCKED (Q-B20, Q-B21). |
+| 2026-10-27 | A14 | `npm run verify` on develop `bc9ef20` | pass | 13 files, 110 tests; build ok. |
+| 2026-10-27 | A14 | Browser smoke, 1440 px (CS): `/reporting`, `/orders`, `/services/...14`, `/models` render with no horizontal scroll and no console errors | pass | Mock. |
+| 2026-10-27 | A14 | Browser smoke, 390 px: `/orders` and `/services/...15` `scrollWidth` 390; no visible button under 40 px; On Hold dialog full screen, focus inside, Escape closes and returns focus to "Put on hold" | pass | Mock. |
+| 2026-10-27 | A14 | Dark mode, 768 and 1024 px, real API, Google sign-in, TEN-01..30 | NOT RUN / BLOCKED | Cut item 7; no backend (R08); Q-B20/Q-B21. |

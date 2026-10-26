@@ -149,9 +149,9 @@ Branch: build/fe-a-a13-docker-docs | Date: - | Estimate: 0.75 h (trimmed 23 Oct)
 - [ ] A13.1 Multi-stage Dockerfile + nginx (SPA fallback), `.dockerignore`. [ ] A13.2 README final. (A13.3 `docs/ux-rationale.md` dropped by the developer on 23 Oct to fit 12 h.)
 
 ## Task A14: Stabilize and release candidate
-Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: **0.5 h (A14-lite, 26 Oct)**, was 1.0 h | Depends on: A7R | Status: not started
+Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: **0.5 h (A14-lite, 26 Oct)**, was 1.0 h | Depends on: A7R | Status: ready for review
 A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light), EVIDENCE, rehearsal script with each mock identity; A14.3 kept.
-- [ ] A14.1 Review fixes. [ ] A14.2 Demo acceptance checklist and rehearsal script (MOCK/INTEGRATED stated honestly). [ ] A14.3 Propose the RC tag to the developer (Claude never tags).
+- [x] A14.1 Review fixes. [x] A14.2 Demo acceptance checklist and rehearsal script (MOCK/INTEGRATED stated honestly). [x] A14.3 Propose the RC tag to the developer (Claude never tags).
 
 ## Phase log
 | Task | Status | Notes |
@@ -170,7 +170,7 @@ A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light)
 | A2D | merged | reference contract v0.9.2 in client, mock and form; 80 tests |
 | A00c | merged | v0.9.7 IAM overlay in docs; 4 h plan |
 | A15 | merged | session context, Pending Access, IAM errors, capability gating, mock access checks; 104 tests |
-| A7R (lite) | ready for review | order services list, instance detail, staff fields with If-Match, transitions + On Hold dialog, history, denied states; 110 tests |
-| A14-lite | not started | 27 Oct, 0.5 h |
+| A7R (lite) | merged | order services list, instance detail, staff fields with If-Match, transitions + On Hold dialog, history, denied states; 110 tests |
+| A14-lite | ready for review | verify, smoke 1440/390, rehearsal script `docs/REHEARSAL.md`; RC tag proposed |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
