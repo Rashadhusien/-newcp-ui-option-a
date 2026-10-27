@@ -1,12 +1,13 @@
 /**
  * Loads the session context on app start and keeps it current:
- * - a 401 from any API call returns the app to "signed out" (sign-in page);
+ * - a 401 from any API call returns the app to "signed out" (sign-in page,
+ *   which says the session ended) and drops the session token;
  * - a 403 refreshes the context, so revoked roles show up (tenant spec D1.5).
  * The context is held in memory only.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { isApiError } from '@/shared/api';
+import { clearSessionToken, isApiError, setSessionToken } from '@/shared/api';
 import { SessionContextValue, type SessionState, type SessionValue } from '@/shared/hooks/useSession';
 import {
   chooseMockIdentity,
@@ -46,7 +47,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       onAccessEvent((event) => {
         if (event === 'unauthorized') {
           clearMockIdentity();
-          setState({ status: 'signedOut' });
+          clearSessionToken();
+          setState({ status: 'signedOut', reason: 'expired' });
         } else {
           refresh();
         }
@@ -64,8 +66,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setState({ status: 'loading' });
         refresh();
       },
+      signInWithSession: (result) => {
+        setSessionToken(result);
+        setState({ status: 'loading' });
+        refresh();
+      },
       signOut: () => {
         clearMockIdentity();
+        clearSessionToken();
         setState({ status: 'signedOut' });
       },
     }),

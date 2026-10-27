@@ -193,14 +193,14 @@ Branch: feat/fe-a-a22-settings | Estimate: 0.5 h | Depends on: A17 | Status: not
 - [ ] A22.1 POC layout with sections; only settings the app really has are interactive (theme, data source, about/version). Profile, notifications and password have no backend: left out or shown as "Not available in this demo".
 
 ## Task A25: Sign-in page per the backend Auth implementation
-Branch: feat/fe-a-a25-google-auth | Estimate: 1.25 h | Depends on: A15 (session, IAM states) | Status: not started | Source: backend team request (27 Oct, D-67), IAM v0.9.7 tenant spec D1/D3
+Branch: feat/fe-a-a25-google-auth | Estimate: 1.25 h | Depends on: A15 (session, IAM states) | Status: ready for review | Source: backend team request (27 Oct, D-67), IAM v0.9.7 tenant spec D1/D3
 Scope: only the sign-in/auth entry and the session token wiring; the rest of the app unchanged.
-- [ ] A25.1 Sign-in page: keep the current look (brand panel, card, dark theme); one primary "Sign in with Google" button. Nothing else to enter: no email/workstation, password, forgot password, remember workstation token, or role selector (our page has none of the first four today; the role picker exists only in mock mode, G18).
-- [ ] A25.2 Flow: Google Identity Services (script loaded at runtime from Google, no npm package) -> Google ID token -> `POST /api/v1/auth/login` `{ idToken }` -> session token + expiry -> client `TokenSource` sends `Authorization: Bearer <session-token>`. Token in memory only; expiry ends the session (401 path). The Google client ID comes from `VITE_GOOGLE_CLIENT_ID` (public, not a secret; Q-B28); without it the button shows BLOCKED.
-- [ ] A25.3 After login the app reads its access from the server (session context, Q-B20) and never from the frontend: no tenant `1`, role names or permissions hard-coded.
-- [ ] A25.4 States on the page: Google loading, Google failure (retry), authorized (go to the requested page), Pending Access with the backend's sentence, session expired / 401 (back here, safe return path only), access denied / 403.
-- [ ] A25.5 Mock mode: "Sign in with Google" is simulated (no Google call, labelled MOCK); the identity picker stays mock-only unless G18 says remove it.
-- [ ] Verify (existing tests green; no new tests, D-66); browser: every state, light and dark, 390 and 1440.
+- [x] A25.1 Sign-in page: keep the current look (brand panel, card, dark theme); one primary "Sign in with Google" button. Nothing else to enter: no email/workstation, password, forgot password, remember workstation token, or role selector (our page has none of the first four today; the role picker exists only in mock mode, G18).
+- [x] A25.2 Flow: Google Identity Services (script loaded at runtime from Google, no npm package) -> Google ID token -> `POST /api/v1/auth/login` `{ idToken }` -> session token + expiry -> client `TokenSource` sends `Authorization: Bearer <session-token>`. Token in memory only; expiry ends the session (401 path). The Google client ID comes from `VITE_GOOGLE_CLIENT_ID` (public, not a secret; Q-B28); without it the button shows BLOCKED.
+- [x] A25.3 After login the app reads its access from the server (session context, Q-B20) and never from the frontend: no tenant `1`, role names or permissions hard-coded.
+- [x] A25.4 States on the page: Google loading, Google failure (retry), authorized (go to the requested page), Pending Access with the backend's sentence, session expired / 401 (back here, safe return path only), access denied / 403.
+- [x] A25.5 Mock mode: "Sign in with Google" is simulated (no Google call, labelled MOCK); the identity picker stays mock-only unless G18 says remove it.
+- [x] Verify (existing tests green; no new tests, D-66); browser: every state, light and dark, 390 and 1440.
 
 ## Task A24: Tests for A17 to A23 (deferred, D-66)
 Branch: test/fe-a-a24-tests | Estimate: 2.0 h | Depends on: the A17 to A23 tasks that were built | Status: not started
@@ -232,7 +232,8 @@ Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Sta
 | A16 (analysis) | merged | `docs/DESIGN_ALIGNMENT.md`: design gaps, token mapping, staged plan A16a/b/c (6.25 h); awaiting hours |
 | A16a | merged | DS token alignment (darkHover, onFillDark, spacing 20, smDark, fieldHeight), Outfit import removed, D-59 to D-62, flaky On Hold test fixed (10/10) |
 | A16b | merged | header/sidebar per DS, ThemeModeSwitch, MOCK badge in PageHeader, SectionCard, Settings page; 114 tests |
-| A17 | ready for review | hidden sidebar (hover peek, click pin + push), footer, support button; no new tests (D-66) |
-| A18 to A25 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
+| A17 | merged | hidden sidebar (hover peek, click pin + push), footer, support button; no new tests (D-66) |
+| A25 | ready for review | Google sign-in per the backend Auth (login call, Bearer token in memory, all sign-in states); IAM-TENANT-002 recorded (D-69); no new tests |
+| A18 to A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

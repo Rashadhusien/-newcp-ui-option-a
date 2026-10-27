@@ -44,8 +44,8 @@ describe('AuthBoundary and sign-in (IAM v0.9.7)', () => {
     const router = renderAt('/services/abc/edit?tab=1');
     expect(await screen.findByRole('heading', { name: 'Sign in to New CP' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('radio', { name: 'OPS (Models and Conversion)' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in (mock)' }));
-    expect(await screen.findByText('Workspace')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with Google (mock)' }));
+    expect(await screen.findByText('Workspace', {}, { timeout: 3000 })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/services/abc/edit');
     expect(router.state.location.search).toBe('?tab=1');
   });
@@ -71,7 +71,8 @@ describe('AuthBoundary and sign-in (IAM v0.9.7)', () => {
     renderAt('/login');
     expect(await screen.findByRole('heading', { name: 'Sign in to New CP' })).toBeInTheDocument();
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Sign in (mock)' })).not.toBeInTheDocument();
-    expect(screen.getByText(/not in the API contract/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sign in with Google (mock)' })).not.toBeInTheDocument();
+    // No Google client ID configured in tests: the real sign-in says BLOCKED (A25, Q-B28).
+    expect(screen.getByText(/Sign-in is BLOCKED/)).toBeInTheDocument();
   });
 });

@@ -24,6 +24,7 @@
 
 import {
   ApiError,
+  bearerTokenSource,
   createNewCpClient,
   readApiConfig,
   type ApiConfig,
@@ -51,10 +52,6 @@ export interface ServiceApi extends NewCpClient {
   zeroChargeReasons(): Promise<ZeroChargeReason[]>;
 }
 
-/** Until the auth transport is decided (Q-B21), the real API has no token to send. */
-const noSessionToken: TokenSource = () => {
-  throw new ApiError(401, null);
-};
 
 /** The signed-in mock identity's context, read on every call (no React needed). */
 function currentMockContext() {
@@ -103,7 +100,8 @@ function withoutPayer<T extends { billedToContactUuid?: string }>(body: T): T {
 
 export function createServiceApi(
   config: ApiConfig = readApiConfig(),
-  tokenSource: TokenSource = noSessionToken,
+  // Real API: the New CP session token from POST /auth/login, in memory (A25, D-67).
+  tokenSource: TokenSource = bearerTokenSource,
 ): ServiceApi {
   if (config.useMocks) {
     return reportingAccess({

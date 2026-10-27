@@ -22,3 +22,13 @@ export function readApiConfig(env: Record<string, unknown> = import.meta.env): A
 export function evidenceOf(config: ApiConfig): ApiEvidence {
   return config.useMocks ? 'MOCK' : 'INTEGRATED';
 }
+
+/**
+ * Google OAuth client ID for Google Identity Services (public, not a secret;
+ * Q-B28). Anything that is not a client ID (missing, or the `.env.example`
+ * placeholder) means "not configured": the sign-in button shows BLOCKED.
+ */
+export function readGoogleClientId(env: Record<string, unknown> = import.meta.env): string | null {
+  const value = typeof env.VITE_GOOGLE_CLIENT_ID === 'string' ? env.VITE_GOOGLE_CLIENT_ID.trim() : '';
+  return /^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(value) ? value : null;
+}

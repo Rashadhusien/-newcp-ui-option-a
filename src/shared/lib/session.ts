@@ -6,7 +6,9 @@
  * - mock mode: the context is a mock fixture for the identity chosen on the
  *   sign-in page. The choice lives in sessionStorage (this tab only); it is
  *   not a token, and nothing else about the session is stored.
- * - real API: loading the context rejects as BLOCKED; no request is sent.
+ * - real API: without a New CP session token (A25, in memory) the user is
+ *   signed out; with one, the context is still BLOCKED because its endpoint
+ *   is not in the contract (Q-B20), so no request is sent.
  *
  * Storage access is guarded: private windows or blocked site data can throw,
  * which must read as "signed out" rather than crash the app.
@@ -16,7 +18,14 @@
  * spec D1.5) without each page wiring it.
  */
 
-import { ApiError, readApiConfig, type ApiConfig, type ApiErrorKind, type SessionContext } from '@/shared/api';
+import {
+  ApiError,
+  readApiConfig,
+  sessionToken,
+  type ApiConfig,
+  type ApiErrorKind,
+  type SessionContext,
+} from '@/shared/api';
 import { isMockIdentity, mockSessionContext, type MockIdentity } from '@/mocks/sessionFixtures';
 
 const IDENTITY_KEY = 'newcp-mock-identity';
@@ -47,11 +56,14 @@ export function clearMockIdentity(): void {
 }
 
 export const SESSION_BLOCKED_MESSAGE =
-  'Sign-in is not available yet: the session context endpoint and the sign-in method are not in the API contract (Q-B20, Q-B21).';
+  'You are signed in, but your access cannot be loaded yet: the session context endpoint is not in the API contract (Q-B20).';
 
 /** Resolves the current context; rejects 401 when signed out and `blocked` with the real API. */
 export function loadSessionContext(config: ApiConfig = readApiConfig()): Promise<SessionContext> {
   if (!config.useMocks) {
+    if (sessionToken() === null) {
+      return Promise.reject(new ApiError(401, { code: 'AUTHENTICATION_REQUIRED', message: 'Sign in to continue.' }));
+    }
     return Promise.reject(new ApiError(0, { code: 'client.blocked', message: SESSION_BLOCKED_MESSAGE }, 'blocked'));
   }
   const identity = mockIdentity();

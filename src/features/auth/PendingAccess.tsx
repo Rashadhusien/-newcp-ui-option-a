@@ -23,8 +23,8 @@ export function PendingAccess() {
           </Typography>
         </Stack>
         <Typography variant="body2">
-          {context ? `${context.user.displayName}, you are signed in, ` : 'You are signed in, '}
-          but no role or tenant is assigned to your account yet. Ask an administrator to grant access.
+          Your account is authenticated, but access has not been assigned yet.
+          {context ? ` (${context.user.displayName})` : ''} Ask an administrator to grant access.
         </Typography>
         <Stack direction="row" spacing={1.5}>
           <AppButton variant="secondary" onClick={refresh}>

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, can } from '@/shared/api';
+import { ApiError, can, clearSessionToken, setSessionToken } from '@/shared/api';
 import { MOCK_IDENTITIES, mockSessionContext } from '@/mocks/sessionFixtures';
 import {
   chooseMockIdentity,
@@ -23,13 +23,15 @@ describe('session context (IAM v0.9.7, D-51)', () => {
     await expect(loadSessionContext(MOCK)).resolves.toMatchObject({ accessStatus: 'AUTHORIZED', roles: ['OPS'] });
   });
 
-  it('is BLOCKED with the real API and sends nothing', async () => {
+  it('with the real API: signed out without a session token, BLOCKED with one, and sends nothing (A25)', async () => {
     const fetchSpy = vi.fn<typeof fetch>();
     vi.stubGlobal('fetch', fetchSpy);
+    const real = { useMocks: false, baseUrl: 'https://api.example.test' };
     chooseMockIdentity('CS');
-    await expect(loadSessionContext({ useMocks: false, baseUrl: 'https://api.example.test' })).rejects.toMatchObject({
-      kind: 'blocked',
-    });
+    await expect(loadSessionContext(real)).rejects.toMatchObject({ kind: 'unauthorized' });
+    setSessionToken({ sessionToken: 'synthetic-session', expiresAt: null });
+    await expect(loadSessionContext(real)).rejects.toMatchObject({ kind: 'blocked' });
+    clearSessionToken();
     expect(fetchSpy).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });

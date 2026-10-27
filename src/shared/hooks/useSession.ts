@@ -4,12 +4,13 @@
  */
 
 import { createContext, useContext } from 'react';
-import type { ApiError, SessionContext } from '@/shared/api';
+import type { ApiError, LoginResult, SessionContext } from '@/shared/api';
 import type { MockIdentity } from '@/mocks/sessionFixtures';
 
 export type SessionState =
   | { status: 'loading' }
-  | { status: 'signedOut' }
+  /** `expired`: a 401 ended the session (sign-in page says so). */
+  | { status: 'signedOut'; reason?: 'expired' }
   | { status: 'blocked'; message: string }
   | { status: 'error'; error: ApiError | null }
   | { status: 'ready'; context: SessionContext };
@@ -21,6 +22,8 @@ export interface SessionValue {
   refresh: () => void;
   /** Mock mode only. */
   signIn: (identity: MockIdentity) => void;
+  /** Real API: keeps the New CP session token (memory only) and loads access. */
+  signInWithSession: (result: LoginResult) => void;
   signOut: () => void;
 }
 
