@@ -8,6 +8,7 @@ import { useParams } from 'react-router-dom';
 import { can } from '@/shared/api';
 import { EmptyState, ErrorState, LoadingState } from '@/shared/components/feedback';
 import { PageHeader } from '@/shared/components/layout';
+import type { TrailHints } from '@/shared/lib/breadcrumbs';
 import { useSession } from '@/shared/hooks/useSession';
 import { specForService } from './forms/formSpecs';
 import { ServiceForm } from './forms/ServiceForm';
@@ -63,6 +64,12 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
     item === null
       ? `New ${definition.service.name} service`
       : `${definition.service.name} service, line ${String(item.lineNumber)}`;
+  const breadcrumbs: TrailHints =
+    item === null
+      ? spec
+        ? { section: spec.key === 'biomodel' ? 'models' : 'conversion' }
+        : {}
+      : { orderUuid: item.orderUuid, lineNumber: item.lineNumber };
   const description =
     item === null
       ? `Order …${shortId(orderUuid)}. A new instance is created even if the order already has this service.`
@@ -71,7 +78,7 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
   if (!spec) {
     return (
       <>
-        <PageHeader title={title} description={description} evidence />
+        <PageHeader title={title} description={description} evidence breadcrumbs={breadcrumbs} />
         <EmptyState
           title="No form for this service"
           description="Option A has form rules for Biomodel and Conversion only."
@@ -82,7 +89,7 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
 
   return (
     <>
-      <PageHeader title={title} description={description} evidence />
+      <PageHeader title={title} description={description} evidence breadcrumbs={breadcrumbs} />
       <ServiceForm
         key={`${item?.uuid ?? 'new'}|${etag ?? ''}`}
         spec={spec}

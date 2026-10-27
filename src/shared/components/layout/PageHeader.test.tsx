@@ -1,12 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { theme } from '@/theme/theme';
 import { ThemeModeSwitch } from '@/shared/components/basic/ThemeModeSwitch';
 import { PageHeader } from './PageHeader';
 
 function renderWithTheme(ui: React.ReactNode) {
-  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+  return render(
+    <MemoryRouter>
+      <ThemeProvider theme={theme}>{ui}</ThemeProvider>
+    </MemoryRouter>,
+  );
 }
 
 describe('PageHeader (A16b)', () => {

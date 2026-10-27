@@ -39,3 +39,19 @@ export const ROUTES = {
   serviceEdit: (serviceItemUuid: string) => string;
   notFound: string;
 };
+
+/** Breadcrumb labels per route (A26); the trail builder in shared/lib/breadcrumbs.ts reads only these. */
+export const ROUTE_LABELS = {
+  home: "Home",
+  reporting: "Report",
+  orders: "Orders",
+  orderNew: "New order",
+  models: "Models",
+  conversion: "Conversion",
+  settings: "Settings",
+  serviceNew: "New service",
+  serviceEdit: "Edit form",
+  /** Fallback for a service page before its line number is known. */
+  service: "Service",
+  notFound: "Page not found",
+} as const;

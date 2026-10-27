@@ -214,6 +214,13 @@ Branch: feat/fe-a-a23-carry-over (name not in TASKS before; follows the conventi
 - [x] A23.3 Staff fields Redo, redo-of, pending reason, service notes (PATCH, If-Match); redo-of and pending reason not returned by the API (Q-B18), labelled.
 - [x] Verify (existing tests green; no new tests, D-66); browser check.
 
+## Task A26: Breadcrumbs (shared, all authenticated pages)
+Branch: feat/fe-a-a26-breadcrumbs | Estimate: 0.5 h | Depends on: A23 (develop) | Status: ready for review | Source: developer request 27 Oct (A26-A28 authorized together)
+- [x] A26.1 Pure trail builder `src/shared/lib/breadcrumbs.ts` (labels from `ROUTE_LABELS` in `routes.ts`) and one `AppBreadcrumbs` rendered by `PageHeader`; pages pass hints the URL lacks (order, line, Models/Conversion).
+- [x] A26.2 Trails: Home; Home > Report; Home > Orders > Order …<short id> > Service line <n> (> Edit form); Home > Models or Conversion > New service; Home > Settings. No full UUID, no patient or client name.
+- [x] A26.3 MUI Breadcrumbs as `<nav aria-label="Breadcrumb">`, last crumb `aria-current="page"`, earlier crumbs router links, middle crumbs collapse under 640 px; crumbs the role cannot open are plain text.
+- [x] A26.4 Vitest for the trail builder (5 tests).
+
 ## Phase log
 | Task | Status | Notes |
 |---|---|---|
@@ -243,6 +250,7 @@ Branch: feat/fe-a-a23-carry-over (name not in TASKS before; follows the conventi
 | A20 | merged | order details like the POC: summary, services list, selected service with staff fields, status, On Hold, history; no new tests |
 | A21 | ready for review | create-order wizard (5 steps, react-odontogram teeth chart, per-instance details), mock only; no new tests |
 | A23 | ready for review | Bill To card + create field (mock, BLOCKED real), labels above fields, Redo/redo-of/pending reason/notes; no new tests |
+| A26 | ready for review | breadcrumbs on every page (pure trail builder + AppBreadcrumbs in PageHeader); 5 new tests |
 | A22 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

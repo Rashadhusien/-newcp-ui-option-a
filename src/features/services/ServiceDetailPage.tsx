@@ -53,6 +53,7 @@ function ServiceDetail({ serviceItemUuid }: { serviceItemUuid: string }) {
         title={`${serviceName} service, line ${String(item.lineNumber ?? '-')}`}
         description="This instance only: its own staff fields, status and history."
         evidence
+        breadcrumbs={{ orderUuid: item.orderUuid, lineNumber: item.lineNumber }}
       />
       <ServiceInstanceSections detail={state.detail} onChanged={reload} />
     </>
