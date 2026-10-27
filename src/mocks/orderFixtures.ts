@@ -19,6 +19,8 @@ export interface MockOrderHeader {
   receivedOn: string;
   /** ISO date (yyyy-mm-dd). */
   dueOn: string;
+  /** A21: teeth (FDI) per service instance uuid, from the create-order wizard; mock only (Q-B24). */
+  teethByService?: Readonly<Record<string, readonly number[]>>;
 }
 
 export const MOCK_ORDER_2_UUID = '00000000-0000-0000-0000-0000000000c2';

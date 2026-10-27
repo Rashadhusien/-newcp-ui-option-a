@@ -182,11 +182,11 @@ Branch: feat/fe-a-a20-order-details | Estimate: 2.0 h | Depends on: A19 | Status
 - [x] Verify: the existing A7R tests keep passing (update them if the layout moves); no new tests (D-66).
 
 ## Task A21: Create order wizard (steps + teeth chart)
-Branch: feat/fe-a-a21-create-order | Estimate: 3.0 h | Depends on: A20; Q-B24, Q-B25, G17 | Status: blocked on answers | Source: POC-2 `src/pages/addCase/*`, `src/components/TeethChart*.tsx`, `teethModel.ts`
-- [ ] A21.1 Stepper like the POC: Patient, Services (Biomodel/Conversion), Service details (our A6R form specs), Teeth, Notes, Review; the Models and Conversion pages start this wizard.
-- [ ] A21.2 Teeth chart: the POC uses `react-odontogram` (not approved, G17). Without approval: a simple tooth-number grid in MUI.
-- [ ] A21.3 Create order is not in the contract (only "create a service on an existing order"): mock only, labelled, BLOCKED with mocks off, until Bishoy's endpoints and the new database fields are in the reference contract (Q-B24). Patient step: synthetic data only (Q-B25).
-- [ ] Verify (no new tests, D-66); browser check.
+Branch: feat/fe-a-a21-create-order | Estimate: 3.0 h | Depends on: A20; Q-B24, Q-B25, G17 | Status: ready for review (mock only; Q-B24, Q-B25 open; G17 approved) | Source: POC-2 `src/pages/addCase/*`, `src/components/TeethChart*.tsx`, `teethModel.ts`
+- [x] A21.1 Stepper like the POC: Patient, Services (Biomodel/Conversion), Service details (our A6R form specs), Teeth, Notes, Review; the Models and Conversion pages start this wizard.
+- [x] A21.2 Teeth chart: the POC uses `react-odontogram` (not approved, G17). Without approval: a simple tooth-number grid in MUI.
+- [x] A21.3 Create order is not in the contract (only "create a service on an existing order"): mock only, labelled, BLOCKED with mocks off, until Bishoy's endpoints and the new database fields are in the reference contract (Q-B24). Patient step: synthetic data only (Q-B25).
+- [x] Verify (no new tests, D-66); browser check.
 
 ## Task A22: Settings like the POC
 Branch: feat/fe-a-a22-settings | Estimate: 0.5 h | Depends on: A17 | Status: not started | Source: POC-1 `src/features/settings/SettingsPage.tsx` (SectionCard + SectionTabs)
@@ -236,7 +236,8 @@ Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Sta
 | A25 | merged | Google sign-in per the backend Auth (login call, Bearer token in memory, all sign-in states); IAM-TENANT-002 recorded (D-69); no new tests |
 | A18 | merged | report like the POC: summary cards, report tabs, status overview; statuses re-keyed to API codes (coloured); no new tests |
 | A19 | merged | orders list at order level with expandable services; mock only, BLOCKED with the real API; no new tests |
-| A20 | ready for review | order details like the POC: summary, services list, selected service with staff fields, status, On Hold, history; no new tests |
-| A21 to A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
+| A20 | merged | order details like the POC: summary, services list, selected service with staff fields, status, On Hold, history; no new tests |
+| A21 | ready for review | create-order wizard (5 steps, react-odontogram teeth chart, per-instance details), mock only; no new tests |
+| A22, A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

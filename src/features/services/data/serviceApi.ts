@@ -34,13 +34,13 @@ import {
   type TokenSource,
   type ZeroChargeReason,
 } from '@/shared/api';
-import { MOCK_ORDERS } from '@/mocks/orderFixtures';
+import { MOCK_ORDERS, type MockOrderHeader } from '@/mocks/orderFixtures';
 import { MOCK_ORDER_UUID } from '@/mocks/serviceFixtures';
 import { mockSessionContext } from '@/mocks/sessionFixtures';
 import { mockIdentity, reportAccessError } from '@/shared/lib/session';
 import { withMockAccess } from './mockAccess';
 import { createMockServiceApi } from './mockServiceApi';
-import type { OrderSummary } from './orderSummary';
+import type { CreateOrderRequest, CreateOrderResult, OrderSummary } from './orderSummary';
 
 export interface ServiceApi extends NewCpClient {
   readonly evidence: ApiEvidence;
@@ -59,6 +59,12 @@ export interface ServiceApi extends NewCpClient {
    * rejects with kind `blocked` and nothing is sent.
    */
   orders(options?: RequestOptions): Promise<OrderSummary[]>;
+  /**
+   * Creates an order with its services (A21 wizard). Mock only: create order
+   * is not in the contract (Q-B24); with the real API this rejects with kind
+   * `blocked` and nothing is sent.
+   */
+  createOrder(request: CreateOrderRequest): Promise<CreateOrderResult>;
 }
 
 
@@ -114,13 +120,44 @@ export function createServiceApi(
 ): ServiceApi {
   if (config.useMocks) {
     const mock = withMockAccess(createMockServiceApi({ failWith: failStatusFromUrl() }), currentMockContext);
+    // Orders created by the A21 wizard in this tab (memory only; a reload starts from the fixtures again).
+    const createdOrders: MockOrderHeader[] = [];
+    let nextOrder = 0;
     return reportingAccess({
       ...mock,
       // Each order's services come from the access-checked mock, so a role without service rights gets the 403.
       orders: (options?: RequestOptions) =>
         Promise.all(
-          MOCK_ORDERS.map(async (header) => ({ ...header, services: await mock.orderItems(header.orderUuid, options) })),
+          [...MOCK_ORDERS, ...createdOrders].map(async (header) => ({
+            ...header,
+            services: await mock.orderItems(header.orderUuid, options),
+          })),
         ),
+      createOrder: async (request: CreateOrderRequest) => {
+        nextOrder += 1;
+        const orderUuid = `00000000-0000-4000-8000-${String(nextOrder).padStart(12, '0')}`;
+        const orderNumber = `ORD-${String(3000 + nextOrder)}`;
+        const teethByService: Record<string, number[]> = {};
+        // Services are created one by one through the access-checked mock (needs service.create).
+        for (const service of request.services) {
+          const created = await mock.create(orderUuid, {
+            sellableItemUuid: service.sellableItemUuid,
+            answers: service.answers,
+            quantity: 1,
+          });
+          teethByService[created.uuid] = service.teeth;
+        }
+        createdOrders.push({
+          orderUuid,
+          orderNumber,
+          clientName: request.clientName,
+          patientCode: request.patientCode,
+          receivedOn: new Date().toISOString().slice(0, 10),
+          dueOn: request.dueOn,
+          teethByService,
+        });
+        return { orderUuid, orderNumber };
+      },
       evidence: 'MOCK',
       demoOrderUuid: MOCK_ORDER_UUID,
       billToAvailable: true,
@@ -137,6 +174,8 @@ export function createServiceApi(
     zeroChargeReasons: () =>
       Promise.reject(blocked('Zero-charge reasons are not in the API contract yet (question Q-B17).')),
     orders: () => Promise.reject(blocked('The order list is not in the API contract yet (question Q-B26).')),
+    createOrder: () =>
+      Promise.reject(blocked('Creating an order is not in the API contract yet (question Q-B24). Nothing was sent.')),
     evidence: 'INTEGRATED',
     demoOrderUuid: null,
     billToAvailable: false,

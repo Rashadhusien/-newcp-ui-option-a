@@ -29,6 +29,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTES.reporting} replace /> },
       { path: 'reporting', lazy: page(() => import('@/features/reporting/ReportingPage')) },
       { path: 'orders', lazy: page(() => import('@/features/services/OrdersPage')) },
+      { path: 'orders/new', lazy: page(() => import('@/features/services/create/CreateOrderPage')) },
       { path: 'orders/:orderUuid', lazy: page(() => import('@/features/services/OrderDetailsPage')) },
       { path: 'models', lazy: page(() => import('@/features/services/BiomodelPage')) },
       { path: 'conversion', lazy: page(() => import('@/features/services/ConversionPage')) },

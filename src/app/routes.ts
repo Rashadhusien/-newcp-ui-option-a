@@ -7,6 +7,7 @@ export const ROUTES = {
   login: "/login",
   reporting: "/reporting",
   orders: "/orders",
+  orderNew: "/orders/new",
   models: "/models",
   conversion: "/conversion",
   settings: "/settings",
@@ -28,6 +29,7 @@ export const ROUTES = {
   login: string;
   reporting: string;
   orders: string;
+  orderNew: string;
   models: string;
   conversion: string;
   settings: string;

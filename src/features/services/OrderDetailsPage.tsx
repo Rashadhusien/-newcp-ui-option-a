@@ -175,6 +175,21 @@ export default function OrderDetailsPage() {
                   { label: 'Received', value: formatDate(header.receivedOn) },
                   { label: 'Due', value: formatDate(header.dueOn) },
                   { label: 'Services', value: String(services.length) },
+                  ...(header.teethByService
+                    ? [
+                        {
+                          label: 'Teeth (FDI, mock)',
+                          value:
+                            services
+                              .map((item) => {
+                                const teeth = header.teethByService?.[item.uuid] ?? [];
+                                return `Line ${String(item.lineNumber ?? '-')}: ${teeth.length > 0 ? teeth.join(', ') : 'none'}`;
+                              })
+                              .join(' · ') || '—',
+                          wide: true,
+                        },
+                      ]
+                    : []),
                 ]}
               />
               <Typography variant="caption" color="text.secondary">

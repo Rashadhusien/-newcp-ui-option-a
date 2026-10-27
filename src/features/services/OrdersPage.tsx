@@ -28,6 +28,7 @@ import { useUrlFilter, useUrlFiltersUpdater, useUrlTableControls } from '@/share
 import { formatDate } from '@/shared/lib/formatters';
 import { presentStatus } from '@/shared/status/status';
 import { typographyTokens } from '@/theme/tokens';
+import { NewOrderButton } from './create/NewOrderButton';
 import { serviceApi } from './data/serviceApi';
 import type { OrderSummary } from './data/orderSummary';
 
@@ -204,6 +205,7 @@ export default function OrdersPage() {
         title="Orders"
         description="One row per order. Open a row to see its services: each service is its own instance with its own status."
         evidence
+        action={<NewOrderButton />}
       />
       {blocked ? (
         <InlineAlert severity="warning">{`BLOCKED: ${state.error?.message ?? ''}`}</InlineAlert>
