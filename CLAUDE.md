@@ -33,8 +33,11 @@ status, history, payer and report rows. Never a type-level identifier.
 - Contract: `references/f07/integration/newcp-demo-f07.openapi.yaml` (v0.9.2-draft, `NOT_FINAL`) + typed client. Q-B15:
   the package reference wins over Bishoy's `docs/openapi/newcp-v1.openapi.yaml`, which stays a draft the backend
   reconciles into one snapshot (D-40). Never invent an endpoint, field or error code.
-- One shared client in `src/shared/api/` (types follow the reference contract; no token storage). Auth transport
-  (Bearer token per the OpenAPI, or an HttpOnly session cookie per the tenant spec) is pending Q-B21.
+- One shared client in `src/shared/api/` (types follow the reference contract). Auth (backend team, 27 Oct, D-67;
+  not yet in the OpenAPI, Q-B27): Google Identity Services gives a Google ID token -> `POST /api/v1/auth/login`
+  `{ "idToken": ... }` -> New CP session token + expiry -> `Authorization: Bearer <session-token>` on every request.
+  The session token is held in memory only (no localStorage, sessionStorage or cookie written by the UI); a reload
+  signs in again. Never send the Google ID token to any other endpoint.
 - Errors: accept both the OpenAPI Problem `{code,message,requestId,details}` and the IAM envelope
   `{error:{code,message,requestId,details}}` (Q-B22). Codes are the recommended IAM codes until the OpenAPI lists them.
 - Concurrency (Q-B8): keep the item ETag; send `If-Match` on every PATCH and transition. 412 = changed by someone
@@ -81,8 +84,12 @@ status, history, payer and report rows. Never a type-level identifier.
 - Capability flags are display-only (hide/disable actions); the server decides and its 403 is always shown. Codes
   follow ROLE_CAPABILITY_MATRIX (`CANDIDATE_UNVERIFIED`, D-53). FINANCE and QC: reports only (G11 open). All five
   roles view reports; export only FINANCE/QC/ADMIN, and there is no export endpoint, so no export control (D-54).
-- Mock mode only: a mock identity picker (CS, OPS, ADMIN, FINANCE, QC, PENDING) on the sign-in page; it is never
-  rendered with mocks off and is not a token.
+- Sign-in page (A25): one primary action, "Sign in with Google". No email, password, "forgot password", "remember
+  workstation" or role selector; the frontend never selects or infers a role, tenant or capability. States: Google
+  loading, Google failure, authorized, Pending Access ("Your account is authenticated, but access has not been
+  assigned yet."), session expired / 401, access denied / 403.
+- Mock mode only: the mock identity picker (CS, OPS, ADMIN, FINANCE, QC, PENDING) simulates what the server would
+  answer; it is never rendered with mocks off and is not a token (G18: keep it for the demo?).
 
 ## Bill To (F07)
 - Per service: Doctor or Scanning Center from `GET /orders/{orderUuid}/eligible-billed-parties`.
@@ -124,7 +131,9 @@ touch targets >= 40 px under 768; respect `prefers-reduced-motion`. Verify at 39
 page scroll (tables become cards on phones); light and dark both checked.
 
 ## Tests and evidence
-- Unit/component tests are required now (Vitest + RTL after approval). Browser tests when a runner exists.
+- **New tests are deferred (27 Oct, developer decision, D-66):** tasks A17 to A23 add no new Vitest tests; they are
+  written in A24 after those pages are finished. The existing suite still runs in `npm run verify` and must stay
+  green: a task that breaks an existing test fixes or updates it. Browser checks stay required for every task.
 - Report PASS/FAIL/NOT RUN/BLOCKED honestly. Never claim live, E2E or integration PASS that wasn't executed.
 
 ## End of task

@@ -153,6 +153,63 @@ Branch: fix/fe-a-a14-stabilize-rc | Date: 27 Oct | Estimate: **0.5 h (A14-lite, 
 A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light), EVIDENCE, rehearsal script with each mock identity; A14.3 kept.
 - [x] A14.1 Review fixes. [x] A14.2 Demo acceptance checklist and rehearsal script (MOCK/INTEGRATED stated honestly). [x] A14.3 Propose the RC tag to the developer (Claude never tags).
 
+## Reference-pattern plan (A17 to A23, 27 Oct, developer request)
+The developer asked to follow the two earlier POCs (`refrences/mui`, `refrences/1-mui`) page by page ("don't reinvent the wheel"): a Notion-style hidden sidebar, a global footer, a support button, an order-level Orders list with sub-services, an order details page, a create-order wizard with steps and teeth chart, reports with tabs (no Models/Conversion filter chips), settings like the POC, and coloured statuses. POC code may now be ported and adapted (D-65), in our stack and folders, mock data only. One task at a time; each waits for `start A<NN>`. The A16c stages are folded into these tasks.
+
+## Task A17: Shell like the POC: hidden sidebar, footer, support button
+Branch: feat/fe-a-a17-shell-footer-support | Estimate: 1.5 h | Depends on: A16b | Status: not started | Source: POC-2 `src/layout/useSidebarState.ts`, `AppShell.tsx`, `AppFooter.tsx`, `appInfo.ts`, `src/support/*`
+- [ ] A17.1 Sidebar hidden by default at every width (content full width). Menu button in the header: hovering it (or the left edge) shows the sidebar as an overlay (peek); clicking pins it and the content shrinks to make room (push, Notion-style); clicking again unpins and hides it. Escape and outside click close a peek. Phones: modal drawer. Pin state remembered per browser (convenience only).
+- [ ] A17.2 Global footer under every page: app name, version from `package.json`, data source (MOCK), in-app links (Report, Orders, Settings, Help). No invented external URL, address or contact.
+- [ ] A17.3 Support button fixed bottom-right: opens "Help and support" (topic, message, priority Standard/Urgent, status "Draft, not submitted"). No ticketing system: the form says nothing is sent or stored, never shows "Submitted", warns to leave out patient data. Dummy topics only.
+- [ ] Verify (existing tests green; no new tests, D-66); browser at 390/768/1024/1440, light and dark.
+
+## Task A18: Reports like the POC, with coloured statuses
+Branch: feat/fe-a-a18-reports-pattern | Estimate: 1.0 h | Depends on: A17 | Status: not started | Source: POC-1 `src/features/reports/ReportsPage.tsx`, POC-2 `src/pages/reports/*`
+- [ ] A18.1 Report page structure from the POC: summary cards on top, a tab bar of report pages, then the table. Replace the Models/Conversion status-chip rows; service type stays a column and a toolbar filter. No charts (`@mui/x-charts` not approved).
+- [ ] A18.2 Coloured statuses: report rows use the API status codes from the mock (`submitted`, `in_design`, `on_hold`, `completed`, ...) so `presentStatus` gives each its own tone and icon. This fixes "all statuses look the same": the old fixture labels fell back to neutral grey. Absorbs A5R.
+- [ ] Verify (no new tests, D-66); browser light and dark.
+
+## Task A19: Orders list at order level with sub-services
+Branch: feat/fe-a-a19-orders-list | Estimate: 1.5 h | Depends on: A17 | Status: not started | Source: POC-2 `src/pages/orders/FlowPage.tsx`, `FlowTable.tsx`, `FlowToolbar.tsx`, `ServiceLines.tsx`, `flowColumns.tsx`
+- [ ] A19.1 One row per order; expanding a row shows its services (one line per instance: type, status, line, quantity); a row opens the order details page. Toolbar, search, sort and paging like the POC.
+- [ ] A19.2 Data: a mock orders-list source behind the service adapter. Bishoy's `GET /orders` is not in the contract yet (Q-B3, Q-B26): the shape is PROPOSED and `[NEEDS VERIFICATION]`; with mocks off the list is BLOCKED and nothing is called. Synthetic orders only.
+- [ ] Verify (no new tests, D-66); browser incl. phone cards.
+
+## Task A20: Order details page
+Branch: feat/fe-a-a20-order-details | Estimate: 2.0 h | Depends on: A19 | Status: not started | Source: POC-2 `src/pages/orderDetails/*` (OrderSummary, ServiceInfo, ServiceAction, WorkflowSteps, InternalNotes)
+- [ ] A20.1 Order summary card, then one card per service instance with its status, transition buttons (from the API), staff fields and history: today's A7R detail content in the POC layout (A16c-1 folded in). On Hold dialog unchanged.
+- [ ] A20.2 Order header fields the contract lacks (order number, client, patient, due date) are mock-only and labelled (D-61).
+- [ ] Verify: the existing A7R tests keep passing (update them if the layout moves); no new tests (D-66).
+
+## Task A21: Create order wizard (steps + teeth chart)
+Branch: feat/fe-a-a21-create-order | Estimate: 3.0 h | Depends on: A20; Q-B24, Q-B25, G17 | Status: blocked on answers | Source: POC-2 `src/pages/addCase/*`, `src/components/TeethChart*.tsx`, `teethModel.ts`
+- [ ] A21.1 Stepper like the POC: Patient, Services (Biomodel/Conversion), Service details (our A6R form specs), Teeth, Notes, Review; the Models and Conversion pages start this wizard.
+- [ ] A21.2 Teeth chart: the POC uses `react-odontogram` (not approved, G17). Without approval: a simple tooth-number grid in MUI.
+- [ ] A21.3 Create order is not in the contract (only "create a service on an existing order"): mock only, labelled, BLOCKED with mocks off, until Bishoy's endpoints and the new database fields are in the reference contract (Q-B24). Patient step: synthetic data only (Q-B25).
+- [ ] Verify (no new tests, D-66); browser check.
+
+## Task A22: Settings like the POC
+Branch: feat/fe-a-a22-settings | Estimate: 0.5 h | Depends on: A17 | Status: not started | Source: POC-1 `src/features/settings/SettingsPage.tsx` (SectionCard + SectionTabs)
+- [ ] A22.1 POC layout with sections; only settings the app really has are interactive (theme, data source, about/version). Profile, notifications and password have no backend: left out or shown as "Not available in this demo".
+
+## Task A25: Sign-in page per the backend Auth implementation
+Branch: feat/fe-a-a25-google-auth | Estimate: 1.25 h | Depends on: A15 (session, IAM states) | Status: not started | Source: backend team request (27 Oct, D-67), IAM v0.9.7 tenant spec D1/D3
+Scope: only the sign-in/auth entry and the session token wiring; the rest of the app unchanged.
+- [ ] A25.1 Sign-in page: keep the current look (brand panel, card, dark theme); one primary "Sign in with Google" button. Nothing else to enter: no email/workstation, password, forgot password, remember workstation token, or role selector (our page has none of the first four today; the role picker exists only in mock mode, G18).
+- [ ] A25.2 Flow: Google Identity Services (script loaded at runtime from Google, no npm package) -> Google ID token -> `POST /api/v1/auth/login` `{ idToken }` -> session token + expiry -> client `TokenSource` sends `Authorization: Bearer <session-token>`. Token in memory only; expiry ends the session (401 path). The Google client ID comes from `VITE_GOOGLE_CLIENT_ID` (public, not a secret; Q-B28); without it the button shows BLOCKED.
+- [ ] A25.3 After login the app reads its access from the server (session context, Q-B20) and never from the frontend: no tenant `1`, role names or permissions hard-coded.
+- [ ] A25.4 States on the page: Google loading, Google failure (retry), authorized (go to the requested page), Pending Access with the backend's sentence, session expired / 401 (back here, safe return path only), access denied / 403.
+- [ ] A25.5 Mock mode: "Sign in with Google" is simulated (no Google call, labelled MOCK); the identity picker stays mock-only unless G18 says remove it.
+- [ ] Verify (existing tests green; no new tests, D-66); browser: every state, light and dark, 390 and 1440.
+
+## Task A24: Tests for A17 to A23 (deferred, D-66)
+Branch: test/fe-a-a24-tests | Estimate: 2.0 h | Depends on: the A17 to A23 tasks that were built | Status: not started
+- [ ] A24.1 Vitest + RTL for what A17 to A23 and A25 added (incl. the sign-in states and Bearer token use): sidebar peek/pin/push and drawer, footer links, support form (validation, "not submitted", no data sent), report tabs and status tones, orders list expand and BLOCKED with mocks off, order details (transitions, On Hold, staff fields, history), create-order wizard steps and mock-only create, settings.
+- [ ] A24.2 Restore the rule "every task adds its own tests" in CLAUDE.md.
+
+## Task A23: Carry-over: Bill To, form layout, Redo/pending/notes
+Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Status: not started, after A21
+
 ## Phase log
 | Task | Status | Notes |
 |---|---|---|
@@ -174,6 +231,7 @@ A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light)
 | A14-lite | merged; tag v0.1.0-rc.1 | verify, smoke 1440/390, rehearsal script `docs/REHEARSAL.md`; RC tag proposed |
 | A16 (analysis) | merged | `docs/DESIGN_ALIGNMENT.md`: design gaps, token mapping, staged plan A16a/b/c (6.25 h); awaiting hours |
 | A16a | merged | DS token alignment (darkHover, onFillDark, spacing 20, smDark, fieldHeight), Outfit import removed, D-59 to D-62, flaky On Hold test fixed (10/10) |
-| A16b | ready for review | header/sidebar per DS, ThemeModeSwitch, MOCK badge in PageHeader, SectionCard, Settings page; 114 tests |
+| A16b | merged | header/sidebar per DS, ThemeModeSwitch, MOCK badge in PageHeader, SectionCard, Settings page; 114 tests |
+| A17 to A25 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

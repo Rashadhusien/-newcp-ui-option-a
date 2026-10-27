@@ -62,6 +62,24 @@ Re-baselined 24 Oct (A00b) after package v0.9.2.2. Done: A1, A2.4, A5, V3 findin
 
 A10 (live API) has 0 h: blocked by R08 (no running backend) and the F07 gate. If the backend appears, it replaces A14 time.
 
+## 5a. Reference-pattern plan (27 Oct, replaces the A16c stages)
+The developer asked to follow the earlier POCs page by page (D-65). Time left before the 28 Oct 21:00 meeting: about 3 to 4 h (5 to 6 h given; A16a and A16b used about 2 h).
+
+| Order | Task | Hours | Shows in the meeting |
+|---|---|---|---|
+| 1 | A17 shell: hidden sidebar (hover peek, click to pin and push), footer, support button | 1.5 | every page |
+| 2 | A18 reports like the POC + coloured statuses | 1.0 | report |
+| 3 | A19 orders list at order level with sub-services (mock; Bishoy's endpoint pending) | 1.5 | orders |
+| 4 | A20 order details page | 2.0 | an order and its services |
+| 5 | A21 create order wizard with teeth chart (blocked on Q-B24, Q-B25, G17) | 3.0 | new order |
+| 6 | A22 settings like the POC | 0.5 | settings |
+| 7 | A23 Bill To, form labels, Redo/pending/notes | 2.25 | service details |
+
+| 8 | A24 tests for A17 to A23 and A25 (deferred, D-66) | 2.0 | none (quality) |
+| 2 (proposed) | A25 sign-in per the backend Auth (Google button, `POST /auth/login`, Bearer) | 1.25 | sign-in |
+
+Total 15.0 h with A25. **No new tests until the pages are done (D-66):** A17 to A23 only keep the existing suite green; A24 writes the tests afterwards. **Fits before the meeting (about 4 h): A17 + A25 + A18 = 3.75 h** if A25 goes second (the backend team is waiting for it); A19 then moves after the meeting. Without A25: A17 + A18 + A19 = 4.0 h. Developer to choose. A20 next if time remains; A21 needs answers first. Today's service detail page and the Models/Conversion launchers keep working until A20/A21 replace them.
+
 ## 6. What we reused (read-only sources, copied out)
 `sources/mui` (base: app, theme, components, table, status) and `sources/poc-mui` (token scripts; form host, fields, error summary, dirty guard, timeline and action panel still to be adapted in A6R/A7R). Full map: `docs/DEVIATIONS.md`, "Reuse map (A1)".
 
