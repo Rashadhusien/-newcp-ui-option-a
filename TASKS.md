@@ -164,10 +164,10 @@ Branch: feat/fe-a-a17-shell-footer-support | Estimate: 1.5 h | Depends on: A16b 
 - [x] Verify (existing tests green; no new tests, D-66); browser at 390/768/1024/1440, light and dark.
 
 ## Task A18: Reports like the POC, with coloured statuses
-Branch: feat/fe-a-a18-reports-pattern | Estimate: 1.0 h | Depends on: A17 | Status: not started | Source: POC-1 `src/features/reports/ReportsPage.tsx`, POC-2 `src/pages/reports/*`
-- [ ] A18.1 Report page structure from the POC: summary cards on top, a tab bar of report pages, then the table. Replace the Models/Conversion status-chip rows; service type stays a column and a toolbar filter. No charts (`@mui/x-charts` not approved).
-- [ ] A18.2 Coloured statuses: report rows use the API status codes from the mock (`submitted`, `in_design`, `on_hold`, `completed`, ...) so `presentStatus` gives each its own tone and icon. This fixes "all statuses look the same": the old fixture labels fell back to neutral grey. Absorbs A5R.
-- [ ] Verify (no new tests, D-66); browser light and dark.
+Branch: feat/fe-a-a18-reports-pattern | Estimate: 1.0 h | Depends on: A17 | Status: ready for review | Source: POC-1 `src/features/reports/ReportsPage.tsx`, POC-2 `src/pages/reports/*`
+- [x] A18.1 Report page structure from the POC: summary cards on top, a tab bar of report pages, then the table. Replace the Models/Conversion status-chip rows; service type stays a column and a toolbar filter. No charts (`@mui/x-charts` not approved).
+- [x] A18.2 Coloured statuses: report rows use the API status codes from the mock (`submitted`, `in_design`, `on_hold`, `completed`, ...) so `presentStatus` gives each its own tone and icon. This fixes "all statuses look the same": the old fixture labels fell back to neutral grey. Absorbs A5R.
+- [x] Verify (no new tests, D-66); browser light and dark.
 
 ## Task A19: Orders list at order level with sub-services
 Branch: feat/fe-a-a19-orders-list | Estimate: 1.5 h | Depends on: A17 | Status: not started | Source: POC-2 `src/pages/orders/FlowPage.tsx`, `FlowTable.tsx`, `FlowToolbar.tsx`, `ServiceLines.tsx`, `flowColumns.tsx`
@@ -233,7 +233,8 @@ Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Sta
 | A16a | merged | DS token alignment (darkHover, onFillDark, spacing 20, smDark, fieldHeight), Outfit import removed, D-59 to D-62, flaky On Hold test fixed (10/10) |
 | A16b | merged | header/sidebar per DS, ThemeModeSwitch, MOCK badge in PageHeader, SectionCard, Settings page; 114 tests |
 | A17 | merged | hidden sidebar (hover peek, click pin + push), footer, support button; no new tests (D-66) |
-| A25 | ready for review | Google sign-in per the backend Auth (login call, Bearer token in memory, all sign-in states); IAM-TENANT-002 recorded (D-69); no new tests |
-| A18 to A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
+| A25 | merged | Google sign-in per the backend Auth (login call, Bearer token in memory, all sign-in states); IAM-TENANT-002 recorded (D-69); no new tests |
+| A18 | ready for review | report like the POC: summary cards, report tabs, status overview; statuses re-keyed to API codes (coloured); no new tests |
+| A19 to A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
