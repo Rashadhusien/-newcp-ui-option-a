@@ -2,11 +2,12 @@
  * Quick access cards on Home (A27). A card with a capability shows only
  * when the session context has it (display only; the server decides). The
  * capabilities match the pages' own gates, so FINANCE and QC get the report,
- * settings and help only. Help opens the support panel instead of a page.
+ * the dashboard, settings and help only. Help opens the support panel instead of a page.
  */
 
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import SyncAltOutlinedIcon from '@mui/icons-material/SyncAltOutlined';
@@ -51,6 +52,13 @@ export const HOME_CARDS: readonly HomeCardSpec[] = [
     icon: <SyncAltOutlinedIcon />,
     to: ROUTES.conversion,
     capability: 'service.create',
+  },
+  {
+    title: 'Dashboard',
+    description: 'Counts by status, services on hold and the latest status changes.',
+    icon: <DashboardOutlinedIcon />,
+    to: ROUTES.dashboard,
+    capability: 'reports.view_all',
   },
   {
     title: 'Settings',

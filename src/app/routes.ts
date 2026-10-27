@@ -7,6 +7,8 @@ export const ROUTES = {
   login: "/login",
   /** Landing page after sign-in (A27). */
   home: "/home",
+  /** Figures over all service instances (A28). */
+  dashboard: "/dashboard",
   reporting: "/reporting",
   orders: "/orders",
   orderNew: "/orders/new",
@@ -30,6 +32,7 @@ export const ROUTES = {
   root: string;
   login: string;
   home: string;
+  dashboard: string;
   reporting: string;
   orders: string;
   orderNew: string;
@@ -46,6 +49,7 @@ export const ROUTES = {
 /** Breadcrumb labels per route (A26); the trail builder in shared/lib/breadcrumbs.ts reads only these. */
 export const ROUTE_LABELS = {
   home: "Home",
+  dashboard: "Dashboard",
   reporting: "Report",
   orders: "Orders",
   orderNew: "New order",

@@ -2,7 +2,7 @@
 
 **Do not start any task until the developer says `start A<NN>`.** One task = one branch = one commit = one PR (see `GIT_WORKFLOW.md`). Base: `develop` (name to confirm, G7); stack on the previous branch while its PR is unmerged. Update `AI_USAGE_LOG.md` right after every subtask group.
 Sources of truth (highest first): the v0.9.2.2 handoff package with the v0.9.7 IAM overlay in `docs/newcp-ai/payload/`, `CLAUDE.md`, `docs/PLAN.md`. Unknown means `[NEEDS VERIFICATION]`; log gaps in `docs/DEVIATIONS.md`.
-Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00), after Bishoy's v1 contract, and on 24 Oct (A00b) after package v0.9.2.2: 12.0 h of work for 12 h left (25-27 Oct) with the typed-rules evaluator cut. **Re-baselined 26 Oct (A00c) after the v0.9.7 IAM overlay: 4 h left (27 Oct) for A15, A7R-lite and A14-lite; A8R, A11, A4, A5R, A12 and A13 cut (PLAN section 8).**
+Total: **24 h** (4 h/day, 20-27 Oct 2026). Re-baselined 23 Oct (A00), after Bishoy's v1 contract, and on 24 Oct (A00b) after package v0.9.2.2: 12.0 h of work for 12 h left (25-27 Oct) with the typed-rules evaluator cut. **Re-baselined 26 Oct (A00c) after the v0.9.7 IAM overlay: 4 h left (27 Oct) for A15, A7R-lite and A14-lite; A8R, A11, A4, A5R, A12 and A13 cut (PLAN section 8).** 27 Oct: the developer added A26 (0.5 h), A27 (1.0 h) and A28 (1.5 h, scope addition D-77).
 
 ## Task A1: Bootstrap the repo from the existing mui POC
 Branch: build/fe-a-a01-bootstrap | Gate: D1 | Date: Tue 20 Oct | Estimate: 2.0 h | Depends on: sources available | Status: ready for review
@@ -231,6 +231,19 @@ Branch: feat/fe-a-a27-home (stacked on A26) | Estimate: 1.0 h | Depends on: A26 
 - [x] A27.6 Component test: cards for CS, FINANCE, QC (3 tests).
 - [x] A27.7 `docs/REHEARSAL.md`: sign-in lands on Home.
 
+## Task A28: Dashboard page (scope addition, D-77)
+Branch: feat/fe-a-a28-dashboard (stacked on A27) | Estimate: 1.5 h | Depends on: A27 | Status: ready for review (MOCK only; G19, Q-B30 open) | Source: developer request 27 Oct
+- [x] A28.1 `/dashboard`, sidebar item under Home, Home card, breadcrumb Home > Dashboard.
+- [x] A28.2 Figures computed in the browser by `dashboardSelectors` over `serviceApi.dashboardData()` (mock, `reports.view_all`); BLOCKED with the real API, nothing called.
+- [x] A28.3 KPI cards: open, on hold, completed, price override ("Not available", Q-B30), zero-charge reason; each says how it is counted.
+- [x] A28.4 Status overview: one row per API status (badge icon + label, count, LinearProgress); no chart library.
+- [x] A28.5 Needs attention: services on hold (service, line, order short id; hold type and reason "not returned", Q-B18), linked only with `service.read`.
+- [x] A28.6 Recent activity from history; actor as short id (Q-B6).
+- [x] A28.7 All five roles; FINANCE and QC without links; no export.
+- [x] A28.8 Loading skeletons, empty state, error with retry, BLOCKED; cards on phone; light and dark; reduced motion via the global rule.
+- [x] A28.9 Test: dashboard counts equal the Report's counting for the same rows (2 tests); the Report summary cards now use the shared `statusFigures`.
+- [x] A28.10 D-77, G19, Q-B30; PLAN and REHEARSAL updated.
+
 ## Phase log
 | Task | Status | Notes |
 |---|---|---|
@@ -262,6 +275,7 @@ Branch: feat/fe-a-a27-home (stacked on A26) | Estimate: 1.0 h | Depends on: A26 
 | A23 | ready for review | Bill To card + create field (mock, BLOCKED real), labels above fields, Redo/redo-of/pending reason/notes; no new tests |
 | A26 | ready for review | breadcrumbs on every page (pure trail builder + AppBreadcrumbs in PageHeader); 5 new tests |
 | A27 | ready for review | Home landing page with greeting, roles, tenant and capability-gated cards; 3 new tests |
+| A28 | ready for review | Dashboard (mock, computed in the browser, BLOCKED real), status counts shared with the Report; 2 new tests |
 | A22 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

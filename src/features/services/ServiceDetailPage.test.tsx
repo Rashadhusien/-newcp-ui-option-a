@@ -85,7 +85,8 @@ describe('ServiceDetailPage (A7R, mock)', () => {
     }, SLOW);
     expect(await screen.findByRole('list', { name: 'Status history, line 1' }, SLOW)).toHaveTextContent(/On hold/);
     expect((await serviceApi.item(LINE_2)).data.status).toBe('in_design');
-  });
+    // Several chained waits of up to SLOW each; the default 5 s test limit was shorter than they allow (A23 flake).
+  }, 15_000);
 
   it('shows the zero-charge 422 on its field and saves nothing', async () => {
     renderDetail(LINE_1);

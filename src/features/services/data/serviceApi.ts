@@ -38,7 +38,8 @@ import { MOCK_ORDERS, type MockOrderHeader } from '@/mocks/orderFixtures';
 import { MOCK_ORDER_UUID } from '@/mocks/serviceFixtures';
 import { mockSessionContext } from '@/mocks/sessionFixtures';
 import { mockIdentity, reportAccessError } from '@/shared/lib/session';
-import { withMockAccess } from './mockAccess';
+import type { DashboardData } from './dashboardData';
+import { mockAccessError, withMockAccess } from './mockAccess';
 import { createMockServiceApi } from './mockServiceApi';
 import type { CreateOrderRequest, CreateOrderResult, OrderSummary } from './orderSummary';
 
@@ -65,6 +66,13 @@ export interface ServiceApi extends NewCpClient {
    * `blocked` and nothing is sent.
    */
   createOrder(request: CreateOrderRequest): Promise<CreateOrderResult>;
+  /**
+   * Everything the Dashboard counts (A28). No dashboard or report endpoint
+   * is in the contract (G3): mock only, checked like a report read
+   * (`reports.view_all`, so FINANCE and QC may see it); with the real API
+   * this rejects with kind `blocked` and nothing is sent.
+   */
+  dashboardData(options?: RequestOptions): Promise<DashboardData>;
 }
 
 
@@ -119,7 +127,8 @@ export function createServiceApi(
   tokenSource: TokenSource = bearerTokenSource,
 ): ServiceApi {
   if (config.useMocks) {
-    const mock = withMockAccess(createMockServiceApi({ failWith: failStatusFromUrl() }), currentMockContext);
+    const raw = createMockServiceApi({ failWith: failStatusFromUrl() });
+    const mock = withMockAccess(raw, currentMockContext);
     // Orders created by the A21 wizard in this tab (memory only; a reload starts from the fixtures again).
     const createdOrders: MockOrderHeader[] = [];
     let nextOrder = 0;
@@ -158,6 +167,21 @@ export function createServiceApi(
         });
         return { orderUuid, orderNumber };
       },
+      dashboardData: async (options?: RequestOptions) => {
+        const denied = mockAccessError(currentMockContext(), ['reports.view_all']);
+        if (denied) throw denied;
+        // Read like a report: all orders' services, unfiltered by service rights.
+        const headers = [...MOCK_ORDERS, ...createdOrders];
+        const services = (await Promise.all(headers.map((header) => raw.orderItems(header.orderUuid, options)))).flat();
+        const [catalog, histories] = await Promise.all([
+          raw.catalog(undefined, options),
+          Promise.all(services.map((item) => raw.history(item.uuid, options))),
+        ]);
+        const activity = histories.flatMap((events, index) =>
+          events.map((event) => ({ ...event, serviceItemUuid: services[index]?.uuid ?? '' })),
+        );
+        return { services, catalog, activity };
+      },
       evidence: 'MOCK',
       demoOrderUuid: MOCK_ORDER_UUID,
       billToAvailable: true,
@@ -176,6 +200,8 @@ export function createServiceApi(
     orders: () => Promise.reject(blocked('The order list is not in the API contract yet (question Q-B26).')),
     createOrder: () =>
       Promise.reject(blocked('Creating an order is not in the API contract yet (question Q-B24). Nothing was sent.')),
+    dashboardData: () =>
+      Promise.reject(blocked('There is no dashboard or report endpoint in the API contract yet (G3). Nothing was sent.')),
     evidence: 'INTEGRATED',
     demoOrderUuid: null,
     billToAvailable: false,

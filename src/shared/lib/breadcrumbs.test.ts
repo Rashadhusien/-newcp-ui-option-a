@@ -9,6 +9,7 @@ describe('buildTrail (A26)', () => {
   it('builds the top-level trails from the route labels', () => {
     expect(labels('/')).toEqual(['Home']);
     expect(labels('/home')).toEqual(['Home']);
+    expect(labels('/dashboard')).toEqual(['Home', 'Dashboard']);
     expect(labels('/reporting')).toEqual(['Home', 'Report']);
     expect(labels('/orders')).toEqual(['Home', 'Orders']);
     expect(labels('/settings')).toEqual(['Home', 'Settings']);

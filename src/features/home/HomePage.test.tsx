@@ -35,6 +35,7 @@ describe('HomePage (A27)', () => {
       'Orders',
       'New Biomodel',
       'New Conversion',
+      'Dashboard',
       'Settings',
       'Help and support',
     ]);
@@ -42,7 +43,7 @@ describe('HomePage (A27)', () => {
     expect(screen.getByLabelText('Role: CS')).toBeInTheDocument();
   });
 
-  it.each<MockIdentity>(['FINANCE', 'QC'])('shows %s only the report, settings and help', (identity) => {
-    expect(renderHome(identity)).toEqual(['Report', 'Settings', 'Help and support']);
+  it.each<MockIdentity>(['FINANCE', 'QC'])('shows %s only the report, dashboard, settings and help', (identity) => {
+    expect(renderHome(identity)).toEqual(['Report', 'Dashboard', 'Settings', 'Help and support']);
   });
 });

@@ -24,7 +24,8 @@ import { AppSelect, type AppSelectOption } from '@/shared/components/basic';
 import { KpiCard, ResponsiveDataTable, TableToolbar, type FilterChip } from '@/shared/components/data-display';
 import { PageHeader } from '@/shared/components/layout';
 import { useUrlFilter, useUrlFiltersUpdater, useUrlTableControls } from '@/shared/hooks/useUrlTableControls';
-import { presentStatus } from '@/shared/status/status';
+import { presentStatus, type StatusSemantic } from '@/shared/status/status';
+import { countBySemantic } from '@/shared/status/statusFigures';
 import { SERVICE_TYPES, filterReport, isServiceType, statusOptions } from './filterReport';
 import { REPORT_COLUMNS } from './reportColumns';
 import { StatusOverview } from './StatusOverview';
@@ -65,7 +66,8 @@ export default function ReportingPage() {
 
   const filters = { search, serviceType, status };
   const filtered = filterReport(rows, filters);
-  const bySemantic = (semantic: string) => rows.filter((row) => presentStatus(row.status).semantic === semantic).length;
+  // Shared with the Dashboard (A28), so both pages count the same way.
+  const bySemantic = (semantic: StatusSemantic) => countBySemantic(rows, semantic);
   const orderCount = new Set(rows.map((row) => row.orderId)).size;
   const controls = useUrlTableControls({
     initialSort: { column: 'dueDate', direction: 'asc' },

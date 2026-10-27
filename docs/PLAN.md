@@ -77,8 +77,11 @@ The developer asked to follow the earlier POCs page by page (D-65). Time left be
 
 | 8 | A24 tests for A17 to A23 and A25 (deferred, D-66) | 2.0 | none (quality) |
 | 2 (proposed) | A25 sign-in per the backend Auth (Google button, `POST /auth/login`, Bearer) | 1.25 | sign-in |
+| 9 | A26 breadcrumbs on every page | 0.5 | every page |
+| 10 | A27 Home (welcome) page, landing after sign-in | 1.0 | sign-in, Home |
+| 11 | A28 Dashboard (scope addition 27 Oct, D-77, G19) | 1.5 | dashboard |
 
-Total 15.0 h with A25. **No new tests until the pages are done (D-66):** A17 to A23 only keep the existing suite green; A24 writes the tests afterwards. **Fits before the meeting (about 4 h): A17 + A25 + A18 = 3.75 h** if A25 goes second (the backend team is waiting for it); A19 then moves after the meeting. Without A25: A17 + A18 + A19 = 4.0 h. Developer to choose. A20 next if time remains; A21 needs answers first. Today's service detail page and the Models/Conversion launchers keep working until A20/A21 replace them.
+Total 15.0 h with A25, 18.0 h with A26 to A28 (added 27 Oct; the Dashboard is a scope addition, D-77). **No new tests until the pages are done (D-66):** A17 to A23 only keep the existing suite green; A24 writes the tests afterwards. **Fits before the meeting (about 4 h): A17 + A25 + A18 = 3.75 h** if A25 goes second (the backend team is waiting for it); A19 then moves after the meeting. Without A25: A17 + A18 + A19 = 4.0 h. Developer to choose. A20 next if time remains; A21 needs answers first. Today's service detail page and the Models/Conversion launchers keep working until A20/A21 replace them.
 
 ## 6. What we reused (read-only sources, copied out)
 `sources/mui` (base: app, theme, components, table, status) and `sources/poc-mui` (token scripts; form host, fields, error summary, dirty guard, timeline and action panel still to be adapted in A6R/A7R). Full map: `docs/DEVIATIONS.md`, "Reuse map (A1)".
