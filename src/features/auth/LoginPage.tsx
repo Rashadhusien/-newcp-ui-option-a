@@ -59,7 +59,7 @@ export default function LoginPage() {
   const dark = (mode === 'system' ? systemMode : mode) === 'dark';
   const { useMocks, baseUrl } = readApiConfig();
   const clientId = useMocks ? null : readGoogleClientId();
-  const destination = safeReturnPath((location.state as LoginRedirectState | null)?.from, ROUTES.reporting);
+  const destination = safeReturnPath((location.state as LoginRedirectState | null)?.from, ROUTES.home);
   const [identity, setIdentity] = useState<MockIdentity>('CS');
   const [phase, setPhase] = useState<Phase>(() =>
     !useMocks && readGoogleClientId() !== null ? { kind: 'googleLoading' } : { kind: 'idle' },

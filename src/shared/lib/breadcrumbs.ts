@@ -31,7 +31,7 @@ export interface TrailHints {
   section?: 'models' | 'conversion';
 }
 
-const HOME: Crumb = { label: ROUTE_LABELS.home, to: ROUTES.root };
+const HOME: Crumb = { label: ROUTE_LABELS.home, to: ROUTES.home };
 const ORDERS: Crumb = { label: ROUTE_LABELS.orders, to: ROUTES.orders, capability: 'orders.read' };
 
 export function shortId(uuid: string): string {
@@ -71,6 +71,8 @@ export function buildTrail(pathname: string, hints: TrailHints = {}): Crumb[] {
   if (parts.length === 0) return current([HOME]);
   if (parts.length === 1) {
     switch (first) {
+      case 'home':
+        return current([HOME]);
       case 'reporting':
         return current([HOME, { label: ROUTE_LABELS.reporting }]);
       case 'orders':

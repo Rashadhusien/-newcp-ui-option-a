@@ -15,9 +15,9 @@ export default function NotFoundPage() {
       <EmptyState
         title="This page does not exist"
         description="The link may be out of date, or the address was mistyped."
-        actionLabel="Back to the report"
+        actionLabel="Back to Home"
         onAction={() => {
-          void navigate(ROUTES.reporting);
+          void navigate(ROUTES.home);
         }}
       />
     </>

@@ -4,6 +4,7 @@
  * the server still decides). FINANCE and QC therefore see the report only.
  */
 
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined';
@@ -28,6 +29,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: 'Workspace',
     entries: [
+      { label: 'Home', to: ROUTES.home, icon: <HomeOutlinedIcon /> },
       { label: 'Report', to: ROUTES.reporting, icon: <AssessmentOutlinedIcon />, capability: 'reports.view_all' },
       { label: 'Orders', to: ROUTES.orders, icon: <AssignmentOutlinedIcon />, capability: 'orders.read' },
       { label: 'Models', to: ROUTES.models, icon: <ViewInArOutlinedIcon />, capability: 'service.read' },

@@ -5,6 +5,8 @@
 export const ROUTES = {
   root: "/",
   login: "/login",
+  /** Landing page after sign-in (A27). */
+  home: "/home",
   reporting: "/reporting",
   orders: "/orders",
   orderNew: "/orders/new",
@@ -27,6 +29,7 @@ export const ROUTES = {
 } satisfies {
   root: string;
   login: string;
+  home: string;
   reporting: string;
   orders: string;
   orderNew: string;

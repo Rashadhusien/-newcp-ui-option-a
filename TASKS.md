@@ -221,6 +221,16 @@ Branch: feat/fe-a-a26-breadcrumbs | Estimate: 0.5 h | Depends on: A23 (develop) 
 - [x] A26.3 MUI Breadcrumbs as `<nav aria-label="Breadcrumb">`, last crumb `aria-current="page"`, earlier crumbs router links, middle crumbs collapse under 640 px; crumbs the role cannot open are plain text.
 - [x] A26.4 Vitest for the trail builder (5 tests).
 
+## Task A27: Home (welcome) page
+Branch: feat/fe-a-a27-home (stacked on A26) | Estimate: 1.0 h | Depends on: A26 | Status: ready for review | Source: developer request 27 Oct
+- [x] A27.1 `/home` (lazy, default export): landing page after sign-in (safe return path still wins), first sidebar item, first breadcrumb; `/` and the 404 action go there.
+- [x] A27.2 "Welcome, <displayName>", role chips and the read-only tenant badge, all from the session context.
+- [x] A27.3 Quick access cards gated by `can(context, ...)`: Report, Orders, New Biomodel, New Conversion, Settings, Help and support (Dashboard follows in A28); grid 1/2/3 columns; whole card is the link (Help opens the support panel).
+- [x] A27.4 MOCK badge in the PageHeader; no counts, no activity.
+- [x] A27.5 Mock identity switch updates greeting, chips and cards.
+- [x] A27.6 Component test: cards for CS, FINANCE, QC (3 tests).
+- [x] A27.7 `docs/REHEARSAL.md`: sign-in lands on Home.
+
 ## Phase log
 | Task | Status | Notes |
 |---|---|---|
@@ -251,6 +261,7 @@ Branch: feat/fe-a-a26-breadcrumbs | Estimate: 0.5 h | Depends on: A23 (develop) 
 | A21 | ready for review | create-order wizard (5 steps, react-odontogram teeth chart, per-instance details), mock only; no new tests |
 | A23 | ready for review | Bill To card + create field (mock, BLOCKED real), labels above fields, Redo/redo-of/pending reason/notes; no new tests |
 | A26 | ready for review | breadcrumbs on every page (pure trail builder + AppBreadcrumbs in PageHeader); 5 new tests |
+| A27 | ready for review | Home landing page with greeting, roles, tenant and capability-gated cards; 3 new tests |
 | A22 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

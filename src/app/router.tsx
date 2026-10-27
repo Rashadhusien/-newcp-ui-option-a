@@ -26,7 +26,8 @@ export const router = createBrowserRouter([
       </AuthBoundary>
     ),
     children: [
-      { index: true, element: <Navigate to={ROUTES.reporting} replace /> },
+      { index: true, element: <Navigate to={ROUTES.home} replace /> },
+      { path: 'home', lazy: page(() => import('@/features/home/HomePage')) },
       { path: 'reporting', lazy: page(() => import('@/features/reporting/ReportingPage')) },
       { path: 'orders', lazy: page(() => import('@/features/services/OrdersPage')) },
       { path: 'orders/new', lazy: page(() => import('@/features/services/create/CreateOrderPage')) },

@@ -35,7 +35,7 @@ const SIDEBAR_WIDTH = layoutTokens.sidebarWidth;
 export type SidebarVariant = 'docked' | 'floating' | 'modal';
 
 function isActivePath(pathname: string, to: string): boolean {
-  if (to === ROUTES.reporting) return pathname === ROUTES.reporting || pathname === '/';
+  if (to === ROUTES.home) return pathname === ROUTES.home || pathname === '/';
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
