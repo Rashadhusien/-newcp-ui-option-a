@@ -176,10 +176,10 @@ Branch: feat/fe-a-a19-orders-list | Estimate: 1.5 h | Depends on: A17 | Status: 
 - [x] Verify (no new tests, D-66); browser incl. phone cards.
 
 ## Task A20: Order details page
-Branch: feat/fe-a-a20-order-details | Estimate: 2.0 h | Depends on: A19 | Status: not started | Source: POC-2 `src/pages/orderDetails/*` (OrderSummary, ServiceInfo, ServiceAction, WorkflowSteps, InternalNotes)
-- [ ] A20.1 Order summary card, then one card per service instance with its status, transition buttons (from the API), staff fields and history: today's A7R detail content in the POC layout (A16c-1 folded in). On Hold dialog unchanged.
-- [ ] A20.2 Order header fields the contract lacks (order number, client, patient, due date) are mock-only and labelled (D-61).
-- [ ] Verify: the existing A7R tests keep passing (update them if the layout moves); no new tests (D-66).
+Branch: feat/fe-a-a20-order-details | Estimate: 2.0 h | Depends on: A19 | Status: ready for review | Source: POC-2 `src/pages/orderDetails/*` (OrderSummary, ServiceInfo, ServiceAction, WorkflowSteps, InternalNotes)
+- [x] A20.1 Order summary card, then one card per service instance with its status, transition buttons (from the API), staff fields and history: today's A7R detail content in the POC layout (A16c-1 folded in). On Hold dialog unchanged.
+- [x] A20.2 Order header fields the contract lacks (order number, client, patient, due date) are mock-only and labelled (D-61).
+- [x] Verify: the existing A7R tests keep passing (update them if the layout moves); no new tests (D-66).
 
 ## Task A21: Create order wizard (steps + teeth chart)
 Branch: feat/fe-a-a21-create-order | Estimate: 3.0 h | Depends on: A20; Q-B24, Q-B25, G17 | Status: blocked on answers | Source: POC-2 `src/pages/addCase/*`, `src/components/TeethChart*.tsx`, `teethModel.ts`
@@ -235,7 +235,8 @@ Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Sta
 | A17 | merged | hidden sidebar (hover peek, click pin + push), footer, support button; no new tests (D-66) |
 | A25 | merged | Google sign-in per the backend Auth (login call, Bearer token in memory, all sign-in states); IAM-TENANT-002 recorded (D-69); no new tests |
 | A18 | merged | report like the POC: summary cards, report tabs, status overview; statuses re-keyed to API codes (coloured); no new tests |
-| A19 | ready for review | orders list at order level with expandable services; mock only, BLOCKED with the real API; no new tests |
-| A20 to A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
+| A19 | merged | orders list at order level with expandable services; mock only, BLOCKED with the real API; no new tests |
+| A20 | ready for review | order details like the POC: summary, services list, selected service with staff fields, status, On Hold, history; no new tests |
+| A21 to A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

@@ -8,23 +8,14 @@
  * returns to sign-in through the session.
  */
 
-import { Link as RouterLink, useParams } from 'react-router-dom';
-import Link from '@mui/material/Link';
-import Stack from '@mui/material/Stack';
-import { ROUTES } from '@/app/routes';
-import { can } from '@/shared/api';
-import { StatusBadge } from '@/shared/components/basic';
-import { DetailList, SectionCard } from '@/shared/components/data-display';
+import { useParams } from 'react-router-dom';
 import { ErrorState, LoadingState } from '@/shared/components/feedback';
 import { PageHeader } from '@/shared/components/layout';
-import { useSession } from '@/shared/hooks/useSession';
-import { StaffFieldsForm } from './detail/StaffFieldsForm';
-import { StatusPanel } from './detail/StatusPanel';
+import { ServiceInstanceSections } from './detail/ServiceInstanceSections';
 import { useServiceDetail } from './detail/useServiceDetail';
 
 function ServiceDetail({ serviceItemUuid }: { serviceItemUuid: string }) {
   const { state, reload } = useServiceDetail(serviceItemUuid);
-  const { context } = useSession();
 
   if (state.status === 'loading') {
     return (
@@ -55,60 +46,15 @@ function ServiceDetail({ serviceItemUuid }: { serviceItemUuid: string }) {
     );
   }
 
-  const { item, etag, serviceName, transitions, history } = state.detail;
-  const lineLabel = `line ${String(item.lineNumber ?? '-')}`;
+  const { item, serviceName } = state.detail;
   return (
     <>
       <PageHeader
-        title={`${serviceName} service, ${lineLabel}`}
+        title={`${serviceName} service, line ${String(item.lineNumber ?? '-')}`}
         description="This instance only: its own staff fields, status and history."
         evidence
       />
-      <Stack spacing={3}>
-        <SectionCard title="Instance">
-          <DetailList
-            columns={3}
-            items={[
-              { label: 'Service', value: serviceName },
-              { label: 'Line', value: String(item.lineNumber ?? '-') },
-              { label: 'Instance ID', value: item.uuid },
-              {
-                label: 'Status',
-                value: <StatusBadge status={item.status} size="sm" />,
-              },
-              {
-                label: 'Invoiced',
-                value: item.isInvoiced ? 'Yes (financially locked)' : 'No',
-              },
-              {
-                label: 'Form answers',
-                value: can(context, 'service.update') ? (
-                  <Link component={RouterLink} to={ROUTES.serviceEdit(item.uuid)}>
-                    Edit the form answers
-                  </Link>
-                ) : (
-                  'Read-only'
-                ),
-              },
-            ]}
-          />
-        </SectionCard>
-        <SectionCard title="Staff fields">
-          <StaffFieldsForm key={etag} item={item} etag={etag} onSaved={reload} onReload={reload} />
-        </SectionCard>
-        <SectionCard title="Status">
-          <StatusPanel
-            key={etag}
-            serviceItemUuid={item.uuid}
-            lineLabel={lineLabel}
-            status={item.status}
-            etag={etag}
-            transitions={transitions}
-            history={history}
-            onChanged={reload}
-          />
-        </SectionCard>
-      </Stack>
+      <ServiceInstanceSections detail={state.detail} onChanged={reload} />
     </>
   );
 }

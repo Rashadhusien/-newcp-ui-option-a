@@ -13,7 +13,7 @@ export const ROUTES = {
   /** Create a service instance of one catalog service on an order. */
   serviceNew: (orderUuid: string, serviceUuid: string) =>
     `/orders/${encodeURIComponent(orderUuid)}/services/new/${encodeURIComponent(serviceUuid)}`,
-  /** One order's services (placeholder for the A20 order details page). */
+  /** One order: summary and its services (A20). */
   orderServices: (orderUuid: string) =>
     `/orders/${encodeURIComponent(orderUuid)}`,
   /** One service instance: staff fields, status, history. */
