@@ -9,3 +9,5 @@ export * from './TablePager';
 export * from './TableToolbar';
 export * from './SectionCard';
 export * from './KpiCard';
+export * from './SectionTabs';
+export * from './sectionTabIds';

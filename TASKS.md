@@ -189,8 +189,10 @@ Branch: feat/fe-a-a21-create-order | Estimate: 3.0 h | Depends on: A20; Q-B24, Q
 - [x] Verify (no new tests, D-66); browser check.
 
 ## Task A22: Settings like the POC
-Branch: feat/fe-a-a22-settings | Estimate: 0.5 h | Depends on: A17 | Status: not started | Source: POC-1 `src/features/settings/SettingsPage.tsx` (SectionCard + SectionTabs)
-- [ ] A22.1 POC layout with sections; only settings the app really has are interactive (theme, data source, about/version). Profile, notifications and password have no backend: left out or shown as "Not available in this demo".
+Branch: feat/fe-a-a22-settings | Estimate: 0.5 h | Depends on: A17 | Status: ready for review | Source: POC-1 `src/features/settings/SettingsPage.tsx` (SectionCard + SectionTabs)
+- [x] A22.1 POC layout with sections; only settings the app really has are interactive (theme, data source, about/version). Profile, notifications and password have no backend: left out or shown as "Not available in this demo".
+- [x] A22.2 Sections Account (read-only from the session context), Appearance (theme), Data source (MOCK/INTEGRATED, what stays mock only), About (name, version, build); tab in `?tab=`; `SectionTabs` and `useTabParam` ported from POC-1 into `shared/`. D-78.
+- [x] Verify (existing tests green; no new tests, D-66); browser CS/FINANCE/QC, 390 and 1440, light and dark.
 
 ## Task A25: Sign-in page per the backend Auth implementation
 Branch: feat/fe-a-a25-google-auth | Estimate: 1.25 h | Depends on: A15 (session, IAM states) | Status: ready for review | Source: backend team request (27 Oct, D-67), IAM v0.9.7 tenant spec D1/D3
@@ -271,11 +273,12 @@ Branch: feat/fe-a-a28-dashboard (stacked on A27) | Estimate: 1.5 h | Depends on:
 | A18 | merged | report like the POC: summary cards, report tabs, status overview; statuses re-keyed to API codes (coloured); no new tests |
 | A19 | merged | orders list at order level with expandable services; mock only, BLOCKED with the real API; no new tests |
 | A20 | merged | order details like the POC: summary, services list, selected service with staff fields, status, On Hold, history; no new tests |
-| A21 | ready for review | create-order wizard (5 steps, react-odontogram teeth chart, per-instance details), mock only; no new tests |
-| A23 | ready for review | Bill To card + create field (mock, BLOCKED real), labels above fields, Redo/redo-of/pending reason/notes; no new tests |
-| A26 | ready for review | breadcrumbs on every page (pure trail builder + AppBreadcrumbs in PageHeader); 5 new tests |
-| A27 | ready for review | Home landing page with greeting, roles, tenant and capability-gated cards; 3 new tests |
-| A28 | ready for review | Dashboard (mock, computed in the browser, BLOCKED real), status counts shared with the Report; 2 new tests |
-| A22 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
+| A21 | merged | create-order wizard (5 steps, react-odontogram teeth chart, per-instance details), mock only; no new tests |
+| A23 | merged | Bill To card + create field (mock, BLOCKED real), labels above fields, Redo/redo-of/pending reason/notes; no new tests |
+| A26 | merged | breadcrumbs on every page (pure trail builder + AppBreadcrumbs in PageHeader); 5 new tests |
+| A27 | merged | Home landing page with greeting, roles, tenant and capability-gated cards; 3 new tests |
+| A28 | merged | Dashboard (mock, computed in the browser, BLOCKED real), status counts shared with the Report; 2 new tests |
+| A22 (Settings) | ready for review | Settings like the POC: Account (read-only), Appearance, Data source, About in `?tab=` sections; no new tests |
+| A22 (plan) | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
