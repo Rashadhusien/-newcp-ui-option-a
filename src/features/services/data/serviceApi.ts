@@ -30,14 +30,17 @@ import {
   type ApiConfig,
   type ApiEvidence,
   type NewCpClient,
+  type RequestOptions,
   type TokenSource,
   type ZeroChargeReason,
 } from '@/shared/api';
+import { MOCK_ORDERS } from '@/mocks/orderFixtures';
 import { MOCK_ORDER_UUID } from '@/mocks/serviceFixtures';
 import { mockSessionContext } from '@/mocks/sessionFixtures';
 import { mockIdentity, reportAccessError } from '@/shared/lib/session';
 import { withMockAccess } from './mockAccess';
 import { createMockServiceApi } from './mockServiceApi';
+import type { OrderSummary } from './orderSummary';
 
 export interface ServiceApi extends NewCpClient {
   readonly evidence: ApiEvidence;
@@ -50,6 +53,12 @@ export interface ServiceApi extends NewCpClient {
   readonly billToAvailable: boolean;
   /** Mock only; with the real API this rejects with kind `blocked` (Q-B17). */
   zeroChargeReasons(): Promise<ZeroChargeReason[]>;
+  /**
+   * Order-level list with each order's services (A19). Mock only: the
+   * endpoint is not in the contract yet (Q-B26); with the real API this
+   * rejects with kind `blocked` and nothing is sent.
+   */
+  orders(options?: RequestOptions): Promise<OrderSummary[]>;
 }
 
 
@@ -104,8 +113,14 @@ export function createServiceApi(
   tokenSource: TokenSource = bearerTokenSource,
 ): ServiceApi {
   if (config.useMocks) {
+    const mock = withMockAccess(createMockServiceApi({ failWith: failStatusFromUrl() }), currentMockContext);
     return reportingAccess({
-      ...withMockAccess(createMockServiceApi({ failWith: failStatusFromUrl() }), currentMockContext),
+      ...mock,
+      // Each order's services come from the access-checked mock, so a role without service rights gets the 403.
+      orders: (options?: RequestOptions) =>
+        Promise.all(
+          MOCK_ORDERS.map(async (header) => ({ ...header, services: await mock.orderItems(header.orderUuid, options) })),
+        ),
       evidence: 'MOCK',
       demoOrderUuid: MOCK_ORDER_UUID,
       billToAvailable: true,
@@ -121,6 +136,7 @@ export function createServiceApi(
       client.edit(serviceItemUuid, withoutPayer(patch), ifMatch, options),
     zeroChargeReasons: () =>
       Promise.reject(blocked('Zero-charge reasons are not in the API contract yet (question Q-B17).')),
+    orders: () => Promise.reject(blocked('The order list is not in the API contract yet (question Q-B26).')),
     evidence: 'INTEGRATED',
     demoOrderUuid: null,
     billToAvailable: false,

@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ROUTES } from '@/app/routes';
 import { isApiError, type ServiceItem } from '@/shared/api';
 import { StatusBadge } from '@/shared/components/basic';
@@ -62,7 +63,9 @@ type LoadState =
   | { status: 'ready'; rows: OrderServiceRow[] };
 
 export default function OrderServicesPage() {
-  const orderUuid = serviceApi.demoOrderUuid;
+  // A19: the order comes from the URL (Orders list -> Open order); the demo order is the fallback.
+  const { orderUuid: orderParam } = useParams();
+  const orderUuid = orderParam ?? serviceApi.demoOrderUuid;
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const controls = useTableControls({
@@ -102,7 +105,7 @@ export default function OrderServicesPage() {
     <>
       <PageHeader
         title="Order services"
-        description="Every service on the demo order. Two services of the same type are two separate instances."
+        description="Every service on this order. Two services of the same type are two separate instances."
         evidence
       />
       {orderUuid === null ? (

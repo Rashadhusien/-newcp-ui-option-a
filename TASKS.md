@@ -170,10 +170,10 @@ Branch: feat/fe-a-a18-reports-pattern | Estimate: 1.0 h | Depends on: A17 | Stat
 - [x] Verify (no new tests, D-66); browser light and dark.
 
 ## Task A19: Orders list at order level with sub-services
-Branch: feat/fe-a-a19-orders-list | Estimate: 1.5 h | Depends on: A17 | Status: not started | Source: POC-2 `src/pages/orders/FlowPage.tsx`, `FlowTable.tsx`, `FlowToolbar.tsx`, `ServiceLines.tsx`, `flowColumns.tsx`
-- [ ] A19.1 One row per order; expanding a row shows its services (one line per instance: type, status, line, quantity); a row opens the order details page. Toolbar, search, sort and paging like the POC.
-- [ ] A19.2 Data: a mock orders-list source behind the service adapter. Bishoy's `GET /orders` is not in the contract yet (Q-B3, Q-B26): the shape is PROPOSED and `[NEEDS VERIFICATION]`; with mocks off the list is BLOCKED and nothing is called. Synthetic orders only.
-- [ ] Verify (no new tests, D-66); browser incl. phone cards.
+Branch: feat/fe-a-a19-orders-list | Estimate: 1.5 h | Depends on: A17 | Status: ready for review | Source: POC-2 `src/pages/orders/FlowPage.tsx`, `FlowTable.tsx`, `FlowToolbar.tsx`, `ServiceLines.tsx`, `flowColumns.tsx`
+- [x] A19.1 One row per order; expanding a row shows its services (one line per instance: type, status, line, quantity); a row opens the order details page. Toolbar, search, sort and paging like the POC.
+- [x] A19.2 Data: a mock orders-list source behind the service adapter. Bishoy's `GET /orders` is not in the contract yet (Q-B3, Q-B26): the shape is PROPOSED and `[NEEDS VERIFICATION]`; with mocks off the list is BLOCKED and nothing is called. Synthetic orders only.
+- [x] Verify (no new tests, D-66); browser incl. phone cards.
 
 ## Task A20: Order details page
 Branch: feat/fe-a-a20-order-details | Estimate: 2.0 h | Depends on: A19 | Status: not started | Source: POC-2 `src/pages/orderDetails/*` (OrderSummary, ServiceInfo, ServiceAction, WorkflowSteps, InternalNotes)
@@ -234,7 +234,8 @@ Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Sta
 | A16b | merged | header/sidebar per DS, ThemeModeSwitch, MOCK badge in PageHeader, SectionCard, Settings page; 114 tests |
 | A17 | merged | hidden sidebar (hover peek, click pin + push), footer, support button; no new tests (D-66) |
 | A25 | merged | Google sign-in per the backend Auth (login call, Bearer token in memory, all sign-in states); IAM-TENANT-002 recorded (D-69); no new tests |
-| A18 | ready for review | report like the POC: summary cards, report tabs, status overview; statuses re-keyed to API codes (coloured); no new tests |
-| A19 to A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
+| A18 | merged | report like the POC: summary cards, report tabs, status overview; statuses re-keyed to API codes (coloured); no new tests |
+| A19 | ready for review | orders list at order level with expandable services; mock only, BLOCKED with the real API; no new tests |
+| A20 to A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

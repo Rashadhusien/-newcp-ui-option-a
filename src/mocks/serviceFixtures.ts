@@ -61,6 +61,30 @@ export const MOCK_BILLED_PARTIES: readonly BilledPartyChoice[] = [
 export const MOCK_CONTRACT_UNIT_PRICE = '20.00';
 export const MOCK_CURRENCY = 'USD';
 
+/** A19: services of the other synthetic orders (orderFixtures), so the orders list has more than one order. */
+function extraItem(uuidSuffix: string, orderSuffix: string, service: 'biomodel' | 'conversion', lineNumber: number, status: string): ServiceItem {
+  return {
+    uuid: `00000000-0000-0000-0000-0000000000${uuidSuffix}`,
+    orderUuid: `00000000-0000-0000-0000-0000000000${orderSuffix}`,
+    sellableItemUuid: service === 'biomodel' ? MOCK_BIOMODEL_UUID : MOCK_CONVERSION_UUID,
+    lineNumber,
+    quantity: 1,
+    status,
+    isBillable: true,
+    canEditBillability: true,
+    isRedo: false,
+    isInvoiced: false,
+    currencyCode: MOCK_CURRENCY,
+    unitPrice: MOCK_CONTRACT_UNIT_PRICE,
+    lineTotal: MOCK_CONTRACT_UNIT_PRICE,
+    canEditPrice: true,
+    answers: [],
+    billedToContactUuid: MOCK_DOCTOR_UUID,
+    billedPartyOrigin: 'order_default',
+    canEditBilledParty: true,
+  };
+}
+
 /**
  * One order with two same-type Biomodel items (different payers, as in the
  * F07 example `sameTypeInstancesDifferentPayers`; the second one's clerk may
@@ -128,6 +152,13 @@ export const MOCK_SERVICE_ITEMS: readonly ServiceItem[] = [
     billedPartyOrigin: 'order_default',
     canEditBilledParty: false,
   },
+  extraItem('d1', 'c2', 'biomodel', 1, 'in_production'),
+  extraItem('d2', 'c2', 'conversion', 2, 'pending_information'),
+  extraItem('d3', 'c3', 'conversion', 1, 'on_hold'),
+  extraItem('d4', 'c4', 'biomodel', 1, 'completed'),
+  extraItem('d5', 'c4', 'biomodel', 2, 'in_design'),
+  extraItem('d6', 'c4', 'conversion', 3, 'submitted'),
+  extraItem('d7', 'c5', 'biomodel', 1, 'submitted'),
 ];
 
 export const MOCK_ZERO_CHARGE_REASONS: readonly ZeroChargeReason[] = [
