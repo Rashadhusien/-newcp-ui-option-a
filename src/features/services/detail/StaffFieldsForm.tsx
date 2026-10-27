@@ -1,6 +1,9 @@
 /**
- * Staff fields of ONE service instance (A7R.2): quantity, unit price
- * override, Billable and zero-charge reason/note, saved with If-Match.
+ * Staff fields of ONE service instance (A7R.2, A23): Redo, redo-of,
+ * pending reason and service notes; quantity, unit price override, Billable
+ * and zero-charge reason/note. Saved together with If-Match. Bill To has
+ * its own section and save (BillToSection), so Billable and Bill To never
+ * change each other.
  *
  * - A field is editable only when the item allows it (`canEditPrice`,
  *   `canEditBillability`) and the session has the capability; otherwise it
@@ -9,6 +12,8 @@
  *   stay, "Reload latest" offered. 422 with `details.field`: error on that
  *   field (e.g. ZERO_CHARGE_REASON_REQUIRED). 409/403/other: above the form.
  * - Currency and rush are read-only (Q-B2); rush is not in the contract.
+ * - Redo-of and pending reason are not returned by the API (Q-B18): they
+ *   start empty and are sent only when filled in.
  * - Success is shown only after the API returned the saved item.
  */
 
@@ -17,6 +22,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { can, isApiError, type ServiceItem, type ZeroChargeReason } from '@/shared/api';
 import { AppButton, AppCheckbox, AppSelect, AppTextField } from '@/shared/components/basic';
 import { DetailList } from '@/shared/components/data-display';
@@ -44,6 +50,8 @@ export interface StaffFieldsFormProps {
 
 const FIELD_ID = (field: StaffField) => `staff-${field}`;
 
+const NOT_RETURNED = 'The API does not return the saved value yet (Q-B18): fill in only to change it.';
+
 function focusField(key: string): void {
   const input = document.querySelector<HTMLElement>(`[name="${FIELD_ID(key as StaffField)}"]`);
   const root = input?.closest<HTMLElement>('.MuiFormControl-root') ?? input?.parentElement;
@@ -61,8 +69,13 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
+  const canUpdate = can(context, 'service.update');
   const editable: Record<StaffField, boolean> = {
-    quantity: can(context, 'service.update'),
+    isRedo: canUpdate,
+    redoOfItemUuid: canUpdate,
+    pendingReason: canUpdate,
+    serviceNotes: canUpdate,
+    quantity: canUpdate,
     unitPrice: item.canEditPrice !== false && can(context, 'service.price.override'),
     isBillable: item.canEditBillability !== false && can(context, 'service.billing.is_billable.edit'),
     zeroChargeReasonCode: can(context, 'service.zero_charge_reason.edit'),
@@ -161,6 +174,79 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
       )}
       {serverError !== null && <InlineAlert severity="error">{serverError}</InlineAlert>}
       <ErrorSummary items={summary} attempt={attempt} onSelect={focusField} />
+      <Typography variant="subtitle2" component="h3">
+        Production
+      </Typography>
+      <Controller
+        name="isRedo"
+        control={control}
+        render={({ field }) => (
+          <AppCheckbox
+            label={STAFF_LABEL.isRedo}
+            name={FIELD_ID('isRedo')}
+            checked={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            helperText={readOnlyNote('isRedo') ?? 'This service remakes an earlier one.'}
+            disabled={!editable.isRedo || formState.isSubmitting}
+          />
+        )}
+      />
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <Controller
+          name="redoOfItemUuid"
+          control={control}
+          render={({ field, fieldState }) => (
+            <AppTextField
+              label={STAFF_LABEL.redoOfItemUuid}
+              name={FIELD_ID('redoOfItemUuid')}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={fieldState.error?.message}
+              helperText={readOnlyNote('redoOfItemUuid') ?? NOT_RETURNED}
+              disabled={!editable.redoOfItemUuid || formState.isSubmitting}
+            />
+          )}
+        />
+        <Controller
+          name="pendingReason"
+          control={control}
+          render={({ field, fieldState }) => (
+            <AppTextField
+              label={STAFF_LABEL.pendingReason}
+              name={FIELD_ID('pendingReason')}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={fieldState.error?.message}
+              helperText={readOnlyNote('pendingReason') ?? NOT_RETURNED}
+              disabled={!editable.pendingReason || formState.isSubmitting}
+            />
+          )}
+        />
+      </Stack>
+      <Controller
+        name="serviceNotes"
+        control={control}
+        render={({ field, fieldState }) => (
+          <AppTextField
+            label={STAFF_LABEL.serviceNotes}
+            name={FIELD_ID('serviceNotes')}
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            error={fieldState.error?.message}
+            helperText={readOnlyNote('serviceNotes') ?? 'Internal: for staff, not for the client.'}
+            disabled={!editable.serviceNotes || formState.isSubmitting}
+            multiline
+            minRows={2}
+          />
+        )}
+      />
+      <Typography variant="subtitle2" component="h3">
+        Charges
+      </Typography>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
         <Controller
           name="quantity"

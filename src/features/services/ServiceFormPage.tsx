@@ -5,8 +5,10 @@
  */
 
 import { useParams } from 'react-router-dom';
+import { can } from '@/shared/api';
 import { EmptyState, ErrorState, LoadingState } from '@/shared/components/feedback';
 import { PageHeader } from '@/shared/components/layout';
+import { useSession } from '@/shared/hooks/useSession';
 import { specForService } from './forms/formSpecs';
 import { ServiceForm } from './forms/ServiceForm';
 import { useServiceFormData, type ServiceFormTarget } from './forms/useServiceFormData';
@@ -24,6 +26,7 @@ function useTarget(): ServiceFormTarget | null {
 
 function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
   const { data, retry } = useServiceFormData(target);
+  const { context } = useSession();
 
   if (data.status === 'loading') {
     return (
@@ -88,6 +91,7 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
         etag={etag}
         orderUuid={orderUuid}
         onReload={retry}
+        billToAllowed={can(context, 'service.billing.bill_to.edit')}
       />
     </>
   );

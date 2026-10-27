@@ -1,6 +1,6 @@
 /**
- * The body of one service instance: identity, staff fields, status and
- * history (A7R), shared by the service page and the order details page
+ * The body of one service instance: identity, staff fields, Bill To (A23),
+ * status and history (A7R), shared by the service page and the order details page
  * (A20). Everything is keyed by the instance UUID and its version, so two
  * same-type services stay independent.
  */
@@ -12,7 +12,10 @@ import { ROUTES } from '@/app/routes';
 import { can } from '@/shared/api';
 import { StatusBadge } from '@/shared/components/basic';
 import { DetailList, SectionCard } from '@/shared/components/data-display';
+import { EvidenceBadge } from '@/shared/components/feedback';
 import { useSession } from '@/shared/hooks/useSession';
+import { BillToSection } from '../billing/BillToSection';
+import { serviceApi } from '../data/serviceApi';
 import { StaffFieldsForm } from './StaffFieldsForm';
 import { StatusPanel } from './StatusPanel';
 import type { ServiceDetail } from './useServiceDetail';
@@ -54,6 +57,12 @@ export function ServiceInstanceSections({ detail, onChanged }: ServiceInstanceSe
       </SectionCard>
       <SectionCard title="Staff fields">
         <StaffFieldsForm key={etag} item={item} etag={etag} onSaved={onChanged} onReload={onChanged} />
+      </SectionCard>
+      <SectionCard
+        title="Bill To"
+        action={serviceApi.billToAvailable ? <EvidenceBadge evidence={serviceApi.evidence} /> : undefined}
+      >
+        <BillToSection key={etag} item={item} etag={etag} onSaved={onChanged} onReload={onChanged} />
       </SectionCard>
       <SectionCard title="Status">
         <StatusPanel

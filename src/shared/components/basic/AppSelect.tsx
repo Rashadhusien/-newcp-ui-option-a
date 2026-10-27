@@ -2,7 +2,9 @@
  * AppSelect: single select wrapper for all feature code.
  *
  * States: normal, loading (skeleton), empty (no options -> emptyText),
- * error (error text), disabled.
+ * error (error text), disabled. Form selects (size medium) put the label
+ * above the field (A23, see fieldLabel.ts); toolbar selects (small) keep
+ * the floating label.
  */
 
 import FormControl from '@mui/material/FormControl';
@@ -12,6 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Skeleton from '@mui/material/Skeleton';
 import { useId } from 'react';
+import { labelAboveSx } from './fieldLabel';
 
 export interface AppSelectOption<T extends string | number> {
   value: T;
@@ -62,6 +65,7 @@ export function AppSelect<T extends string | number>({
   }
 
   const isEmpty = options.length === 0;
+  const above = size === 'medium';
   const effectiveDisabled = disabled || isEmpty;
 
   return (
@@ -72,12 +76,16 @@ export function AppSelect<T extends string | number>({
       disabled={effectiveDisabled}
       required={required}
     >
-      <InputLabel id={`${id}-label`}>{label}</InputLabel>
+      <InputLabel id={`${id}-label`} shrink={above ? true : undefined} sx={above ? labelAboveSx : undefined}>
+        {label}
+      </InputLabel>
       <Select
         id={id}
         name={name}
         labelId={`${id}-label`}
-        label={label}
+        label={above ? undefined : label}
+        notched={above ? false : undefined}
+        displayEmpty={above}
         value={value ?? ''}
         aria-describedby={error != null ? `${id}-error` : undefined}
         onChange={(e) => {

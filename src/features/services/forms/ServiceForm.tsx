@@ -6,7 +6,9 @@
  *   same type on one order); one Idempotency-Key per form, so a retried
  *   submit can't create a duplicate, while a second intentional create
  *   (a new form) gets a new key.
- * - Create sends quantity 1 (demo default, Q-B13).
+ * - Create sends quantity 1 (demo default, Q-B13) and, when one was chosen,
+ *   a Bill To for this new service only (A23, mock only; otherwise the
+ *   server copies the order default once).
  * - Edit sends the version it loaded as If-Match (Q-B8). On 412 the user's
  *   edits stay in the form and a banner offers to reload the latest
  *   version (which replaces them); nothing was saved.
@@ -34,6 +36,7 @@ import { AppButton } from '@/shared/components/basic';
 import { LeavePageDialog } from '@/shared/components/composite';
 import { ErrorSummary, InlineAlert, useToast } from '@/shared/components/feedback';
 import { useDirtyGuard } from '@/shared/hooks/useDirtyGuard';
+import { BillToCreateField } from '../billing/BillToCreateField';
 import { serviceApi } from '../data/serviceApi';
 import {
   definedValues,
@@ -45,6 +48,7 @@ import {
   unsupportedFields,
   warnings,
 } from './formLogic';
+import { FormSection } from './FormSection';
 import type { FormSpec, FormValues } from './formSpecs';
 import { ServiceFormFields } from './ServiceFormFields';
 
@@ -58,6 +62,8 @@ export interface ServiceFormProps {
   orderUuid: string;
   /** Reloads the item from the server (used after a 412). */
   onReload: () => void;
+  /** Create only: offer a Bill To for the new service (session has the Bill To capability). */
+  billToAllowed?: boolean;
 }
 
 function newIdempotencyKey(): string {
@@ -70,7 +76,15 @@ function focusField(key: string): void {
   wrapper?.querySelector<HTMLElement>('input:not([type="hidden"]), textarea, [role="combobox"]')?.focus();
 }
 
-export function ServiceForm({ spec, definition, item, etag, orderUuid, onReload }: ServiceFormProps) {
+export function ServiceForm({
+  spec,
+  definition,
+  item,
+  etag,
+  orderUuid,
+  onReload,
+  billToAllowed = false,
+}: ServiceFormProps) {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const fields = useMemo(() => resolveFields(spec, definition), [spec, definition]);
@@ -80,6 +94,8 @@ export function ServiceForm({ spec, definition, item, etag, orderUuid, onReload 
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
   const [version, setVersion] = useState(etag);
   const [stale, setStale] = useState(false);
+  const [billTo, setBillTo] = useState('');
+  const [billToError, setBillToError] = useState<string | null>(null);
   const unsupported = useMemo(() => unsupportedFields(spec, definition), [spec, definition]);
 
   const form = useForm<FormValues>({
@@ -99,18 +115,25 @@ export function ServiceForm({ spec, definition, item, etag, orderUuid, onReload 
 
   const summary = fields
     .map(({ spec: field, label }) => ({ key: field.key, label, message: formState.errors[field.key]?.message }))
-    .filter((entry): entry is { key: string; label: string; message: string } => typeof entry.message === 'string');
+    .filter((entry): entry is { key: string; label: string; message: string } => typeof entry.message === 'string')
+    .concat(billToError !== null ? [{ key: 'billedToContactUuid', label: 'Bill To', message: billToError }] : []);
 
   const submit = handleSubmit(
     async (submitted) => {
       setServerError(null);
       setStale(false);
+      setBillToError(null);
       const answers = toAnswers(fields, submitted);
       try {
         if (item === null) {
           const created = await serviceApi.create(
             orderUuid,
-            { sellableItemUuid: definition.service.uuid, answers, quantity: 1 },
+            {
+              sellableItemUuid: definition.service.uuid,
+              answers,
+              quantity: 1,
+              ...(billTo !== '' ? { billedToContactUuid: billTo } : {}),
+            },
             idempotencyKey,
           );
           reset(initialValues(fields, created.answers));
@@ -134,8 +157,11 @@ export function ServiceForm({ spec, definition, item, etag, orderUuid, onReload 
           setStale(true);
           return;
         }
-        const fieldKey = error.kind === 'validation' ? keyForServerField(fields, error.problem?.details?.field) : undefined;
-        if (fieldKey !== undefined) {
+        const serverField = error.problem?.details?.field;
+        const fieldKey = error.kind === 'validation' ? keyForServerField(fields, serverField) : undefined;
+        if (error.kind === 'validation' && serverField === 'billedToContactUuid') {
+          setBillToError(error.message);
+        } else if (fieldKey !== undefined) {
           setError(fieldKey, { type: 'server', message: error.message });
         } else {
           setServerError(`${error.message} Nothing was saved.`);
@@ -189,6 +215,20 @@ export function ServiceForm({ spec, definition, item, etag, orderUuid, onReload 
         warnings={warnings(spec.key, values)}
         disabled={formState.isSubmitting}
       />
+      {item === null && billToAllowed && (
+        <FormSection title="Billing">
+          <BillToCreateField
+            orderUuid={orderUuid}
+            value={billTo}
+            onChange={(value) => {
+              setBillTo(value);
+              setBillToError(null);
+            }}
+            error={billToError ?? undefined}
+            disabled={formState.isSubmitting}
+          />
+        </FormSection>
+      )}
       <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={1.5} sx={{ justifyContent: 'flex-end' }}>
         <AppButton
           variant="text"

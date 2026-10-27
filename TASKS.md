@@ -208,7 +208,11 @@ Branch: test/fe-a-a24-tests | Estimate: 2.0 h | Depends on: the A17 to A23 tasks
 - [ ] A24.2 Restore the rule "every task adds its own tests" in CLAUDE.md.
 
 ## Task A23: Carry-over: Bill To, form layout, Redo/pending/notes
-Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Status: not started, after A21
+Branch: feat/fe-a-a23-carry-over (name not in TASKS before; follows the convention) | Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Depends on: A21 | Status: ready for review (Bill To MOCK only; Q-B18 open)
+- [x] A23.1 Bill To (A8R.1, A8R.2): per-instance card from `eligible-billed-parties`, `billedToContactUuid` for ONE service on patch and on single-service create; `canEditBilledParty` and capability respected; 403/409/412/422 rendered; no success unless persisted; BLOCKED with mocks off; Billable and Bill To never change each other.
+- [x] A23.2 Labels above fields in `AppTextField` and form-size `AppSelect` (DESIGN_ALIGNMENT item 11); toolbars unchanged.
+- [x] A23.3 Staff fields Redo, redo-of, pending reason, service notes (PATCH, If-Match); redo-of and pending reason not returned by the API (Q-B18), labelled.
+- [x] Verify (existing tests green; no new tests, D-66); browser check.
 
 ## Phase log
 | Task | Status | Notes |
@@ -238,6 +242,7 @@ Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Sta
 | A19 | merged | orders list at order level with expandable services; mock only, BLOCKED with the real API; no new tests |
 | A20 | merged | order details like the POC: summary, services list, selected service with staff fields, status, On Hold, history; no new tests |
 | A21 | ready for review | create-order wizard (5 steps, react-odontogram teeth chart, per-instance details), mock only; no new tests |
-| A22, A23 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
+| A23 | ready for review | Bill To card + create field (mock, BLOCKED real), labels above fields, Redo/redo-of/pending reason/notes; no new tests |
+| A22 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |

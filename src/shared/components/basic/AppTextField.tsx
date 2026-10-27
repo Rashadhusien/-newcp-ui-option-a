@@ -3,12 +3,14 @@
  *
  * States: normal (value), loading (skeleton), empty (no value +
  * placeholder), error (error text linked via aria-describedby),
- * disabled. Validation display follows SRS 9.4.
+ * disabled. Validation display follows SRS 9.4. The label sits above the
+ * field (A23, see fieldLabel.ts).
  */
 
 import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import { useId } from 'react';
+import { labelAboveSx } from './fieldLabel';
 
 interface AppTextFieldProps {
   label: string;
@@ -76,10 +78,10 @@ export function AppTextField({
       fullWidth
       slotProps={{
         formHelperText: error != null ? { id: `${id}-error` } : undefined,
-        input: describedBy != null ? { 'aria-describedby': describedBy } : undefined,
+        // Label above the field (A23): no notch in the outline.
+        input: { notched: false, ...(describedBy != null ? { 'aria-describedby': describedBy } : {}) },
         htmlInput: { min, max },
-        // Date inputs render their own placeholder; keep the label above it.
-        inputLabel: type === 'date' ? { shrink: true } : undefined,
+        inputLabel: { shrink: true, sx: labelAboveSx },
       }}
     />
   );
