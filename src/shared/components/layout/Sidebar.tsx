@@ -1,10 +1,12 @@
 /**
  * Sidebar navigation.
  *
- * Variants (chosen by AppShell):
- * - `full`: persistent 260px sidebar (desktop, expanded)
- * - `rail`: persistent 72px icon rail (tablet, or desktop collapsed)
- * - `overlay`: temporary full drawer (mobile, or tablet expanded)
+ * Variants (chosen by AppShell, state from useSidebarState, A17):
+ * - `docked`: pinned 260px sidebar in the page flow; the content shrinks
+ * - `floating`: peek over the content under the header (hover), no backdrop
+ * - `modal`: temporary drawer for phones and touch screens
+ * The sidebar is hidden by default. (The icon-rail rendering of
+ * SidebarContent is kept for a later compact mode but unused now.)
  *
  * Follows the active color scheme. Active items expose aria-current="page".
  */
@@ -29,9 +31,8 @@ import { useSession } from '@/shared/hooks/useSession';
 import { NAV_GROUPS, type NavEntry } from './navigation';
 
 const SIDEBAR_WIDTH = layoutTokens.sidebarWidth;
-const SIDEBAR_RAIL_WIDTH = layoutTokens.sidebarRailWidth;
 
-export type SidebarVariant = 'full' | 'rail' | 'overlay';
+export type SidebarVariant = 'docked' | 'floating' | 'modal';
 
 function isActivePath(pathname: string, to: string): boolean {
   if (to === ROUTES.reporting) return pathname === ROUTES.reporting || pathname === '/';
@@ -147,38 +148,67 @@ function SidebarContent({ rail, onNavigate }: SidebarContentProps) {
   );
 }
 
+export const SIDEBAR_ID = 'app-navigation';
+
 interface SidebarProps {
   variant: SidebarVariant;
-  /** Overlay drawer visibility. */
+  /** Floating and modal visibility (docked is always shown). */
   open: boolean;
   onClose: () => void;
+  /** Floating only: keeps the peek open while hovered or focused. */
+  paperProps?: React.HTMLAttributes<HTMLDivElement>;
+  paperRef?: React.Ref<HTMLDivElement>;
 }
 
-export function Sidebar({ variant, open, onClose }: SidebarProps) {
-  if (variant === 'overlay') {
+export function Sidebar({ variant, open, onClose, paperProps, paperRef }: SidebarProps) {
+  if (variant === 'modal') {
     return (
       <Drawer
         variant="temporary"
         open={open}
         onClose={onClose}
         ModalProps={{ keepMounted: true }}
-        sx={{ '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH, maxWidth: '82vw' } }}
+        slotProps={{ paper: { id: SIDEBAR_ID, sx: { width: SIDEBAR_WIDTH, maxWidth: '82vw' } } }}
       >
         <SidebarContent rail={false} onNavigate={onClose} />
       </Drawer>
     );
   }
-  const width = variant === 'rail' ? SIDEBAR_RAIL_WIDTH : SIDEBAR_WIDTH;
+  if (variant === 'floating') {
+    return (
+      <Drawer
+        variant="persistent"
+        anchor="left"
+        open={open}
+        slotProps={{
+          paper: {
+            id: SIDEBAR_ID,
+            ref: paperRef,
+            ...paperProps,
+            sx: {
+              top: layoutTokens.headerHeight,
+              height: `calc(100% - ${String(layoutTokens.headerHeight)}px)`,
+              width: SIDEBAR_WIDTH,
+              boxShadow: 8,
+            },
+          },
+        }}
+      >
+        <SidebarContent rail={false} onNavigate={onClose} />
+      </Drawer>
+    );
+  }
   return (
     <Drawer
       variant="permanent"
       sx={{
-        width,
+        width: SIDEBAR_WIDTH,
         flexShrink: 0,
-        '& .MuiDrawer-paper': { width, overflowX: 'hidden', boxSizing: 'border-box' },
+        '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH, overflowX: 'hidden', boxSizing: 'border-box' },
       }}
+      slotProps={{ paper: { id: SIDEBAR_ID } }}
     >
-      <SidebarContent rail={variant === 'rail'} />
+      <SidebarContent rail={false} />
     </Drawer>
   );
 }

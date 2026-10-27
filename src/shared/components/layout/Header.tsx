@@ -1,7 +1,8 @@
 /**
- * Header bar (design system AppShell):
- * - menu button below 1024 only (opens the drawer); at 1024 and wider the
- *   sidebar is always shown, so there is nothing to toggle;
+ * Header bar (design system AppShell, A17 sidebar behaviour):
+ * - menu button at every width: hover peeks the hidden sidebar, click pins
+ *   or hides it (phones: opens the drawer); the brand shows here while the
+ *   sidebar is not docked;
  * - data source (MOCK / INTEGRATED) on phones only: from 640 up it sits in
  *   each data page's PageHeader;
  * - read-only active tenant (IAM v0.9.7, from 640 up; the account menu
@@ -13,6 +14,9 @@
 
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
@@ -25,22 +29,33 @@ import { ThemeModeSwitch } from '@/shared/components/basic/ThemeModeSwitch';
 import { EvidenceBadge } from '@/shared/components/feedback/EvidenceBadge';
 import { TenantBadge } from '@/shared/components/feedback/TenantBadge';
 import { useSession } from '@/shared/hooks/useSession';
+import type { SidebarState } from '@/shared/hooks/useSidebarState';
+import { SIDEBAR_ID } from './Sidebar';
 import { UserMenu } from './UserMenu';
 
 const EVIDENCE = evidenceOf(readApiConfig());
 
-interface HeaderProps {
+export interface HeaderProps {
+  state: SidebarState;
+  /** Peek/pin behaviour (mouse, tablet and wider) vs a modal drawer. */
+  floating: boolean;
   onMenuClick: () => void;
-  /** Whether the navigation drawer is open (for the toggle label). */
-  navigationExpanded: boolean;
+  menuButtonRef: React.Ref<HTMLButtonElement>;
+  /** Hovering the button peeks the sidebar. */
+  menuHoverProps: Pick<React.HTMLAttributes<HTMLElement>, 'onPointerEnter' | 'onPointerLeave'>;
 }
 
-export function Header({ onMenuClick, navigationExpanded }: HeaderProps) {
+function menuLabel(state: SidebarState, floating: boolean): string {
+  if (!floating) return state === 'closed' ? 'Open navigation' : 'Close navigation';
+  return state === 'pinned' ? 'Hide navigation' : 'Pin navigation';
+}
+
+export function Header({ state, floating, onMenuClick, menuButtonRef, menuHoverProps }: HeaderProps) {
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const tenant = useSession().context?.activeTenant ?? null;
-  const menuLabel = navigationExpanded ? 'Close navigation' : 'Open navigation';
+  const label = menuLabel(state, floating);
 
   return (
     <AppBar
@@ -51,12 +66,27 @@ export function Header({ onMenuClick, navigationExpanded }: HeaderProps) {
       sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
     >
       <Toolbar sx={{ gap: 1, px: { xs: 1, sm: 2 } }}>
-        {!isDesktop && (
-          <Tooltip title={menuLabel}>
-            <IconButton aria-label={menuLabel} aria-expanded={navigationExpanded} onClick={onMenuClick} edge="start">
-              {navigationExpanded ? <MenuOpenIcon /> : <MenuIcon />}
-            </IconButton>
-          </Tooltip>
+        <Tooltip title={label}>
+          <IconButton
+            ref={menuButtonRef}
+            aria-label={label}
+            aria-controls={SIDEBAR_ID}
+            aria-expanded={state !== 'closed'}
+            aria-pressed={floating ? state === 'pinned' : undefined}
+            onClick={onMenuClick}
+            {...menuHoverProps}
+            edge="start"
+          >
+            {state === 'pinned' ? <MenuOpenIcon /> : <MenuIcon />}
+          </IconButton>
+        </Tooltip>
+        {state !== 'pinned' && (
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <MedicalServicesIcon color="primary" aria-hidden="true" />
+            <Typography variant="h3" component="span" noWrap>
+              New CP
+            </Typography>
+          </Stack>
         )}
 
         <Box sx={{ flexGrow: 1 }} />

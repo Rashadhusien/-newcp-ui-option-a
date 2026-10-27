@@ -157,11 +157,11 @@ A14-lite scope: `npm run verify`, browser smoke check at 390 and 1440 px (light)
 The developer asked to follow the two earlier POCs (`refrences/mui`, `refrences/1-mui`) page by page ("don't reinvent the wheel"): a Notion-style hidden sidebar, a global footer, a support button, an order-level Orders list with sub-services, an order details page, a create-order wizard with steps and teeth chart, reports with tabs (no Models/Conversion filter chips), settings like the POC, and coloured statuses. POC code may now be ported and adapted (D-65), in our stack and folders, mock data only. One task at a time; each waits for `start A<NN>`. The A16c stages are folded into these tasks.
 
 ## Task A17: Shell like the POC: hidden sidebar, footer, support button
-Branch: feat/fe-a-a17-shell-footer-support | Estimate: 1.5 h | Depends on: A16b | Status: not started | Source: POC-2 `src/layout/useSidebarState.ts`, `AppShell.tsx`, `AppFooter.tsx`, `appInfo.ts`, `src/support/*`
-- [ ] A17.1 Sidebar hidden by default at every width (content full width). Menu button in the header: hovering it (or the left edge) shows the sidebar as an overlay (peek); clicking pins it and the content shrinks to make room (push, Notion-style); clicking again unpins and hides it. Escape and outside click close a peek. Phones: modal drawer. Pin state remembered per browser (convenience only).
-- [ ] A17.2 Global footer under every page: app name, version from `package.json`, data source (MOCK), in-app links (Report, Orders, Settings, Help). No invented external URL, address or contact.
-- [ ] A17.3 Support button fixed bottom-right: opens "Help and support" (topic, message, priority Standard/Urgent, status "Draft, not submitted"). No ticketing system: the form says nothing is sent or stored, never shows "Submitted", warns to leave out patient data. Dummy topics only.
-- [ ] Verify (existing tests green; no new tests, D-66); browser at 390/768/1024/1440, light and dark.
+Branch: feat/fe-a-a17-shell-footer-support | Estimate: 1.5 h | Depends on: A16b | Status: ready for review | Source: POC-2 `src/layout/useSidebarState.ts`, `AppShell.tsx`, `AppFooter.tsx`, `appInfo.ts`, `src/support/*`
+- [x] A17.1 Sidebar hidden by default at every width (content full width). Menu button in the header: hovering it (or the left edge) shows the sidebar as an overlay (peek); clicking pins it and the content shrinks to make room (push, Notion-style); clicking again unpins and hides it. Escape and outside click close a peek. Phones: modal drawer. Pin state remembered per browser (convenience only).
+- [x] A17.2 Global footer under every page: app name, version from `package.json`, data source (MOCK), in-app links (Report, Orders, Settings, Help). No invented external URL, address or contact.
+- [x] A17.3 Support button fixed bottom-right: opens "Help and support" (topic, message, priority Standard/Urgent, status "Draft, not submitted"). No ticketing system: the form says nothing is sent or stored, never shows "Submitted", warns to leave out patient data. Dummy topics only.
+- [x] Verify (existing tests green; no new tests, D-66); browser at 390/768/1024/1440, light and dark.
 
 ## Task A18: Reports like the POC, with coloured statuses
 Branch: feat/fe-a-a18-reports-pattern | Estimate: 1.0 h | Depends on: A17 | Status: not started | Source: POC-1 `src/features/reports/ReportsPage.tsx`, POC-2 `src/pages/reports/*`
@@ -232,6 +232,7 @@ Estimate: 2.25 h (A8R 1.0, labels-above form 0.75, Redo/pending/notes 0.5) | Sta
 | A16 (analysis) | merged | `docs/DESIGN_ALIGNMENT.md`: design gaps, token mapping, staged plan A16a/b/c (6.25 h); awaiting hours |
 | A16a | merged | DS token alignment (darkHover, onFillDark, spacing 20, smDark, fieldHeight), Outfit import removed, D-59 to D-62, flaky On Hold test fixed (10/10) |
 | A16b | merged | header/sidebar per DS, ThemeModeSwitch, MOCK badge in PageHeader, SectionCard, Settings page; 114 tests |
-| A17 to A25 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
+| A17 | ready for review | hidden sidebar (hover peek, click pin + push), footer, support button; no new tests (D-66) |
+| A18 to A25 | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
