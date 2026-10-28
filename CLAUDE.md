@@ -8,6 +8,8 @@ Owner: Rashad (FE intern). Mentor/reviewer: Aya Adel. Contract author: Bishoy. O
    IAM overlay v0.9.7 (26 Oct; v0.9.3-v0.9.6 superseded): policy/IAM_APPROVED_BUSINESS_SPEC_v1.2,
    references/iam/ (TENANT_OCT_DEMO_IMPLEMENTATION_SPEC_v1.1 sections B, D, G, H; API_ERROR_CONTRACT;
    ROLE_CAPABILITY_MATRIX; TENANT_OCT_DEMO_ACCEPTANCE_TESTS). The service OpenAPI is unchanged by it (D-50).
+   API contract (28 Oct, D-79): the backend's canonical `docs/openapi/newcp.openapi.yaml` supersedes the package's
+   F07 OpenAPI; the backend answers of 28 Oct are in docs/DEVIATIONS.md.
 2. Explicit New CP decisions > evidenced legacy rules (Connect create, CP clerk edit) > developer proposals.
 3. This file, then docs/PLAN.md and TASKS.md. Where they disagree with 1, 1 wins; log it in docs/DEVIATIONS.md.
 V0.7 files are archival. V0.6 form specs are the source for form controls.
@@ -30,16 +32,18 @@ Model is reference only. Two same-type services in one order are independent: di
 status, history, payer and report rows. Never a type-level identifier.
 
 ## Contract and API
-- Contract: `references/f07/integration/newcp-demo-f07.openapi.yaml` (v0.9.2-draft, `NOT_FINAL`) + typed client. Q-B15:
-  the package reference wins over Bishoy's `docs/openapi/newcp-v1.openapi.yaml`, which stays a draft the backend
-  reconciles into one snapshot (D-40). Never invent an endpoint, field or error code.
-- One shared client in `src/shared/api/` (types follow the reference contract). Auth (backend team, 27 Oct, D-67;
-  not yet in the OpenAPI, Q-B27): Google Identity Services gives a Google ID token -> `POST /api/v1/auth/login`
-  `{ "idToken": ... }` -> New CP session token + expiry -> `Authorization: Bearer <session-token>` on every request.
-  The session token is held in memory only (no localStorage, sessionStorage or cookie written by the UI); a reload
-  signs in again. Never send the Google ID token to any other endpoint.
-- Errors: accept both the OpenAPI Problem `{code,message,requestId,details}` and the IAM envelope
-  `{error:{code,message,requestId,details}}` (Q-B22). Codes are the recommended IAM codes until the OpenAPI lists them.
+- Contract (28 Oct, D-79): the backend's canonical `docs/openapi/newcp.openapi.yaml` (backend repo
+  `swd-3ddx/newcp-api`, `openapi/newcp.openapi.yaml`; 18 operations, `NOT_FINAL`, live behaviour unverified) + typed
+  client. It replaces the package reference and Bishoy's v1 draft for all API work; the test server serves the same
+  file (`http://10.20.25.147:3001/docs`, company VPN). Never invent an endpoint, field or error code.
+- One shared client in `src/shared/api/` (types follow the canonical contract). Auth (in the contract, Q-B27):
+  Google Identity Services gives a Google ID token -> `POST /api/v1/auth/login` `{ "idToken": ... }` -> either
+  `AUTHORIZED` with `token` + `expiresAt`, or `PENDING_ACCESS` with no token -> `Authorization: Bearer <token>` on
+  every request; `POST /api/v1/auth/logout` on sign-out. The token is held in memory only (no localStorage,
+  sessionStorage or cookie written by the UI); a reload signs in again until Q-B29 says otherwise. Never send the
+  Google ID token to any other endpoint. Auth, IAM and session questions go to Hesham.
+- Errors: auth errors use `{error:{code,message,...}}`, other errors the flat `Problem` `{code,message,requestId,details}`
+  (the test server answers 401 with the flat shape); accept both (Q-B22).
 - Concurrency (Q-B8): keep the item ETag; send `If-Match` on every PATCH and transition. 412 = changed by someone
   else: keep the user's edits and offer a reload. 428 = precondition missing (a bug). 409 = workflow/financial conflict.
 - Feature adapter: `src/features/services/data/serviceApi.ts`, with a mock and a real implementation behind one interface.
@@ -53,9 +57,11 @@ status, history, payer and report rows. Never a type-level identifier.
   reason/detail, rush, currency, Bill To, internal comment).
 - Enforce only validators the source actually attached (02_Validation_Rule_Matrix: UI-attached).
   DEFINED_NOT_ATTACHED rules are not enforced; display-only warnings stay warnings.
-- Answers follow the reference contract (v0.9.2: `optionCode`/`optionCodes`, `valueText`/`valueNumber`/`valueBoolean`/
-  `valueDate`); one conversion function maps form values to the wire format, so a change after Bishoy's answer
-  (Q-B16) stays local. Field types are the 8 canonical types (Q-B11); radio vs select is presentation only.
+- Answers follow the canonical contract (Q-B16 answered): `fieldCode` + `optionCodes: string[]` for choice fields
+  (single select = one item, cleared = `[]`) or `value` (string | number | boolean, real JSON types, dates as
+  `YYYY-MM-DD`) for every other field; never both, never the removed carriers (`optionCode`, `valueText`, ...: 400).
+  PATCH `answers` replaces the whole set. One conversion function maps form values to the wire format. File and
+  tooth-chart answers have no confirmed payload: do not invent one. Field types are the 8 canonical types (Q-B11).
 - Staff fields (PATCH): Redo, redo-of, notes, pending reason, quantity (> 0, decimals allowed; demo default 1, Q-B13),
   Billable Yes/No (`canEditBillability`, Q-B14), unit price override (`canEditPrice`, Q-B10), zero-charge reason/note
   (a zero final total needs a reason: 422 `ZERO_CHARGE_REASON_REQUIRED` on `zeroChargeReasonCode`), Bill To (mock).
@@ -73,9 +79,10 @@ status, history, payer and report rows. Never a type-level identifier.
 
 ## Session and access (IAM v0.9.7)
 - Google is authentication only; no Google Groups. Authorization is server-side (PostgreSQL IAM + Casbin).
-- One read-only session context call on app load and after a 403 (illustrative `GET /api/v1/session/context`, NOT in
-  the OpenAPI, Q-B20): MOCK only; with mocks off it is BLOCKED like Bill To (D-51). It returns AUTHORIZED or PENDING,
-  the active tenant label, roles and capability flags.
+- One read-only session context call on app load and after a 403: `GET /api/v1/auth/me` (in the contract, Q-B20)
+  returns `email`, `userUuid`, `tenantSlug`, `roleCodes`, `capabilities`, `isPendingAccess`; it is mapped once into
+  the app's session context (the tenant badge shows `tenantSlug`, no tenant label exists). Capability codes still
+  need Hesham's confirmation against the IAM matrix.
 - AUTHORIZED: workspace with a read-only tenant badge; no tenant selector. PENDING (or 403 `ACCESS_NOT_ASSIGNED` /
   `TENANT_NOT_ASSIGNED`): Pending Access page with no features. 401 `AUTHENTICATION_REQUIRED`: back to sign-in,
   keeping only a safe in-app return path. Other 403: access denied. 404: generic "not available", no existence leak.
@@ -96,8 +103,8 @@ status, history, payer and report rows. Never a type-level identifier.
 - Send `billedToContactUuid` for ONE service on create/patch. Never send billedPartyOrigin or tenantId.
   Never copy an order-level Bill To.
 - Honour `canEditBilledParty`; render 403/409/422. Never show success unless the API persisted it.
-- Current V3 has `is_billable` but NOT `billed_to_contact_id` / `billed_party_origin` (CURRENT_V3_DATABASE_STATUS):
-  Bill To is MOCK only. With mocks off, the adapter never calls the payer endpoint or sends a payer, and the UI says
+- The canonical contract marks `billedToContactUuid`, `billedPartyOrigin` and `canEditBilledParty` required, but its
+  own `x-blockers` say the F07 migration (V204) on the deployed schema is unverified: Bill To stays MOCK only. With mocks off, the adapter never calls the payer endpoint or sends a payer, and the UI says
   BLOCKED; Bill To is never shown as INTEGRATED until the DB owner confirms F07 (F07-01..05).
 - Billable and Bill To are independent: changing one never changes the other.
 

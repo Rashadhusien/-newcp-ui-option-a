@@ -234,7 +234,7 @@ Branch: feat/fe-a-a27-home (stacked on A26) | Estimate: 1.0 h | Depends on: A26 
 - [x] A27.7 `docs/REHEARSAL.md`: sign-in lands on Home.
 
 ## Task A28: Dashboard page (scope addition, D-77)
-Branch: feat/fe-a-a28-dashboard (stacked on A27) | Estimate: 1.5 h | Depends on: A27 | Status: ready for review (MOCK only; G19, Q-B30 open) | Source: developer request 27 Oct
+Branch: feat/fe-a-a28-dashboard (stacked on A27) | Estimate: 1.5 h | Depends on: A27 | Status: merged; **removed by A32 (D-80, 28 Oct)** | Source: developer request 27 Oct
 - [x] A28.1 `/dashboard`, sidebar item under Home, Home card, breadcrumb Home > Dashboard.
 - [x] A28.2 Figures computed in the browser by `dashboardSelectors` over `serviceApi.dashboardData()` (mock, `reports.view_all`); BLOCKED with the real API, nothing called.
 - [x] A28.3 KPI cards: open, on hold, completed, price override ("Not available", Q-B30), zero-charge reason; each says how it is counted.
@@ -245,6 +245,55 @@ Branch: feat/fe-a-a28-dashboard (stacked on A27) | Estimate: 1.5 h | Depends on:
 - [x] A28.8 Loading skeletons, empty state, error with retry, BLOCKED; cards on phone; light and dark; reduced motion via the global rule.
 - [x] A28.9 Test: dashboard counts equal the Report's counting for the same rows (2 tests); the Report summary cards now use the shared `statusFigures`.
 - [x] A28.10 D-77, G19, Q-B30; PLAN and REHEARSAL updated.
+
+## Plan after the canonical contract (28 Oct)
+Inputs: canonical OpenAPI + migration guide (D-79), backend answers (DEVIATIONS "Backend answers of 28 Oct"), developer requests: remove the Dashboard (D-80), nested sidebar with legacy names (D-81), 3DDX logo (D-82), tables like the references (D-83), connect the endpoints. The order below is the recommended start order; each task still waits for `start A<NN>`.
+
+## Task A32: Remove the Dashboard (D-80)
+Branch: refactor/fe-a-a32-remove-dashboard | Estimate: 0.5 h | Depends on: develop | Status: not started
+- [ ] A32.1 Delete `/dashboard` (route, `ROUTES.dashboard`, label), sidebar entry, Home card, breadcrumb case, `features/services/dashboard/`, `serviceApi.dashboardData()`, `data/dashboardData.ts`, and the `mockAccessError` export if nothing else uses it.
+- [ ] A32.2 Keep `shared/status/statusFigures.ts` (Report); update the Home and breadcrumb tests; remove REHEARSAL step 2a.
+- [ ] Verify; browser: no Dashboard anywhere for CS/FINANCE/QC, `/dashboard` shows Not found.
+
+## Task A29: Migrate to the canonical contract (D-79)
+Branch: feat/fe-a-a29-canonical-contract | Estimate: 2.0 h | Depends on: A32 | Status: not started
+- [ ] A29.1 Rename the shared file to `docs/openapi/newcp.openapi.yaml`; types in `src/shared/api/types.ts` follow it: `FormAnswer` = `fieldCode` + `optionCodes?` + `value?`; `ServiceItem` with the 24 required fields and `holdType`, `holdReasonCode`, `pendingReason`, `redoOfItemUuid`; auth, lookup and IAM schemas.
+- [ ] A29.2 One answer conversion: choice -> `optionCodes` (single = one item, cleared = `[]`), others -> `value` with real JSON types, dates `YYYY-MM-DD`; a reader for responses; never both, no carriers; PATCH sends the full answer set. File and tooth-chart fields: no payload invented (`[NEEDS VERIFICATION]`).
+- [ ] A29.3 Mocks re-shaped to the canonical `ServiceItem` (money fields, isInvoiced, hold and pending fields); mock 400 for unknown answer properties and 422 `INVALID_FIELD_TYPE`.
+- [ ] A29.4 UI: show hold type/reason, pending reason and redo-of from the item (drop "not returned"); `isInvoiced` locks price, quantity, currency and payer controls; remove `?? 1`-style fallbacks; zero-charge reasons from `GET /lookups/zero-charge-reasons` (mock list until A31).
+- [ ] A29.5 Update the existing tests that assert carriers (`formLogic.test.ts`, adapter tests); verify green.
+
+## Task A30: Real sign-in and session against the test server
+Branch: feat/fe-a-a30-auth-session | Estimate: 1.5 h | Depends on: A29; Q-B28 (Google client ID + allowed origin from Hesham) for the live part | Status: not started
+- [ ] A30.1 Login response: AUTHORIZED (`token`, `expiresAt`) or PENDING_ACCESS (no token -> Pending Access page); token in memory only.
+- [ ] A30.2 `GET /auth/me` replaces the illustrative session context: mapped once to `SessionContext` (`userUuid`, `email` as the name until a display name exists, `tenantSlug` as the read-only badge, `roleCodes`, `capabilities`, `isPendingAccess`); with mocks off it is real, no longer BLOCKED.
+- [ ] A30.3 Sign-out calls `POST /auth/logout`, then drops the token.
+- [ ] A30.4 Dev proxy: Vite `server.proxy` for `/api` to `VITE_API_PROXY_TARGET` (set in the git-ignored `.env.local`, never committed); `VITE_API_BASE_URL` empty in dev; `.env.example` documents both (Q-B31).
+- [ ] A30.5 Evidence: real Google sign-in, `/auth/me`, logout, 401 after expiry: PASS only if executed on the test server.
+
+## Task A33: Nested sidebar, legacy names and logo (D-81, D-82)
+Branch: feat/fe-a-a33-nested-nav | Estimate: 1.5 h | Depends on: A32 | Status: not started
+- [ ] A33.1 Sidebar groups that open on click (Enter/Space, `aria-expanded`): Home; Orders -> All orders (`/orders`), Add order (`/orders/new`), Models, Conversion (service filter); Report -> Service instances, Status overview (the Report tabs, `?view=`); Settings. Capability gating unchanged; the group of the active route starts open.
+- [ ] A33.2 Labels "All orders" and "Add order" everywhere (page titles, breadcrumbs, Home cards, buttons, footer); URLs unchanged; other labels per Q-B34.
+- [ ] A33.3 Logo: `public/brand/3ddx-logo.svg` (copied from the iSmile assets) in the header and sidebar brand with `alt="3D Diagnostix"`; replaced when the developer sends the references.
+- [ ] A33.4 The phone drawer uses the same groups; the A17 peek/pin behaviour is kept.
+
+## Task A34: Tables like the references (D-83)
+Branch: feat/fe-a-a34-table-columns | Estimate: 2.0 h | Depends on: A33 | Status: not started | Source: POC-1 `components/data-display/ColumnVisibilityMenu.tsx`, `useColumnLayout`; POC-2 `pages/orders/*` (FlowToolbar, flowColumns), `pages/orderDetails/*`
+- [ ] A34.1 Port the Columns menu into `shared/components/data-display/` and wire it into `ResponsiveDataTable` (hidden columns go to the details row; choice per table id in localStorage, wrapped in try/catch).
+- [ ] A34.2 All orders: service filter (Models / Conversion) beside the status filter, both in the URL; columns per the references (order, client, patient code, services with status, dates, quantity, total); Columns menu.
+- [ ] A34.3 Report and the Models/Conversion lists get the Columns menu.
+- [ ] A34.4 Order details: compare with POC-2 `orderDetails` and close the gaps (summary fields, service cards, the money breakdown now in the contract).
+
+## Task A31: Connect the service endpoints (live, test server)
+Branch: feat/fe-a-a31-live-services | Estimate: 2.0 h | Depends on: A30; Q-B33 (test accounts, order UUIDs) | Status: not started
+- [ ] A31.1 Real adapter on the canonical paths: catalog services, form schema, `GET /orders/{orderUuid}/services`, service get/patch (If-Match), available transitions, transitions (On Hold with type + reason), history, `/catalog/hold-reasons?holdType=`, `/lookups/zero-charge-reasons`.
+- [ ] A31.2 Order details with the real API: the services list is real; the header stays mock-labelled until an order read exists (Q-B32). All orders and Add order stay MOCK / BLOCKED (no `GET /orders`, no create order: Q-B26, Q-B24).
+- [ ] A31.3 Bill To: call `eligible-billed-parties` on the test server read-only; it stays MOCK in the UI until F07 is confirmed (CLAUDE.md, Bill To).
+- [ ] A31.4 Evidence label per area (INTEGRATED only where a live call was executed); 401/403/404/409/412/422 seen live or NOT RUN; no real patient data copied into the repo or EVIDENCE.
+
+## Task A24 (updated 28 Oct): tests
+Estimate: 2.5 h (was 2.0) | Depends on: A29-A34 | Status: not started. Adds to A24.1: the canonical answer conversion, the `/auth/me` mapping, the nested sidebar, the Columns menu and the service filter.
 
 ## Phase log
 | Task | Status | Notes |
@@ -277,8 +326,10 @@ Branch: feat/fe-a-a28-dashboard (stacked on A27) | Estimate: 1.5 h | Depends on:
 | A23 | merged | Bill To card + create field (mock, BLOCKED real), labels above fields, Redo/redo-of/pending reason/notes; no new tests |
 | A26 | merged | breadcrumbs on every page (pure trail builder + AppBreadcrumbs in PageHeader); 5 new tests |
 | A27 | merged | Home landing page with greeting, roles, tenant and capability-gated cards; 3 new tests |
-| A28 | merged | Dashboard (mock, computed in the browser, BLOCKED real), status counts shared with the Report; 2 new tests |
-| A22 (Settings) | ready for review | Settings like the POC: Account (read-only), Appearance, Data source, About in `?tab=` sections; no new tests |
+| A28 | merged; to be removed (A32, D-80) | Dashboard (mock, computed in the browser, BLOCKED real), status counts shared with the Report; 2 new tests |
+| A22 (Settings) | merged | Settings like the POC: Account (read-only), Appearance, Data source, About in `?tab=` sections; no new tests |
 | A22 (plan) | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
+| A00d | ready for review | docs only: canonical contract adopted (D-79), backend answers recorded, Dashboard removal (D-80), nested nav (D-81), logo (D-82), tables (D-83); tasks A29-A34 planned |
+| A29, A30, A31, A32, A33, A34 | planned 28 Oct | order: A32, A29, A30, A33, A34, A31, then A24 |

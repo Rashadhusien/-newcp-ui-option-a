@@ -79,9 +79,24 @@ The developer asked to follow the earlier POCs page by page (D-65). Time left be
 | 2 (proposed) | A25 sign-in per the backend Auth (Google button, `POST /auth/login`, Bearer) | 1.25 | sign-in |
 | 9 | A26 breadcrumbs on every page | 0.5 | every page |
 | 10 | A27 Home (welcome) page, landing after sign-in | 1.0 | sign-in, Home |
-| 11 | A28 Dashboard (scope addition 27 Oct, D-77, G19) | 1.5 | dashboard |
+| 11 | A28 Dashboard (scope addition 27 Oct, D-77, G19; removed 28 Oct by A32, D-80) | 1.5 | none |
 
 Total 15.0 h with A25, 18.0 h with A26 to A28 (added 27 Oct; the Dashboard is a scope addition, D-77). **No new tests until the pages are done (D-66):** A17 to A23 only keep the existing suite green; A24 writes the tests afterwards. **Fits before the meeting (about 4 h): A17 + A25 + A18 = 3.75 h** if A25 goes second (the backend team is waiting for it); A19 then moves after the meeting. Without A25: A17 + A18 + A19 = 4.0 h. Developer to choose. A20 next if time remains; A21 needs answers first. Today's service detail page and the Models/Conversion launchers keep working until A20/A21 replace them.
+
+## 5b. Plan after the canonical contract (28 Oct)
+The backend shared its canonical OpenAPI and a test server (D-79) and answered most open questions (DEVIATIONS, "Backend answers of 28 Oct"). The developer removed the Dashboard (D-80) and asked for a nested sidebar with legacy names (D-81), the 3DDX logo (D-82), tables like the references (D-83) and live endpoints.
+
+| Order | Task | Hours | Blocked by |
+|---|---|---|---|
+| 1 | A32 remove the Dashboard | 0.5 | none |
+| 2 | A29 migrate types, answers and mocks to the canonical contract | 2.0 | none |
+| 3 | A30 real sign-in, `/auth/me`, logout, dev proxy | 1.5 | Q-B28 Google client ID + allowed origin (Hesham) for the live part |
+| 4 | A33 nested sidebar, legacy labels, logo | 1.5 | Q-B34 remaining labels (defaults used meanwhile) |
+| 5 | A34 Columns menu, service filter, order details gaps | 2.0 | none |
+| 6 | A31 live service endpoints on the test server | 2.0 | A30; Q-B33 test accounts and order UUIDs; Q-B31 CORS (the proxy works around it) |
+| 7 | A24 tests (updated scope) | 2.5 | after the above |
+
+Total 12.0 h. Stays MOCK whatever we do: All orders (no `GET /orders`, Q-B26), Add order (no create order, Q-B24), the order header (Q-B32), Bill To (F07 unverified), report figures (no report endpoint, Q-B3). A29, A32, A33 and A34 need nothing from the backend and can start now; A30's live part and A31 wait for Hesham.
 
 ## 6. What we reused (read-only sources, copied out)
 `sources/mui` (base: app, theme, components, table, status) and `sources/poc-mui` (token scripts; form host, fields, error summary, dirty guard, timeline and action panel still to be adapted in A6R/A7R). Full map: `docs/DEVIATIONS.md`, "Reuse map (A1)".
@@ -92,7 +107,8 @@ Total 15.0 h with A25, 18.0 h with A26 to A28 (added 27 Oct; the Dashboard is a 
 3. `domain/`, `data/` and seed JSON are replaced by `shared/status/`, `shared/api/`, `features/services/data/` and `mocks/`.
 4. The report stays on mock data until a report endpoint exists (G3).
 5. Unit price is editable for authorized clerks (Q-B10); currency and rush stay read-only.
-6. Bill To is MOCK only until the DB owner applies and verifies F07 (D-44).
+6. Bill To is MOCK only until the DB owner applies and verifies F07 (D-44); the canonical contract (D-79) keeps the F07 blocker.
+7. The API reference is the backend's canonical OpenAPI (D-79), not the package F07 contract.
 
 ## 8. Risks and cut order
 **R1 (26 Oct, A00c): applied cuts, in order; restored in the same order if hours appear:** (1) A8R Bill To UI (1 h; breaks the earlier "never cut Bill To" and the IAM live Bill To scenario M03/M04, accepted by the developer; mock and adapter guard stay), (2) A11 as its own task (2 h; only tests written inside each task), (3) A7R staff fields Redo, redo-of, pending reason and notes (0.5 h), (4) A13 Docker and README (0.75 h), (5) A12 CI (0.5 h), (6) A5R report re-key (0.5 h; report stays labelled MOCK), (7) dark-mode and tablet checks, the Sonar step, history pagination. A4 (0.5 h) is replaced by A15. Never cut: session/access states, the forms, the On Hold dialog, 412 handling, capability gating.
