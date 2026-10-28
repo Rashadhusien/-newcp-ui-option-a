@@ -308,3 +308,33 @@ export interface AuthMeResponse {
 export interface AuthErrorResponse {
   error: Problem;
 }
+
+/** IAM administration (canonical contract: /iam/users, /iam/roles, /iam/users/{userId}/roles). */
+export interface IamAssignedRole {
+  roleId: number;
+  roleCode: string;
+}
+
+export interface IamUserSummary {
+  userId: number;
+  email: string;
+  state: string;
+  hasEmployeeProfile: boolean;
+  roles: IamAssignedRole[];
+}
+
+export interface IamRoleSummary {
+  roleId: number;
+  code: string;
+  name: string;
+  isSystem: boolean;
+  capabilities: string[];
+}
+
+export interface IamRoleAssignmentResponse {
+  userId: number;
+  roleId: number;
+  roleCode: string;
+  tenantId: number;
+  grantedAt: string;
+}

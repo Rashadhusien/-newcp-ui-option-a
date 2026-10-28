@@ -40,6 +40,7 @@ export const router = createBrowserRouter([
       },
       { path: 'services/:serviceItemUuid', lazy: page(() => import('@/features/services/ServiceDetailPage')) },
       { path: 'services/:serviceItemUuid/edit', lazy: page(() => import('@/features/services/ServiceFormPage')) },
+      { path: 'admin/users', lazy: page(() => import('@/features/iam/UsersAndRolesPage')) },
       { path: 'settings', lazy: page(() => import('@/features/settings/SettingsPage')) },
       { path: ROUTES.notFound, lazy: page(() => import('./NotFoundPage')) },
     ],

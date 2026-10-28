@@ -86,6 +86,9 @@ export function buildTrail(pathname: string, hints: TrailHints = {}): Crumb[] {
         break;
     }
   }
+  if (first === 'admin' && second === 'users' && parts.length === 2) {
+    return current([HOME, { label: ROUTE_LABELS.adminUsers }]);
+  }
   if (first === 'orders' && second === 'new' && parts.length === 2) {
     return current([HOME, ORDERS, { label: ROUTE_LABELS.orderNew }]);
   }

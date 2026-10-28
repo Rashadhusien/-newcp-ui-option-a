@@ -13,6 +13,7 @@ export const ROUTES = {
   models: "/models",
   conversion: "/conversion",
   settings: "/settings",
+  adminUsers: "/admin/users",
   /** Create a service instance of one catalog service on an order. */
   serviceNew: (orderUuid: string, serviceUuid: string) =>
     `/orders/${encodeURIComponent(orderUuid)}/services/new/${encodeURIComponent(serviceUuid)}`,
@@ -36,6 +37,7 @@ export const ROUTES = {
   models: string;
   conversion: string;
   settings: string;
+  adminUsers: string;
   serviceNew: (orderUuid: string, serviceUuid: string) => string;
   orderServices: (orderUuid: string) => string;
   serviceDetail: (serviceItemUuid: string) => string;
@@ -52,6 +54,7 @@ export const ROUTE_LABELS = {
   models: "Models",
   conversion: "Conversion",
   settings: "Settings",
+  adminUsers: "Users and roles",
   serviceNew: "New service",
   serviceEdit: "Edit form",
   /** Fallback for a service page before its line number is known. */

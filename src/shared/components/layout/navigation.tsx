@@ -15,6 +15,7 @@ import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined';
 import SyncAltOutlinedIcon from '@mui/icons-material/SyncAltOutlined';
 import TableRowsOutlinedIcon from '@mui/icons-material/TableRowsOutlined';
 import DonutSmallOutlinedIcon from '@mui/icons-material/DonutSmallOutlined';
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { ROUTES } from '@/app/routes';
 import type { CapabilityCode } from '@/shared/api';
@@ -132,6 +133,14 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     label: 'System',
     items: [
+      {
+        kind: 'link',
+        label: 'Users and roles',
+        to: ROUTES.adminUsers,
+        icon: <ManageAccountsOutlinedIcon />,
+        capability: 'iam.users.read',
+        isActive: ({ pathname }) => pathname === ROUTES.adminUsers,
+      },
       {
         kind: 'link',
         label: 'Settings',

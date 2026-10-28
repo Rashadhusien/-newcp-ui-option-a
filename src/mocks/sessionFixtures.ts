@@ -36,10 +36,18 @@ const OPERATIONAL: readonly CapabilityCode[] = [
   'reports.view_all',
 ];
 
+const ADMIN_CAPABILITIES: readonly CapabilityCode[] = [
+  ...OPERATIONAL,
+  'reports.export',
+  'iam.users.read',
+  'iam.roles.read',
+  'iam.assign_role',
+];
+
 const CAPABILITIES: Record<Exclude<MockIdentity, 'PENDING'>, readonly CapabilityCode[]> = {
   CS: OPERATIONAL,
   OPS: OPERATIONAL,
-  ADMIN: [...OPERATIONAL, 'reports.export'],
+  ADMIN: ADMIN_CAPABILITIES,
   FINANCE: [
     'orders.read',
     'service.read',

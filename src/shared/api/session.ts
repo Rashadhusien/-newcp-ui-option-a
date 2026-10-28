@@ -29,7 +29,10 @@ export type CapabilityCode =
   | 'service.billing.is_billable.edit'
   | 'service.zero_charge_reason.edit'
   | 'reports.view_all'
-  | 'reports.export';
+  | 'reports.export'
+  | 'iam.users.read'
+  | 'iam.roles.read'
+  | 'iam.assign_role';
 
 /** Read-only tenant shown as a badge; never sent in a request. */
 export interface ActiveTenant {
