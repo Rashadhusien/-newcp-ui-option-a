@@ -304,6 +304,16 @@ Branch: feat/fe-a-a31-live-services | Estimate: 2.0 h | Depends on: A30; Q-B33 (
 ## Task A24 (updated 28 Oct): tests
 Estimate: 2.5 h (was 2.0) | Depends on: A29-A34 | Status: not started. Adds to A24.1: the canonical answer conversion, the `/auth/me` mapping, the nested sidebar, the Columns menu and the service filter.
 
+## Task A36: Session lifetime (Q-B29 approved)
+Branch: feat/fe-a-a36-session-lifetime | Estimate: 1.0 h | Depends on: A30 | Status: ready for review | Source: Hesham's approval of Q-B20, Q-B22, Q-B29 (28 Oct, via the developer); IAM spec (30 min idle, 8 h max)
+- [x] A36.1 `shared/lib/sessionLifetime.ts`: the session ends after 30 minutes without activity, 8 hours after sign-in or at the server `expiresAt`, whichever is first; warning 2 minutes before the idle limit (3 tests).
+- [x] A36.2 SessionProvider: checks every 15 s and when the tab becomes visible; activity = pointer, key, wheel, touch (throttled); an ended session calls logout (real API) and drops the token and the mock identity.
+- [x] A36.3 `SessionTimeoutDialog`: "Are you still there?" with Stay signed in / Sign out; Escape and the backdrop keep the session.
+- [x] A36.4 Sign-in page says why the session ended (idle, 8-hour limit, expired).
+- [x] A36.5 Reload: the token stays in memory (no storage, CLAUDE.md); the sign-in page tries Google One Tap auto-select on a fresh load, and sign-out or a timeout calls `disableAutoSelect`, so it does not sign straight back in.
+- [x] A36.6 Browser check (mock, clock moved forward with a `Date.now` override): warning, Escape keeps the session, idle and 8-hour sign-outs with their messages, dialog Sign out. NOT RUN: a real reload with Google One Tap (real sign-in still answers 401, Q-B37).
+- [x] A36.7 `npm run dev` now runs the real backend and Google sign-in (mode `integration`, falls back to mocks without `.env.integration.local`); `npm run dev:mock` keeps the mock demo (developer request, D-91).
+
 ## Phase log
 | Task | Status | Notes |
 |---|---|---|
@@ -344,7 +354,8 @@ Estimate: 2.5 h (was 2.0) | Depends on: A29-A34 | Status: not started. Adds to A
 | A32 | merged | Dashboard removed (D-80); 122 tests (2 Dashboard tests deleted) |
 | A29 | merged | canonical contract: types, answer format, 24-field items, hold/pending/redo shown, invoiced locks, zero-charge lookup; 4 tests updated; 122 tests |
 | A00e | merged | docs only: v0.9.8 adopted (D-85), Orders Dashboard design-only (D-86), FINANCE/QC access (D-87), `docs/BACKEND_BLOCKERS.md`; A34 rescoped, A35 added |
-| A30 | ready for review | login per contract (AUTHORIZED / PENDING_ACCESS), session from GET /auth/me, logout, dev proxy (`npm run dev:integration`); 1 test rewritten; 123 tests; real sign-in NOT RUN |
+| A30 | merged | login per contract (AUTHORIZED / PENDING_ACCESS), session from GET /auth/me, logout, dev proxy (`npm run dev:integration`); 1 test rewritten; 123 tests; real sign-in NOT RUN |
 | A33 | merged | nested sidebar (Orders, Report groups), "All orders" / "Add order" labels, 3DDX logo; 2 tests updated; 122 tests |
 | A35 | merged | FINANCE/QC read orders and services (G11); FINANCE financial edits, QC read-only; 5 tests updated, 1 split in two; 123 tests |
 | A31, A34 | planned 28 Oct | next: A34, then A31 after Hesham, then A24 | order: A32, A29, A30, A33, A34, A31, then A24 |
+| A36 | ready for review | session lifetime: idle 30 min with warning, 8 h max, server expiry; One Tap re-sign-in after a reload; `npm run dev` = real backend, `dev:mock` = mocks; 3 new tests; 126 tests |

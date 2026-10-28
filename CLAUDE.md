@@ -45,7 +45,9 @@ status, history, payer and report rows. Never a type-level identifier.
   Google Identity Services gives a Google ID token -> `POST /api/v1/auth/login` `{ "idToken": ... }` -> either
   `AUTHORIZED` with `token` + `expiresAt`, or `PENDING_ACCESS` with no token -> `Authorization: Bearer <token>` on
   every request; `POST /api/v1/auth/logout` on sign-out. The token is held in memory only (no localStorage,
-  sessionStorage or cookie written by the UI); a reload signs in again until Q-B29 says otherwise. Never send the
+  sessionStorage or cookie written by the UI); a reload signs in again (silently through Google One Tap when the
+  user's Google session allows it). Session limits (Q-B29, approved): 30 minutes idle with a warning 2 minutes before,
+  8 hours after sign-in, or the server's `expiresAt`, whichever comes first (A36). Never send the
   Google ID token to any other endpoint. Auth, IAM and session questions go to Hesham.
 - Errors: auth errors use `{error:{code,message,...}}`, other errors the flat `Problem` `{code,message,requestId,details}`
   (the test server answers 401 with the flat shape); accept both (Q-B22).
@@ -94,7 +96,7 @@ status, history, payer and report rows. Never a type-level identifier.
 - Never send `tenantId` or `X-Tenant-Id`; no default or fallback tenant anywhere in config; the tenant label comes
   only from the context.
 - Capability flags are display-only (hide/disable actions); the server decides and its 403 is always shown. Codes
-  follow ROLE_CAPABILITY_MATRIX (`CANDIDATE_UNVERIFIED`, D-53). G11 confirmed (v0.9.8, OD-01..03): FINANCE and QC
+  follow ROLE_CAPABILITY_MATRIX (approved by Hesham as the `/auth/me` codes, Q-B20, 28 Oct). G11 confirmed (v0.9.8, OD-01..03): FINANCE and QC
   see all tenant-authorized order/service details; FINANCE also makes the approved financial edits; QC is read-only
   apart from audit actions (D-87). All five roles view reports; export only FINANCE/QC/ADMIN, and there is no export
   endpoint, so no export control (D-54).

@@ -3,6 +3,12 @@
  * package) and renders Google's own "Sign in with Google" button, which is
  * the only way GIS hands out an ID token. Google is authentication only: the
  * token is passed straight to the New CP login endpoint (D-67).
+ *
+ * Reload (A36): the New CP token lives in memory only, so a reload signs in
+ * again. With `autoSelect`, Google's One Tap prompt re-signs a returning
+ * user without a click when their Google session allows it; otherwise the
+ * button stays. After an explicit sign-out or a timeout the app calls
+ * `disableGoogleAutoSelect`, so the next visit asks again.
  */
 
 const SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
@@ -20,6 +26,8 @@ interface GoogleAccountsId {
     cancel_on_tap_outside?: boolean;
   }) => void;
   renderButton: (parent: HTMLElement, options: Record<string, string | number>) => void;
+  prompt: () => void;
+  disableAutoSelect: () => void;
 }
 
 function accountsId(): GoogleAccountsId | null {
@@ -60,6 +68,8 @@ export interface GoogleButtonOptions {
   width: number;
   onIdToken: (idToken: string) => void;
   onFailure: () => void;
+  /** Try a silent One Tap re-sign-in (fresh page load only, not after a sign-out). */
+  autoSelect: boolean;
 }
 
 /** Renders Google's button into `parent`; the ID token arrives through `onIdToken`. */
@@ -68,7 +78,7 @@ export async function renderGoogleButton(parent: HTMLElement, options: GoogleBut
   id.initialize({
     client_id: options.clientId,
     ux_mode: 'popup',
-    auto_select: false,
+    auto_select: options.autoSelect,
     cancel_on_tap_outside: true,
     callback: (response) => {
       if (response.credential) options.onIdToken(response.credential);
@@ -84,4 +94,10 @@ export async function renderGoogleButton(parent: HTMLElement, options: GoogleBut
     logo_alignment: 'left',
     width: options.width,
   });
+  if (options.autoSelect) id.prompt();
+}
+
+/** Stops Google's silent re-sign-in for this browser (after a sign-out or timeout). No-op before GIS loads. */
+export function disableGoogleAutoSelect(): void {
+  accountsId()?.disableAutoSelect();
 }

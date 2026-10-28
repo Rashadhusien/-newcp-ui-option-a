@@ -11,7 +11,7 @@ const { version } = JSON.parse(
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  // A30 (Q-B31): the test server sends no CORS headers, so `npm run dev:integration` proxies /api to it.
+  // A30 (Q-B31): the test server sends no CORS headers, so `npm run dev` (mode `integration`) proxies /api to it.
   // The target lives only in the git-ignored .env.<mode>.local file, never in the repository.
   const env = loadEnv(mode, process.cwd(), "VITE_");
   const proxyTarget = env.VITE_API_PROXY_TARGET;

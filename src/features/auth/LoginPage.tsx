@@ -65,6 +65,9 @@ export default function LoginPage() {
     !useMocks && readGoogleClientId() !== null ? { kind: 'googleLoading' } : { kind: 'idle' },
   );
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
+  // A36: silent Google re-sign-in only on a fresh load (a reload), never after a sign-out or a timeout.
+  const endedBy = state.status === 'signedOut' ? state.reason : undefined;
+  const autoSelect = endedBy === undefined;
 
   // Real API: render Google's button once GIS has loaded.
   useEffect(() => {
@@ -76,6 +79,7 @@ export default function LoginPage() {
       clientId,
       dark,
       width: GOOGLE_BUTTON_WIDTH,
+      autoSelect,
       onFailure: () => {
         setPhase({ kind: 'googleFailed', message: 'Google did not return a sign-in. Try again.' });
       },
@@ -105,7 +109,7 @@ export default function LoginPage() {
     return () => {
       active = false;
     };
-  }, [useMocks, clientId, dark, baseUrl, signInWithSession]);
+  }, [useMocks, clientId, dark, baseUrl, signInWithSession, autoSelect]);
 
   if (state.status === 'ready') return <Navigate to={destination} replace />;
 
@@ -120,7 +124,14 @@ export default function LoginPage() {
   };
 
   const busy = phase.kind === 'signingIn' || state.status === 'loading';
-  const expired = state.status === 'signedOut' && state.reason === 'expired' && phase.kind === 'idle';
+  const endedMessage =
+    phase.kind !== 'idle' || endedBy === undefined
+      ? null
+      : {
+          expired: 'Your session has ended. Sign in again to continue.',
+          idle: 'You were signed out after 30 minutes without activity. Sign in again to continue.',
+          max: 'Your session reached its 8-hour limit. Sign in again to continue.',
+        }[endedBy];
 
   return (
     <AuthLayout>
@@ -137,7 +148,7 @@ export default function LoginPage() {
           {useMocks && <EvidenceBadge evidence="MOCK" />}
         </Stack>
 
-        {expired && <InlineAlert severity="warning">Your session has ended. Sign in again to continue.</InlineAlert>}
+        {endedMessage !== null && <InlineAlert severity="warning">{endedMessage}</InlineAlert>}
         {phase.kind === 'googleFailed' && <InlineAlert severity="error">{phase.message}</InlineAlert>}
         {phase.kind === 'denied' && (
           <InlineAlert severity="error">{`Access denied. ${phase.message}`}</InlineAlert>

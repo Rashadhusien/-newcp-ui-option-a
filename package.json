@@ -7,8 +7,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
-    "dev:integration": "vite --mode integration",
+    "dev": "vite --mode integration",
+    "dev:mock": "vite",
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "build": "vite build",

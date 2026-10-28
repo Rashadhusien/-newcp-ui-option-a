@@ -7,10 +7,16 @@ import { createContext, useContext } from 'react';
 import type { ApiError, LoginResult, SessionContext } from '@/shared/api';
 import type { MockIdentity } from '@/mocks/sessionFixtures';
 
+/**
+ * Why the session ended without the user signing out: `expired` = a 401 or
+ * the server's expiry, `idle` = 30 minutes without activity, `max` = 8 hours
+ * after sign-in (A36). The sign-in page says which.
+ */
+export type SignedOutReason = 'expired' | 'idle' | 'max';
+
 export type SessionState =
   | { status: 'loading' }
-  /** `expired`: a 401 ended the session (sign-in page says so). */
-  | { status: 'signedOut'; reason?: 'expired' }
+  | { status: 'signedOut'; reason?: SignedOutReason }
   | { status: 'blocked'; message: string }
   | { status: 'error'; error: ApiError | null }
   | { status: 'ready'; context: SessionContext };

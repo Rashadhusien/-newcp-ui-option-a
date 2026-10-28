@@ -3,7 +3,7 @@
 Everything below runs on the **mock** (header badge: MOCK). Nothing is saved to a real API; say so at the start. The mock resets when the page is reloaded.
 
 ## Setup
-1. `npm ci`, then `npm run dev` (port 3000). `.env` must not set `VITE_USE_MOCKS=false`.
+1. `npm ci`, then `npm run dev:mock` (port 3000; `npm run dev` uses the real backend). `.env` must not set `VITE_USE_MOCKS=false`.
 2. Open `/login` in a fresh window. Light mode, browser at about 1440 px. Keep a phone width (390 px) ready for step 8.
 
 ## Script (about 10 minutes)

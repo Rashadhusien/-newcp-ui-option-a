@@ -9,7 +9,7 @@ Updated 28 Oct 2026 from the canonical `docs/openapi/newcp.openapi.yaml`, the v0
 |---|---|---|---|
 | Q-B28 | Hesham | Client ID received 28 Oct (test web client); allowed JavaScript origin is `http://localhost:3000` (developer, 28 Oct), so the dev server now runs on 3000. Still needed: the demo origin, if the demo is not run locally. | The Google button renders on port 3000; a real sign-in is not yet proven. |
 | Q-B37 | Hesham | A real Google sign-in on `http://localhost:3000` (28 Oct): Google returned an ID token, but `POST /api/v1/auth/login` answered 401 `AUTHENTICATION_REQUIRED` "Authentication required". Which Google client ID (token audience) does the test backend verify, and is the developer's account allowed? Please check the server log for that request. | Real sign-in blocked; the app shows Access denied. |
-| Q-B31 | Hesham | CORS: the test server sends no `Access-Control-Allow-*` headers. Needed only for a deployed demo origin. | Dev proxy for `/api` (`npm run dev:integration`); not a blocker for local work. |
+| Q-B31 | Hesham | CORS: the test server sends no `Access-Control-Allow-*` headers. Needed only for a deployed demo origin. | Dev proxy for `/api` (`npm run dev`); not a blocker for local work. |
 | Q-B33 | Hesham / backend | Test Google accounts (one per role) and order UUIDs that have Biomodel and Conversion items. | Live service calls (A31) cannot be run. |
 | Q-B24 | Backend API owner | Create order endpoint and schema (adding a service to an existing order is not a replacement). | Add order stays MOCK. |
 | Q-B25 | Business / PHI | Which patient fields may be shown and sent. | Synthetic patient data only. |
@@ -28,9 +28,6 @@ Updated 28 Oct 2026 from the canonical `docs/openapi/newcp.openapi.yaml`, the v0
 
 | ID | Owner | Question | Meanwhile |
 |---|---|---|---|
-| Q-B29 | Hesham | Session after reload, refresh or re-auth, idle (30 min) and max (8 h) limits. | Token in memory; a reload signs in again. |
-| Q-B22 | Hesham | Final 401/403 code list, including tenant errors. Seen live: auth endpoints `{error:{code,message,requestId}}` with `AUTHENTICATION_REQUIRED` (401) and `VALIDATION_ERROR` (400). | Accept both error shapes; route on status. |
-| Q-B20 | Hesham | Canonical capability codes behind `/auth/me` (matrix codes are `CANDIDATE_UNVERIFIED`). | Mock uses the matrix codes. |
 | Q-B35 | Hesham / Lead | G11 says FINANCE and QC see all order and service details, but the role matrix (unchanged since v0.9.7) still gives them report capabilities only. Which capabilities will `/auth/me` return for them? | Mock FINANCE/QC get read access to orders and services (D-87). |
 | Q-B36 | Backend API owner | The review YAML (`03_...REVIEW.yaml`) still lists `optionCode`/`valueText`/... on `FormAnswer`; the canonical file and the live server removed them. Confirm the canonical file wins. | We send only `value` / `optionCodes`, which both accept. |
 | Q-B7 | Backend API owner | Final error codes for financial lock, invoiced line, ineligible payer, prohibited transition. | Show the server message and code. |
@@ -42,3 +39,8 @@ Updated 28 Oct 2026 from the canonical `docs/openapi/newcp.openapi.yaml`, the v0
 | Q-B2 | Backend API owner | Rush field and whether currency is editable. | Read-only / not available. |
 | F07 runtime | Backend / DB | F07 is reported complete; the deployed payer endpoint and PATCH are not yet checked live. | Bill To stays MOCK until A31 runs it. |
 | G14, G2/R14, G7 | Lead / repo owner | Visual reference, MUI ADR, integration branch and `local_docs` history. | No change. |
+
+## Approved by Hesham (28 Oct)
+- Q-B20: the capability codes behind `/auth/me` are the role matrix codes the app already uses.
+- Q-B22: auth endpoints answer `{error:{code,message,requestId}}`, the others the flat Problem; the app accepts both and routes on the status.
+- Q-B29: session limits are 30 minutes idle and 8 hours maximum; the token stays in memory, and a reload signs in again. Built in A36.
