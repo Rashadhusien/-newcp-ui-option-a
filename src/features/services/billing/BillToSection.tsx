@@ -59,8 +59,9 @@ export function BillToSection({ item, etag, onSaved, onReload }: BillToSectionPr
   const [stale, setStale] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const editable = item.canEditBilledParty !== false && can(context, 'service.billing.bill_to.edit');
-  const lineLabel = `line ${String(item.lineNumber ?? '-')}`;
+  // Invoiced lines reject a payer change (422); the server also sends canEditBilledParty false then.
+  const editable = item.canEditBilledParty && !item.isInvoiced && can(context, 'service.billing.bill_to.edit');
+  const lineLabel = `line ${String(item.lineNumber)}`;
 
   const { control, formState, handleSubmit, setError } = useForm<BillToValues>({
     defaultValues: { billedToContactUuid: item.billedToContactUuid },
@@ -171,7 +172,7 @@ export function BillToSection({ item, etag, onSaved, onReload }: BillToSectionPr
       <InlineAlert severity="info">
         {editable
           ? `Applies to this service only (${lineLabel}). ${BILL_TO_INDEPENDENT_TEXT}`
-          : `Read-only for you on this service. ${BILL_TO_INDEPENDENT_TEXT}`}
+          : `${item.isInvoiced ? 'Locked: this service is invoiced.' : 'Read-only for you on this service.'} ${BILL_TO_INDEPENDENT_TEXT}`}
       </InlineAlert>
       {editable && (
         <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>

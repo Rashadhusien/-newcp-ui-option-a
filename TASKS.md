@@ -256,12 +256,12 @@ Branch: refactor/fe-a-a32-remove-dashboard | Estimate: 0.5 h | Depends on: devel
 - [x] Verify; browser: no Dashboard anywhere for CS/FINANCE/QC, `/dashboard` shows Not found.
 
 ## Task A29: Migrate to the canonical contract (D-79)
-Branch: feat/fe-a-a29-canonical-contract | Estimate: 2.0 h | Depends on: A32 | Status: not started
-- [ ] A29.1 Rename the shared file to `docs/openapi/newcp.openapi.yaml`; types in `src/shared/api/types.ts` follow it: `FormAnswer` = `fieldCode` + `optionCodes?` + `value?`; `ServiceItem` with the 24 required fields and `holdType`, `holdReasonCode`, `pendingReason`, `redoOfItemUuid`; auth, lookup and IAM schemas.
-- [ ] A29.2 One answer conversion: choice -> `optionCodes` (single = one item, cleared = `[]`), others -> `value` with real JSON types, dates `YYYY-MM-DD`; a reader for responses; never both, no carriers; PATCH sends the full answer set. File and tooth-chart fields: no payload invented (`[NEEDS VERIFICATION]`).
-- [ ] A29.3 Mocks re-shaped to the canonical `ServiceItem` (money fields, isInvoiced, hold and pending fields); mock 400 for unknown answer properties and 422 `INVALID_FIELD_TYPE`.
-- [ ] A29.4 UI: show hold type/reason, pending reason and redo-of from the item (drop "not returned"); `isInvoiced` locks price, quantity, currency and payer controls; remove `?? 1`-style fallbacks; zero-charge reasons from `GET /lookups/zero-charge-reasons` (mock list until A31).
-- [ ] A29.5 Update the existing tests that assert carriers (`formLogic.test.ts`, adapter tests); verify green.
+Branch: feat/fe-a-a29-canonical-contract | Estimate: 2.0 h | Depends on: A32 | Status: ready for review (MOCK; live calls in A31)
+- [x] A29.1 Rename the shared file to `docs/openapi/newcp.openapi.yaml`; types in `src/shared/api/types.ts` follow it: `FormAnswer` = `fieldCode` + `optionCodes?` + `value?`; `ServiceItem` with the 24 required fields and `holdType`, `holdReasonCode`, `pendingReason`, `redoOfItemUuid`; auth and lookup schemas (IAM admin schemas left out: no IAM screen, D-84).
+- [x] A29.2 One answer conversion: choice -> `optionCodes` (single = one item, cleared = `[]`), others -> `value` with real JSON types, dates `YYYY-MM-DD`; a reader for responses; never both, no carriers; PATCH sends the full answer set. File and tooth-chart fields: no payload invented (`[NEEDS VERIFICATION]`).
+- [x] A29.3 Mocks re-shaped to the canonical `ServiceItem` (money fields, isInvoiced, hold and pending fields); mock 400 for unknown answer properties and 422 `INVALID_FIELD_TYPE`.
+- [x] A29.4 UI: show hold type/reason, pending reason and redo-of from the item (drop "not returned"); `isInvoiced` locks price, quantity, currency and payer controls; remove `?? 1`-style fallbacks; zero-charge reasons from `GET /lookups/zero-charge-reasons` (mock list until A31).
+- [x] A29.5 Update the existing tests that assert carriers (`formLogic.test.ts`, adapter tests); verify green.
 
 ## Task A30: Real sign-in and session against the test server
 Branch: feat/fe-a-a30-auth-session | Estimate: 1.5 h | Depends on: A29; Q-B28 (Google client ID + allowed origin from Hesham) for the live part | Status: not started
@@ -332,5 +332,6 @@ Estimate: 2.5 h (was 2.0) | Depends on: A29-A34 | Status: not started. Adds to A
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
 | A00d | merged | docs only: canonical contract adopted (D-79), backend answers recorded, Dashboard removal (D-80), nested nav (D-81), logo (D-82), tables (D-83); tasks A29-A34 planned |
-| A32 | ready for review | Dashboard removed (D-80); 122 tests (2 Dashboard tests deleted) |
-| A29, A30, A31, A33, A34 | planned 28 Oct | order: A32, A29, A30, A33, A34, A31, then A24 |
+| A32 | merged | Dashboard removed (D-80); 122 tests (2 Dashboard tests deleted) |
+| A29 | ready for review | canonical contract: types, answer format, 24-field items, hold/pending/redo shown, invoiced locks, zero-charge lookup; 4 tests updated; 122 tests |
+| A30, A31, A33, A34 | planned 28 Oct | order: A32, A29, A30, A33, A34, A31, then A24 |

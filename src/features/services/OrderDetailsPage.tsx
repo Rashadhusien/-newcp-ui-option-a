@@ -183,7 +183,7 @@ export default function OrderDetailsPage() {
                             services
                               .map((item) => {
                                 const teeth = header.teethByService?.[item.uuid] ?? [];
-                                return `Line ${String(item.lineNumber ?? '-')}: ${teeth.length > 0 ? teeth.join(', ') : 'none'}`;
+                                return `Line ${String(item.lineNumber)}: ${teeth.length > 0 ? teeth.join(', ') : 'none'}`;
                               })
                               .join(' · ') || '—',
                           wide: true,
@@ -244,7 +244,7 @@ export default function OrderDetailsPage() {
                       }}
                     >
                       <Typography variant="body2" sx={{ fontWeight: current ? 700 : 500 }}>
-                        {`Line ${String(item.lineNumber ?? '-')} · ${nameOf(catalog, item.sellableItemUuid)}`}
+                        {`Line ${String(item.lineNumber)} · ${nameOf(catalog, item.sellableItemUuid)}`}
                       </Typography>
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <StatusBadge status={item.status} size="sm" />

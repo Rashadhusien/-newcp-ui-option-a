@@ -1,20 +1,24 @@
 /**
- * In-memory mock of the service-instance API, shaped like the reference
- * contract (package v0.9.2). Behaviour follows the contract and the
- * approved Q-B8 to Q-B15 decisions:
+ * In-memory mock of the service-instance API, shaped like the canonical
+ * contract (docs/openapi/newcp.openapi.yaml, D-79). Behaviour follows the
+ * contract and the approved Q-B8 to Q-B15 decisions:
  * - create always makes a NEW instance (new UUID, next line number), even
  *   for a type the order already has; the same Idempotency-Key returns the
  *   first result (R11, proposed). Quantity defaults to 1 (demo, Q-B13).
  * - Q-B8: every item has a version (ETag); edits and transitions need
  *   If-Match: missing -> 428, stale -> 412, and nothing is written.
  * - Q-B9: On Hold only through a transition carrying holdType and a
- *   matching "Demo only" reason; leaving hold clears both.
+ *   matching "Demo only" reason, kept on the item; leaving hold clears both.
+ * - Q-B16: answers are `fieldCode` + `optionCodes` (choice fields) or
+ *   `value` (others), never both: an unknown property is a 400, a wrong
+ *   kind of value a 422 INVALID_FIELD_TYPE. PATCH answers replace the set.
  * - Q-B10: the contract price is the initial unit price; a clerk with
  *   `canEditPrice` may override it and the override is kept. A final line
  *   total of zero needs a zero-charge reason: 422 ZERO_CHARGE_REASON_REQUIRED
  *   on `zeroChargeReasonCode`.
  * - Q-B14: Billable and Bill To are independent; each is permission- and
- *   lock-checked on its own. Invoiced items are financially locked (409).
+ *   lock-checked on its own. Invoiced items reject price, quantity and payer
+ *   changes (422, as the contract describes) and billability changes (409).
  * - Quantity > 0 with at most 3 decimals (contract `multipleOf: 0.001`).
  * Problem codes other than ZERO_CHARGE_REASON_REQUIRED are mock-only
  * (`mock.*`, Q-B7). Totals here are mock arithmetic; the server computes the
@@ -27,14 +31,13 @@ import {
   type AvailableTransition,
   type BilledPartyChoice,
   type CatalogService,
+  type FormAnswer,
   type FormDefinition,
   type HistoryEvent,
-  type HoldType,
   type NewCpClient,
   type Problem,
   type ServiceItem,
   type TransitionResult,
-  type ZeroChargeReason,
 } from '@/shared/api';
 import {
   MOCK_BILLED_PARTIES,
@@ -61,13 +64,13 @@ export interface MockOptions {
   now?: () => Date;
 }
 
-/** The mock also serves zero-charge reasons, which the reference contract has no endpoint for (Q-B17). */
-export interface MockServiceApi extends NewCpClient {
-  zeroChargeReasons(): Promise<ZeroChargeReason[]>;
-}
+/** The mock implements the contract client as it is. */
+export type MockServiceApi = NewCpClient;
 
 const MOCK_ACTOR = '00000000-0000-0000-0000-0000000000a1';
 const PRICE_PATTERN = /^(0|[1-9][0-9]*)(\.[0-9]+)?$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const ANSWER_KEYS = new Set(['fieldCode', 'value', 'optionCodes']);
 
 function copy<T>(value: T): T {
   return structuredClone(value);
@@ -81,10 +84,52 @@ function invalid(field: string, message: string, code = 'mock.invalid_field'): A
   return new ApiError(422, problem(code, message, { field }));
 }
 
-/** Mock line total: unit price x quantity, 2 decimals (the server owns real totals). */
-function lineTotalOf(unitPrice: string | undefined, quantity: number | undefined): string | undefined {
-  if (unitPrice === undefined) return undefined;
-  return (Number(unitPrice) * (quantity ?? 1)).toFixed(2);
+type MoneyParts = Pick<ServiceItem, 'unitPrice' | 'quantity' | 'fieldsAmount' | 'discountAmount' | 'voucherAmount'>;
+
+/** Mock line total per the contract formula, 2 decimals (the server owns real totals). */
+function lineTotalOf(item: MoneyParts): string {
+  const total =
+    Number(item.unitPrice) * item.quantity +
+    Number(item.fieldsAmount) -
+    Number(item.discountAmount) -
+    Number(item.voucherAmount);
+  return total.toFixed(2);
+}
+
+/** Q-B16 wire checks against the service's form definition. */
+function assertAnswers(answers: readonly FormAnswer[], definition: FormDefinition): void {
+  const types = new Map(definition.fields.map((field) => [field.code, field.type]));
+  for (const answer of answers) {
+    const extra = Object.keys(answer).filter((key) => !ANSWER_KEYS.has(key));
+    if (extra.length > 0) {
+      throw new ApiError(
+        400,
+        problem('mock.unknown_property', `Answer properties not allowed: ${extra.join(', ')}.`, {
+          field: answer.fieldCode,
+        }),
+      );
+    }
+    const type = types.get(answer.fieldCode);
+    if (type === undefined) {
+      throw invalid(answer.fieldCode, 'This field is not part of the service form.', 'mock.unknown_field');
+    }
+    const mismatch = (message: string) => invalid(answer.fieldCode, message, 'INVALID_FIELD_TYPE');
+    const { value, optionCodes } = answer;
+    if (value !== undefined && optionCodes !== undefined) throw mismatch('Send either a value or option codes, not both.');
+    if (type === 'single_select' || type === 'multi_select') {
+      if (value !== undefined || optionCodes === undefined) throw mismatch('A choice field takes option codes.');
+      if (type === 'single_select' && optionCodes.length > 1) throw mismatch('Choose one option.');
+    } else if (optionCodes !== undefined) {
+      throw mismatch('This field takes a value, not option codes.');
+    } else if (
+      (type === 'boolean' && typeof value !== 'boolean') ||
+      (type === 'number' && typeof value !== 'number') ||
+      (type === 'date' && (typeof value !== 'string' || !DATE_PATTERN.test(value))) ||
+      (type === 'text' && typeof value !== 'string')
+    ) {
+      throw mismatch(`This field takes a ${type} value.`);
+    }
+  }
 }
 
 export function createMockServiceApi(options: MockOptions = {}): MockServiceApi {
@@ -94,7 +139,6 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
     (options.items ?? MOCK_SERVICE_ITEMS).map((item) => [item.uuid, copy(item)]),
   );
   const revisions = new Map<string, number>([...items.keys()].map((uuid) => [uuid, 1]));
-  const holds = new Map<string, { holdType: HoldType; holdReasonCode: string }>();
   const history = new Map<string, HistoryEvent[]>();
   const idempotent = new Map<string, string>();
   let nextUuid = 0x100;
@@ -184,8 +228,16 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
     }
   }
 
-  function financialLock(what: string): ApiError {
-    return new ApiError(409, problem('mock.financial_lock', `The ${what} cannot change after the service is invoiced.`));
+  /** Invoiced lines reject price, quantity, currency and payer changes (422 on the field, per the contract). */
+  function invoicedLock(field: string, what: string): ApiError {
+    return invalid(field, `The ${what} cannot change after the service is invoiced.`, 'mock.invoiced');
+  }
+
+  function definitionOf(sellableItemUuid: string): FormDefinition {
+    const service = MOCK_CATALOG.find((entry) => entry.uuid === sellableItemUuid);
+    if (!service) throw invalid('sellableItemUuid', 'Unknown service.', 'mock.unknown_service');
+    const spec = specForService(service.code);
+    return spec ? mockFormDefinition(service, spec) : { service, fields: [], evidence: 'MOCK: no form spec for this service' };
   }
 
   function transitionsFor(item: ServiceItem): AvailableTransition[] {
@@ -210,12 +262,10 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
 
     formSchema: (serviceUuid) =>
       respond((): FormDefinition => {
-        const service = MOCK_CATALOG.find((entry) => entry.uuid === serviceUuid);
-        if (!service) throw new ApiError(404, problem('mock.not_found', 'Service not found.'));
-        const spec = specForService(service.code);
-        return spec
-          ? mockFormDefinition(service, spec)
-          : { service, fields: [], evidence: 'MOCK: no form spec for this service' };
+        if (!MOCK_CATALOG.some((entry) => entry.uuid === serviceUuid)) {
+          throw new ApiError(404, problem('mock.not_found', 'Service not found.'));
+        }
+        return definitionOf(serviceUuid);
       }),
 
     holdReasons: (holdType) => respond(() => MOCK_HOLD_REASONS.filter((reason) => reason.holdType === holdType)),
@@ -228,7 +278,7 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
       respond(() =>
         [...items.values()]
           .filter((item) => item.orderUuid === orderUuid)
-          .sort((a, b) => (a.lineNumber ?? 0) - (b.lineNumber ?? 0))
+          .sort((a, b) => a.lineNumber - b.lineNumber)
           .map(withEtag),
       ),
 
@@ -238,41 +288,49 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
           const existing = idempotent.get(idempotencyKey);
           if (existing) return withEtag(getItem(existing));
         }
-        if (!MOCK_CATALOG.some((entry) => entry.uuid === request.sellableItemUuid)) {
-          throw invalid('sellableItemUuid', 'Unknown service.', 'mock.unknown_service');
-        }
+        assertAnswers(request.answers, definitionOf(request.sellableItemUuid));
         if (request.billedToContactUuid) assertEligiblePayer(orderUuid, request.billedToContactUuid);
         assertQuantity(request.quantity);
         assertUnitPrice(request.unitPrice);
         assertZeroChargeReason(request.zeroChargeReasonCode);
-        const quantity = request.quantity ?? 1;
-        const unitPrice = request.unitPrice ?? MOCK_CONTRACT_UNIT_PRICE;
-        const lineTotal = lineTotalOf(unitPrice, quantity);
+        const money: MoneyParts = {
+          quantity: request.quantity ?? 1,
+          unitPrice: request.unitPrice ?? MOCK_CONTRACT_UNIT_PRICE,
+          fieldsAmount: '0.00',
+          discountAmount: '0.00',
+          voucherAmount: '0.00',
+        };
+        const lineTotal = lineTotalOf(money);
         assertZeroTotalHasReason(lineTotal, request.zeroChargeReasonCode);
-        const lines = [...items.values()]
-          .filter((item) => item.orderUuid === orderUuid)
-          .map((item) => item.lineNumber ?? 0);
+        const lines = [...items.values()].filter((item) => item.orderUuid === orderUuid).map((item) => item.lineNumber);
+        const stamp = now().toISOString();
         const created: ServiceItem = {
           uuid: newUuid(),
           orderUuid,
           sellableItemUuid: request.sellableItemUuid,
           lineNumber: Math.max(0, ...lines) + 1,
-          quantity,
+          ...money,
+          lineTotal,
           status: 'submitted',
           isBillable: request.isBillable ?? true,
           canEditBillability: true,
           isRedo: request.isRedo ?? false,
+          redoOfItemUuid: request.redoOfItemUuid ?? null,
           isInvoiced: false,
           currencyCode: MOCK_CURRENCY,
-          unitPrice,
-          lineTotal,
           canEditPrice: true,
           answers: copy(request.answers),
           billedToContactUuid: request.billedToContactUuid ?? MOCK_DOCTOR_UUID,
           billedPartyOrigin: request.billedToContactUuid ? 'user_selected' : 'order_default',
           canEditBilledParty: true,
+          pendingReason: null,
+          holdType: null,
+          holdReasonCode: null,
           zeroChargeReasonCode: request.zeroChargeReasonCode ?? null,
           zeroChargeNote: request.zeroChargeNote ?? null,
+          etag: '"rev-1"',
+          createdAt: stamp,
+          updatedAt: stamp,
         };
         if (request.serviceNotes !== undefined) created.serviceNotes = request.serviceNotes;
         items.set(created.uuid, created);
@@ -294,43 +352,55 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
         if (Object.keys(patch).length === 0) {
           throw new ApiError(400, problem('mock.empty_patch', 'Nothing to change.'));
         }
+        if (patch.answers !== undefined) assertAnswers(patch.answers, definitionOf(item.sellableItemUuid));
         if (patch.billedToContactUuid !== undefined) {
-          if (item.isInvoiced) throw financialLock('payer');
-          if (item.canEditBilledParty === false) {
+          if (item.isInvoiced) throw invoicedLock('billedToContactUuid', 'payer');
+          if (!item.canEditBilledParty) {
             throw new ApiError(403, problem('mock.forbidden', 'You may not change the payer.'));
           }
           assertEligiblePayer(item.orderUuid, patch.billedToContactUuid);
         }
         if (patch.isBillable !== undefined && patch.isBillable !== item.isBillable) {
-          if (item.canEditBillability === false) {
+          if (!item.canEditBillability) {
             throw new ApiError(403, problem('mock.forbidden', 'You may not change billability.'));
           }
-          if (item.isInvoiced) throw financialLock('billability');
+          if (item.isInvoiced) {
+            throw new ApiError(
+              409,
+              problem('mock.financial_lock', 'Billability cannot change after the service is invoiced.'),
+            );
+          }
         }
         if (patch.unitPrice !== undefined && patch.unitPrice !== item.unitPrice) {
-          if (item.canEditPrice === false) {
+          if (!item.canEditPrice) {
             throw new ApiError(403, problem('mock.forbidden', 'You may not change the price.'));
           }
-          if (item.isInvoiced) throw financialLock('price');
+          if (item.isInvoiced) throw invoicedLock('unitPrice', 'price');
+        }
+        if (patch.quantity !== undefined && patch.quantity !== item.quantity && item.isInvoiced) {
+          throw invoicedLock('quantity', 'quantity');
         }
         assertQuantity(patch.quantity);
         assertUnitPrice(patch.unitPrice);
         assertZeroChargeReason(patch.zeroChargeReasonCode);
-        const unitPrice = patch.unitPrice ?? item.unitPrice;
-        const quantity = patch.quantity ?? item.quantity;
-        const lineTotal = lineTotalOf(unitPrice, quantity);
+        const lineTotal = lineTotalOf({
+          ...item,
+          unitPrice: patch.unitPrice ?? item.unitPrice,
+          quantity: patch.quantity ?? item.quantity,
+        });
         const reason = patch.zeroChargeReasonCode !== undefined ? patch.zeroChargeReasonCode : item.zeroChargeReasonCode;
         assertZeroTotalHasReason(lineTotal, reason);
 
         // Everything is validated before anything changes: no partial update.
-        const updated: ServiceItem = { ...item };
+        const updated: ServiceItem = { ...item, lineTotal, updatedAt: now().toISOString() };
         if (patch.answers !== undefined) updated.answers = copy(patch.answers);
         if (patch.isRedo !== undefined) updated.isRedo = patch.isRedo;
+        if (patch.redoOfItemUuid !== undefined) updated.redoOfItemUuid = patch.redoOfItemUuid;
+        if (patch.pendingReason !== undefined) updated.pendingReason = patch.pendingReason;
         if (patch.serviceNotes !== undefined) updated.serviceNotes = patch.serviceNotes;
         if (patch.isBillable !== undefined) updated.isBillable = patch.isBillable;
         if (patch.quantity !== undefined) updated.quantity = patch.quantity;
         if (patch.unitPrice !== undefined) updated.unitPrice = patch.unitPrice;
-        if (lineTotal !== undefined) updated.lineTotal = lineTotal;
         if (patch.zeroChargeReasonCode !== undefined) updated.zeroChargeReasonCode = patch.zeroChargeReasonCode;
         if (patch.zeroChargeNote !== undefined) updated.zeroChargeNote = patch.zeroChargeNote;
         if (patch.billedToContactUuid !== undefined) {
@@ -363,13 +433,11 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
           }
         }
         const changedAt = now().toISOString();
-        items.set(item.uuid, { ...item, status: move.toCode });
-        if (intoHold && request.holdType !== undefined && request.holdReasonCode !== undefined) {
-          holds.set(item.uuid, { holdType: request.holdType, holdReasonCode: request.holdReasonCode });
-        } else {
-          // Leaving hold clears its active details (history keeps them).
-          holds.delete(item.uuid);
-        }
+        // Leaving hold clears its active details (history keeps the move).
+        const hold = intoHold
+          ? { holdType: request.holdType ?? null, holdReasonCode: request.holdReasonCode ?? null }
+          : { holdType: null, holdReasonCode: null };
+        items.set(item.uuid, { ...item, status: move.toCode, ...hold, updatedAt: changedAt });
         bump(item.uuid);
         const event: HistoryEvent = {
           fromCode: move.fromCode,
@@ -385,8 +453,11 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
           toCode: move.toCode,
           changedAt,
           actorUserUuid: MOCK_ACTOR,
-          ...holds.get(item.uuid),
         };
+        if (intoHold && request.holdType !== undefined && request.holdReasonCode !== undefined) {
+          result.holdType = request.holdType;
+          result.holdReasonCode = request.holdReasonCode;
+        }
         return { data: result, etag: etagOf(item.uuid) };
       }),
 

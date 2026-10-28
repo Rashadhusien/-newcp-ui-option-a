@@ -1,0 +1,1696 @@
+openapi: 3.0.3
+info:
+  title: New CP Backend API
+  version: 1.0.0
+  description: New CP backend API contract for authentication, tenant-scoped IAM, and approved service-instance workflows.
+servers:
+- url: http://localhost:3001
+  description: Local New CP backend
+x-contract-status: APPROVED_QB8_QB15_IMPLEMENTATION_TARGET; F07_AND_LIVE_API_UNVERIFIED;
+  NOT_FINAL
+x-source-authority:
+- Connect Add/Create Service form fields/validators
+- CP internal editing behavior
+- Sanitized PostgreSQL V3 migrations V008 V011 V013 V020 V100 V130
+- 'October demo decisions: multiple same-type instances'
+- F07 supplied remediation V204 + stage-30/stage-90 source; runtime not executed by
+  this handoff
+- 'User confirmation 23 October 2026: retain is_billable alongside F07 service payer
+  columns'
+- Technical Lead approvals Q-B8–Q-B15, 24 October 2026; service-specific and role-specific
+  verification still pending
+x-blockers:
+- Actual V3 applied migration V204 and non-null payer finalization require read-only
+  verification of deployed schema
+- ETL policy approved against exact MySQL source domain and stage-90 reconciliation
+  need owner evidence
+- Selected tenant catalog codes/UUIDs and field mapping remain unverified
+- Actual state transitions and role checks remain unverified
+- Financial charging/price/voucher/invoice code must be validated against persisted
+  order item payer
+- No backend or both React app live integration evidence available
+- Independent legacy is_billable source mapping not yet evidenced; stage30 uses documented
+  true default when no explicit reliable billability source exists
+- Aggregate service revision strategy and DB migration decision pending backend owner
+  design review
+- Actual hold reason values temporary synthetic nonproduction only; historical lookup
+  approval pending
+- Actual CP edit price permission, money currency precision and role permissions must
+  be verified in implementation
+tags:
+- name: System
+  description: Infrastructure liveness and readiness probes
+- name: Catalog
+- name: Service Instances
+- name: Workflow
+- name: Lookups
+  description: System lookup values such as zero-charge reasons and hold reasons
+- name: Auth
+  description: Google authentication and server-issued application sessions
+- name: IAM/Admin
+  description: Tenant-scoped IAM dashboard operations
+security:
+- BearerAuth: []
+paths:
+  /api/v1/auth/login:
+    post:
+      tags:
+      - Auth
+      operationId: loginWithGoogle
+      summary: Authenticate with a Google ID token
+      description: Google verifies identity only. Tenant and role authorization is resolved by the backend IAM store; Google Groups are not used for authorization.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLoginRequest'
+      responses:
+        '200':
+          description: Authenticated identity with either an authorized application session or Pending Access
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/AuthorizedLoginResponse'
+                - $ref: '#/components/schemas/PendingAccessLoginResponse'
+        '400':
+          description: Missing or invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '401':
+          description: Google authentication failed or provisioning eligibility failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Configured tenant is unavailable or not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+  /health:
+    get:
+      tags:
+      - System
+      summary: Liveness/readiness probe
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                required:
+                - status
+  /api/v1/catalog/services:
+    get:
+      tags:
+      - Catalog
+      operationId: listDemoCatalogServices
+      summary: List authorized sellable service options (tenant scoped)
+      parameters:
+      - in: query
+        name: categoryCode
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogService'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/catalog/services/{serviceUuid}/form-schema:
+    get:
+      tags:
+      - Catalog
+      operationId: getServiceFormSchema
+      summary: Get actual tenant catalog field and condition metadata
+      parameters:
+      - in: path
+        name: serviceUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormDefinition'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/orders/{orderUuid}/services:
+    get:
+      tags:
+      - Service Instances
+      operationId: listOrderServiceItems
+      summary: List independent service instances on an authorized order
+      parameters:
+      - in: path
+        name: orderUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceItem'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    post:
+      tags:
+      - Service Instances
+      operationId: createOrderServiceItem
+      summary: Create a new independent service instance on an order
+      description: Create a new independent service-instance UUID even when same sellable
+        item already exists. Server enforces field rules, authorization and tenant-scoped
+        transaction. Idempotency-Key proposal requires explicit policy confirmation;
+        intentional second submissions use distinct keys.
+      parameters:
+      - in: path
+        name: orderUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+        description: Proposed retry protection; exact retention/replay policy is a
+          technical decision.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceItem'
+      responses:
+        '201':
+          description: Created service item
+          headers:
+            ETag:
+              description: Initial opaque revision of the created service aggregate.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceItem'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/services/{serviceItemUuid}:
+    get:
+      tags:
+      - Service Instances
+      operationId: getServiceItem
+      summary: Get a single service instance with ETag aggregate revision
+      description: Return ETag covering the entire editable service state. Implementation
+        must update revision on child field/workflow writes, not only order_items.updated_at.
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          headers:
+            ETag:
+              description: Opaque revision of the entire editable service aggregate
+                (including fields/workflow). Store and send on next write.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceItem'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    patch:
+      tags:
+      - Service Instances
+      operationId: patchServiceItem
+      summary: Update a service instance with If-Match concurrency guard
+      description: Requires If-Match; approved CP authorized unitPrice overrides must
+        not be silently replaced with contract rate. Preserve zero-charge reason required
+        at final line_total zero and financial locks.
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: true
+        schema:
+          type: string
+        description: ETag of loaded service aggregate. Required on mutations. 412
+          if stale, 428 if absent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchServiceItem'
+      responses:
+        '200':
+          description: Success
+          headers:
+            ETag:
+              description: Opaque revision of the entire editable service aggregate
+                (including fields/workflow). Store and send on next write.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceItem'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '412':
+          description: 'Stale version: changed by another user, no write occurred'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '428':
+          description: Missing required If-Match precondition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/services/{serviceItemUuid}/available-transitions:
+    get:
+      tags:
+      - Workflow
+      operationId: listServiceTransitions
+      summary: List currently authorized manual workflow transitions
+      description: Return currently authorized manual transitions from selected workflow
+        instance. Do not hardcode legacy numeric statuses.
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AvailableTransition'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/services/{serviceItemUuid}/transitions:
+    post:
+      tags:
+      - Workflow
+      operationId: advanceServiceWorkflow
+      summary: Execute an atomic workflow state transition with If-Match guard
+      description: Requires If-Match; when destination is on_hold, mandatory holdType
+        + holdReasonCode; commit service status, hold details and history in one DB
+        transaction. Temporary lookup reason choices are for authorized test/demo
+        environments only.
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: true
+        schema:
+          type: string
+        description: ETag of loaded service aggregate. Required on mutations. 412
+          if stale, 428 if absent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+      responses:
+        '200':
+          description: Success
+          headers:
+            ETag:
+              description: New aggregate version after atomic transition
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransitionResult'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '412':
+          description: 'Stale version: changed by another user, no write occurred'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '428':
+          description: Missing required If-Match precondition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/services/{serviceItemUuid}/history:
+    get:
+      tags:
+      - Workflow
+      operationId: getServiceHistory
+      summary: Get status and workflow transition history for a service instance
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoryEvent'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/orders/{orderUuid}/eligible-billed-parties:
+    get:
+      tags:
+      - Service Instances
+      operationId: listEligibleOrderItemBilledParties
+      summary: List eligible service-level billed parties for one authorized order
+      description: 'Resolve order Doctor/default and Scanning Center within tenant
+        and staff permission, return contact UUIDs for selection; do not return unrestricted
+        contacts. Endpoint proposal until backend contract review.'
+      parameters:
+      - in: path
+        name: orderUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Eligible billed parties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BilledPartyChoice'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Order not found or tenant-masked
+  /api/v1/catalog/hold-reasons:
+    get:
+      tags:
+      - Catalog
+      - Lookups
+      operationId: listEligibleHoldReasons
+      summary: Return configured hold reasons; temporary synthetic choices are nonproduction
+        only
+      description: Returns valid hold reasons filtered by holdType (customer or internal)
+        for atomic on_hold workflow transitions (Q-B9).
+      parameters:
+      - in: query
+        name: holdType
+        required: true
+        schema:
+          $ref: '#/components/schemas/HoldType'
+        description: Required hold type filter (customer or internal)
+      responses:
+        '200':
+          description: Configured hold reasons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HoldReasonOption'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+  /api/v1/lookups/zero-charge-reasons:
+    get:
+      tags:
+      - Lookups
+      operationId: listZeroChargeReasons
+      summary: List active zero charge reasons
+      description: Returns active reasons required when an order item line total is
+        $0.00 to satisfy DB constraint ck_order_items__zero_charge_has_reason (Q-B10).
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ZeroChargeReason'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+  /api/v1/lookups/hold-reasons:
+    get:
+      tags:
+      - Lookups
+      operationId: listHoldReasons
+      summary: List active hold reasons (lookup alias for /api/v1/catalog/hold-reasons)
+      description: Returns valid reasons when placing an item on hold with customer
+        or internal hold type; temporary synthetic choices are nonproduction only.
+      parameters:
+      - in: query
+        name: holdType
+        required: false
+        schema:
+          $ref: '#/components/schemas/HoldType'
+        description: Filter reasons by hold type (customer or internal)
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HoldReasonOption'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+  /api/v1/auth/me:
+    get:
+      tags:
+      - Auth
+      operationId: getCurrentAuthContext
+      summary: Get the current authenticated user and tenant authorization context
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Current authenticated user context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMeResponse'
+        '401':
+          description: Missing, invalid, expired, revoked, or idle-timed-out application session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Session tenant authorization was lost
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - Auth
+      operationId: logoutApplicationSession
+      summary: Revoke the current application session
+      description: Requires a valid authenticated session. The handler safely resolves the server-owned session tenant before revoking the session and always returns 204 with no response body. Unknown or already-revoked tokens are safe no-ops.
+      security:
+      - BearerAuth: []
+      responses:
+        '204':
+          description: Session revoked; response has no body
+        '401':
+          description: Missing, invalid, expired, revoked, or idle-timed-out application session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Session tenant authorization was lost
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+  /api/v1/iam/users:
+    get:
+      tags:
+      - IAM/Admin
+      operationId: listIamUsers
+      summary: List tenant-scoped employee identities for IAM administration
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Tenant-scoped employee identities and assigned roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IamUserSummary'
+        '401':
+          description: Authentication required
+        '403':
+          description: Missing iam.users.read capability or tenant authorization
+  /api/v1/iam/roles:
+    get:
+      tags:
+      - IAM/Admin
+      operationId: listIamRoles
+      summary: List tenant-scoped IAM roles and capabilities
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Tenant-scoped IAM roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IamRoleSummary'
+        '401':
+          description: Authentication required
+        '403':
+          description: Missing iam.roles.read capability or tenant authorization
+  /api/v1/iam/users/{userId}/roles:
+    post:
+      tags:
+      - IAM/Admin
+      operationId: assignIamUserRole
+      summary: Assign a tenant role to an employee
+      description: Requires iam.assign_role. The role is resolved inside the authenticated session tenant. ADMIN-to-ADMIN delegation is explicitly not allowed by the current approved model.
+      security:
+      - BearerAuth: []
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IamRoleAssignmentRequest'
+      responses:
+        '200':
+          description: Existing or newly created idempotent role assignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IamRoleAssignmentResponse'
+        '400':
+          description: Invalid userId or roleId
+        '401':
+          description: Authentication required
+        '403':
+          description: Missing iam.assign_role, invalid target/role tenant, or ADMIN delegation not allowed
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque or JWT per approved Google Auth adapter
+  schemas:
+    AuthLoginRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - idToken
+      properties:
+        idToken:
+          type: string
+          minLength: 1
+          description: Google ID token used for authentication only; never treated as an authorization or tenant claim.
+    AuthorizedLoginResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - accessStatus
+      - token
+      - expiresAt
+      properties:
+        accessStatus:
+          type: string
+          enum:
+          - AUTHORIZED
+        token:
+          type: string
+          description: Opaque server-issued application session token.
+        expiresAt:
+          type: string
+          format: date-time
+    PendingAccessLoginResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - accessStatus
+      properties:
+        accessStatus:
+          type: string
+          enum:
+          - PENDING_ACCESS
+          description: Authenticated identity has no valid tenant role assignment; no application session or token is issued.
+    AuthMeResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - email
+      - userUuid
+      - tenantSlug
+      - roleCodes
+      - capabilities
+      - isPendingAccess
+      properties:
+        email:
+          type: string
+          nullable: true
+        userUuid:
+          type: string
+          format: uuid
+          nullable: true
+        tenantSlug:
+          type: string
+          nullable: true
+        roleCodes:
+          type: array
+          items:
+            type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        isPendingAccess:
+          type: boolean
+          description: Current capability-resolution Pending Access indicator; tenant authorization is separately revalidated by protected middleware.
+    AuthErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/Problem'
+    IamRoleAssignmentRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - roleId
+      properties:
+        roleId:
+          type: integer
+          format: int64
+    IamRoleAssignmentResponse:
+      type: object
+      required:
+      - userId
+      - roleId
+      - roleCode
+      - tenantId
+      - grantedAt
+      properties:
+        userId:
+          type: integer
+          format: int64
+        roleId:
+          type: integer
+          format: int64
+        roleCode:
+          type: string
+        tenantId:
+          type: integer
+          format: int64
+        grantedAt:
+          type: string
+          format: date-time
+    IamUserSummary:
+      type: object
+      required:
+      - userId
+      - email
+      - state
+      - hasEmployeeProfile
+      - roles
+      properties:
+        userId:
+          type: integer
+          format: int64
+        email:
+          type: string
+        state:
+          type: string
+        hasEmployeeProfile:
+          type: boolean
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/IamAssignedRole'
+    IamAssignedRole:
+      type: object
+      required:
+      - roleId
+      - roleCode
+      properties:
+        roleId:
+          type: integer
+          format: int64
+        roleCode:
+          type: string
+    IamRoleSummary:
+      type: object
+      required:
+      - roleId
+      - code
+      - name
+      - isSystem
+      - capabilities
+      properties:
+        roleId:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        isSystem:
+          type: boolean
+        capabilities:
+          type: array
+          items:
+            type: string
+    Problem:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        requestId:
+          type: string
+        details:
+          type: object
+          properties:
+            field:
+              type: string
+            reason:
+              type: string
+          additionalProperties: true
+          description: For ZERO_CHARGE_REASON_REQUIRED (422), details.field must equal
+            zeroChargeReasonCode; other errors may include structured code-specific
+            detail.
+    FormOption:
+      type: object
+      required:
+      - code
+      - label
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        active:
+          type: boolean
+    CatalogService:
+      type: object
+      required:
+      - uuid
+      - code
+      - name
+      - itemKind
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        itemKind:
+          type: string
+          enum:
+          - service
+        isDigital:
+          type: boolean
+        workflowCode:
+          type: string
+          nullable: true
+    CanonicalFieldType:
+      type: string
+      enum:
+      - text
+      - number
+      - boolean
+      - date
+      - single_select
+      - multi_select
+      - file
+      - tooth_chart
+      description: Data types allowed by V3 catalog.field_types.data_type (Q-B11),
+        verify actual seeded code values; UI widgets such as radio vs select are presentation-only.
+    FormValidation:
+      type: object
+      properties:
+        min:
+          type: number
+        max:
+          type: number
+        max_length:
+          type: integer
+          minimum: 0
+        pattern:
+          type: string
+      additionalProperties: true
+      description: Known V3 validation keys (Q-B12); backend must review actual existing
+        JSON configurations before freezing full key vocabulary.
+    FieldCondition:
+      oneOf:
+      - $ref: '#/components/schemas/FieldConditionLeaf'
+      - $ref: '#/components/schemas/FieldConditionAll'
+      - $ref: '#/components/schemas/FieldConditionAny'
+      - $ref: '#/components/schemas/FieldConditionNot'
+    FieldConditionLeaf:
+      type: object
+      required:
+      - op
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        attribute:
+          type: string
+        op:
+          type: string
+          enum:
+          - eq
+          - ne
+          - in
+          - not_in
+          - is_set
+          - is_not_set
+          - gt
+          - gte
+          - lt
+          - lte
+        value: {}
+        values:
+          type: array
+          items: {}
+      description: Exactly one of field/attribute; field codes resolved using tenant
+        catalog; value vs values depends on op; enforce with application validator.
+    FieldConditionAll:
+      type: object
+      required:
+      - all
+      additionalProperties: false
+      properties:
+        all:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldCondition'
+    FieldConditionAny:
+      type: object
+      required:
+      - any
+      additionalProperties: false
+      properties:
+        any:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldCondition'
+    FieldConditionNot:
+      type: object
+      required:
+      - not
+      additionalProperties: false
+      properties:
+        not:
+          $ref: '#/components/schemas/FieldCondition'
+    ConditionalFieldRule:
+      type: object
+      required:
+      - ruleKind
+      - condition
+      properties:
+        ruleKind:
+          type: string
+          enum:
+          - visible
+          - required
+          - options
+        condition:
+          $ref: '#/components/schemas/FieldCondition'
+        optionCodes:
+          type: array
+          items:
+            type: string
+        sortOrder:
+          type: integer
+        active:
+          type: boolean
+      description: Rule kind, ordered options precedence and conditional expression
+        V3-derived (Q-B12); server evaluator authoritative.
+    FormField:
+      type: object
+      required:
+      - uuid
+      - code
+      - label
+      - type
+      - required
+      - options
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        code:
+          type: string
+        label:
+          type: string
+        type:
+          $ref: '#/components/schemas/CanonicalFieldType'
+        required:
+          type: boolean
+        defaultValue:
+          type: string
+          nullable: true
+        validation:
+          $ref: '#/components/schemas/FormValidation'
+        conditionalRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionalFieldRule'
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormOption'
+    FormDefinition:
+      type: object
+      required:
+      - service
+      - fields
+      properties:
+        service:
+          $ref: '#/components/schemas/CatalogService'
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormField'
+        evidence:
+          type: string
+          description: Indicates whether tenant runtime mapping is verified
+    FormAnswer:
+      type: object
+      additionalProperties: false
+      required:
+      - fieldCode
+      properties:
+        fieldCode:
+          type: string
+          description: Stable machine code of the form question (from catalog.fields.code)
+        value:
+          description: 'Natural polymorphic answer value for free-form inputs (text, number,
+            boolean, date): string (text or ISO date YYYY-MM-DD), number, or boolean. Backend
+            validates and maps to appropriate SQL column.'
+          oneOf:
+          - type: string
+          - type: number
+          - type: boolean
+        optionCodes:
+          type: array
+          items:
+            type: string
+          description: 'Unified option codes array for choice-based fields: single-select
+            fields supply 0 or 1 element e.g. ["FORMLABS_3B"], multi-select fields supply
+            0..n elements e.g. ["UPPER", "LOWER"], and unselected/cleared fields
+            supply [].'
+      description: Form answer model supporting unified optionCodes array for choice-based
+        fields and natural polymorphic value for free-form inputs. Validation is performed
+        from tenant catalog + source-evidenced rules, including conditional requiredness.
+    CreateServiceItem:
+      type: object
+      required:
+      - sellableItemUuid
+      - answers
+      properties:
+        sellableItemUuid:
+          type: string
+          format: uuid
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormAnswer'
+          description: Submitted form answers. One entry per answered field; see FormAnswer.
+        isRedo:
+          type: boolean
+          default: false
+        redoOfItemUuid:
+          type: string
+          format: uuid
+        serviceNotes:
+          type: string
+        billedToContactUuid:
+          type: string
+          format: uuid
+          description: Optional selected payer for THIS item; when omitted creation
+            copies order default ONCE. Must be eligible for the specific order and
+            tenant.
+        isBillable:
+          type: boolean
+          default: true
+          description: Independent service-instance billability (Q-B14); true = chargeable/billable,
+            false = never invoiced per V3 column definition. Not the Doctor/Scanning
+            Center payer selection; never map legacy toBeBilled to this flag. Changes
+            require clerk permission and are financially locked once charged/invoiced.
+        unitPrice:
+          type: string
+          pattern: ^(0|[1-9][0-9]*)(\.[0-9]+)?$
+          description: Authorized CP-adjustable per-unit monetary price, decimal string
+            (Q-B10). Backend supplies contract-based initial value, then accepts permitted
+            clerk override without silently re-pricing it to contract amount. Enforce
+            currency scale, audit and financial locks; do not trust unprivileged writers.
+        quantity:
+          type: number
+          minimum: 0.001
+          multipleOf: 0.001
+          default: 1
+          description: 'Selected demo workflows default to 1 (Q-B13). Do NOT interpret
+            as universal integer-only or minimum 1: V3 supports >0 and up to 3 decimals
+            (numeric(10,3)); item-specific policy pending.'
+        zeroChargeReasonCode:
+          type: string
+          description: Lookup code resolved server-side (Q-B10); mandatory for new
+            lines whose final line_total equals zero, including discount/voucher,
+            to satisfy DB constraint ck_order_items__zero_charge_has_reason.
+        zeroChargeNote:
+          type: string
+          maxLength: 255
+          description: Free-text explanation when line_total is zero (max 255 chars).
+      additionalProperties: false
+      description: Service-level payer is backed by F07 V204 orders.order_items.billed_to_contact_id.
+        Application resolves billedToContactUuid to crm.contacts.id under tenant-scoped
+        transaction. Omit to select order default once; do not allow client to set
+        provenance. Financial writes require runtime F07 gates. Every service instance
+        independently retains billability and intended payer.
+    PatchServiceItem:
+      type: object
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormAnswer'
+          description: Complete replacement list of form answers. One entry per answered field; see FormAnswer.
+        isRedo:
+          type: boolean
+        redoOfItemUuid:
+          type: string
+          format: uuid
+        serviceNotes:
+          type: string
+        pendingReason:
+          type: string
+        billedToContactUuid:
+          type: string
+          format: uuid
+          description: Change intended payer for this single service instance only
+            before any financial event; server writes billed_party_origin=user_selected
+            and audits the change.
+        isBillable:
+          type: boolean
+          description: Independent service-instance billability (Q-B14); true = chargeable/billable,
+            false = never invoiced per V3 column definition. Not the Doctor/Scanning
+            Center payer selection; never map legacy toBeBilled to this flag. Changes
+            require clerk permission and are financially locked once charged/invoiced.
+            This property changes billability only, not billedToContactUuid.
+        unitPrice:
+          type: string
+          pattern: ^(0|[1-9][0-9]*)(\.[0-9]+)?$
+          description: Authorized CP-adjustable per-unit monetary price, decimal string
+            (Q-B10). Backend supplies contract-based initial value, then accepts permitted
+            clerk override without silently re-pricing it to contract amount. Enforce
+            currency scale, audit and financial locks; do not trust unprivileged writers.
+        quantity:
+          type: number
+          minimum: 0.001
+          multipleOf: 0.001
+          description: Demo currently defaults to 1 (Q-B13); per-service validation
+            pending; V3 permits positive decimals up to 3 places.
+        zeroChargeReasonCode:
+          type: string
+          nullable: true
+          description: Lookup code resolved server-side (Q-B10); mandatory when final
+            line_total equals zero, including discount/voucher. Can be omitted or
+            nullified if final total is nonzero.
+        zeroChargeNote:
+          type: string
+          maxLength: 255
+      additionalProperties: false
+      minProperties: 1
+      description: Do not accept caller-supplied billedPartyOrigin. Reject per-item
+        payer changes once a charge, invoice association or invoice line exists. Other
+        monetary changes obey their own permissions and V3 financial locks (e.g. invoiced
+        lines reject unitPrice, quantity, currency, and payer changes). Never expose arbitrary
+        status or hold changes here instead of configured workflow actions (POST /transitions).
+        Every service instance independently retains billability and intended payer.
+    ServiceItem:
+      type: object
+      required:
+      - uuid
+      - orderUuid
+      - sellableItemUuid
+      - lineNumber
+      - status
+      - isRedo
+      - isInvoiced
+      - currencyCode
+      - unitPrice
+      - fieldsAmount
+      - discountAmount
+      - voucherAmount
+      - lineTotal
+      - quantity
+      - isBillable
+      - billedToContactUuid
+      - billedPartyOrigin
+      - canEditBilledParty
+      - canEditPrice
+      - canEditBillability
+      - answers
+      - etag
+      - createdAt
+      - updatedAt
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        orderUuid:
+          type: string
+          format: uuid
+        sellableItemUuid:
+          type: string
+          format: uuid
+        lineNumber:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+        isRedo:
+          type: boolean
+        redoOfItemUuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: UUID of parent item this line remakes
+        isInvoiced:
+          type: boolean
+        currencyCode:
+          type: string
+          minLength: 3
+          maxLength: 3
+        unitPrice:
+          type: string
+          description: Decimal string, not floating point
+        fieldsAmount:
+          type: string
+          description: Sum of answer surcharges recalculated by trigger trg_order_item_field_values__refresh_item
+        discountAmount:
+          type: string
+          description: Applied discount amount
+        voucherAmount:
+          type: string
+          description: Applied voucher amount
+        lineTotal:
+          type: string
+          description: Final line amount (unitPrice * quantity + fieldsAmount - discountAmount
+            - voucherAmount)
+        canEditPrice:
+          type: boolean
+          description: Backend-derived permission hint for authorized CP clerk (Q-B10);
+            API/DB enforce.
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormAnswer'
+          description: Form answers for this service instance. One entry per answered field; see FormAnswer.
+        serviceNotes:
+          type: string
+        billedToContactUuid:
+          type: string
+          format: uuid
+          description: Authoritative item-level intended payer (crm.contacts.uuid),
+            not orders.orders.contact_id or charges.contact_id.
+        billedPartyOrigin:
+          $ref: '#/components/schemas/BilledPartyOrigin'
+        canEditBilledParty:
+          type: boolean
+          description: Server-calculated permission and financial-lock hint; backend
+            always enforces mutation rules.
+        isBillable:
+          type: boolean
+          default: true
+          description: Independent service-instance billability (Q-B14); true = chargeable/billable,
+            false = never invoiced per V3 column definition. Read persisted orders.order_items.is_billable,
+            independent from billedToContactUuid.
+        canEditBillability:
+          type: boolean
+          description: Server-derived hint for authorized internal clerk (Q-B14);
+            actual backend validation and financial lock remain mandatory.
+        quantity:
+          type: number
+          minimum: 0.001
+          multipleOf: 0.001
+          default: 1
+          description: Stored V3 quantity (numeric(10,3)); demo default 1 is not a
+            general integer restriction (Q-B13).
+        pendingReason:
+          type: string
+          nullable: true
+          description: Reason the item is pending information
+        holdType:
+          $ref: '#/components/schemas/HoldType'
+          nullable: true
+          description: Active hold type when status is on_hold
+        holdReasonCode:
+          type: string
+          nullable: true
+          description: Active hold reason code when status is on_hold
+        zeroChargeReasonCode:
+          type: string
+          nullable: true
+          description: Code explaining why line_total is zero
+        zeroChargeNote:
+          type: string
+          nullable: true
+        etag:
+          type: string
+          description: Optional body convenience only (Q-B8); authoritative version
+            is ETag response header. Backend must version entire editable aggregate.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      description: Each service instance has independent item-level billed party,
+        billability, pricing breakdown, form answers, status and history.
+    AvailableTransition:
+      type: object
+      required:
+      - transitionId
+      - fromCode
+      - toCode
+      properties:
+        transitionId:
+          type: integer
+          format: int64
+        fromCode:
+          type: string
+        toCode:
+          type: string
+        label:
+          type: string
+        requiresCapability:
+          type: string
+        guard:
+          type: object
+          additionalProperties: true
+    TransitionRequest:
+      type: object
+      required:
+      - transitionId
+      additionalProperties: false
+      properties:
+        transitionId:
+          type: integer
+          format: int64
+        comment:
+          type: string
+        holdType:
+          $ref: '#/components/schemas/HoldType'
+        holdReasonCode:
+          type: string
+          description: Required alongside holdType for EVERY new transition into on_hold
+            (Q-B9), resolved to orders.order_items.hold_reason_id from eligible lookup.
+            Must be absent/handled per workflow policy on transitions outside on_hold.
+      description: 'One atomic transition (Q-B9): when destination is on_hold, holdType
+        and holdReasonCode are required; set status, hold type/reason, and workflow
+        history together. Leaving hold clears active details while retaining history.
+        Server validates against actual transition target.'
+    TransitionResult:
+      type: object
+      required:
+      - serviceItemUuid
+      - fromCode
+      - toCode
+      - changedAt
+      properties:
+        serviceItemUuid:
+          type: string
+          format: uuid
+        fromCode:
+          type: string
+        toCode:
+          type: string
+        changedAt:
+          type: string
+          format: date-time
+        actorUserUuid:
+          type: string
+          format: uuid
+        holdType:
+          $ref: '#/components/schemas/HoldType'
+        holdReasonCode:
+          type: string
+    HistoryEvent:
+      type: object
+      properties:
+        fromCode:
+          type: string
+        toCode:
+          type: string
+        actorUserUuid:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        comment:
+          type: string
+    BilledPartyChoice:
+      type: object
+      additionalProperties: false
+      required:
+      - contactUuid
+      - role
+      - label
+      properties:
+        contactUuid:
+          type: string
+          format: uuid
+          description: Public identifier for crm.contacts; resolve bigint ID on backend
+            only within trusted tenant scope
+        role:
+          type: string
+          enum:
+          - doctor
+          - scanning_center
+          description: Choice role in this specific order, not global contact category
+        label:
+          type: string
+          description: Approved display label; avoid PHI
+      description: Eligible contacts derived from selected order doctor/default contact
+        and scanning center. Not an unrestricted tenant contact list.
+    BilledPartyOrigin:
+      type: string
+      enum:
+      - legacy_explicit
+      - order_default
+      - manual_resolution
+      - user_selected
+      - unresolved_legacy
+      description: Read-only migration/user-action provenance. The unresolved_legacy
+        state is prohibited in authoritative completed ETL.
+    HoldType:
+      type: string
+      enum:
+      - customer
+      - internal
+      description: Hold category when placing an order item on_hold (customer vs internal).
+    HoldReasonOption:
+      type: object
+      required:
+      - code
+      - label
+      - isTemporary
+      properties:
+        code:
+          type: string
+          description: Unique code in core.lookup_values (or SYNTHETIC_* in non-prod
+            demo)
+        label:
+          type: string
+          description: Human-readable label
+        isTemporary:
+          type: boolean
+          description: True when option is a temporary synthetic demo choice (never
+            production/historical authority)
+        holdType:
+          $ref: '#/components/schemas/HoldType'
+        active:
+          type: boolean
+      description: Approved catalog rows once available; current demo temporary synthetic
+        nonproduction choices must be explicitly labelled (Q-B9). Never invent actual
+        historical reason values.
+    ZeroChargeReason:
+      type: object
+      required:
+      - code
+      - label
+      - active
+      properties:
+        code:
+          type: string
+          description: Unique code in core.lookup_values
+        label:
+          type: string
+          description: Human-readable label (e.g., Redo / Remake, Promotional Courtesy,
+            Voucher Full Coverage)
+        description:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+x-f07-implementation:
+  status: TARGET_MAPPING_ADOPTED_FOR_CODE_GENERATION; NOT_RUNTIME_CERTIFIED
+  perItemDbColumn: orders.order_items.billed_to_contact_id
+  provenanceDbColumn: orders.order_items.billed_party_origin
+  sourceMigration: references/f07/source/migrations/V204__service_level_billed_party.sql
+  sourceETL: references/f07/source/etl/stage_30_orders.py
+  reconciliation: references/f07/source/etl/stage_90_finalise.py
+  dataRule: Select one eligible Doctor/default or Scanning Center contact for EACH
+    service instance; no order-wide payer inheritance after creation
+  guard: No payer/provenance mutation after any charge or invoice association
+  runtimeGate: Inspect deployed V204 plus actual source-domain policy, stage-90 evidence
+    and safe app-role integration tests
+x-financial-field-authority:
+  billabilityColumn: orders.order_items.is_billable
+  payerColumn: orders.order_items.billed_to_contact_id
+  provenanceColumn: orders.order_items.billed_party_origin
+  billabilitySource: V011 existing NOT NULL DEFAULT true; independent of F07 V204
+  legacyPayerField: toBeBilled / ToBeBilled -> payer only (NOT is_billable)
+  billabilityLock: Financially locked after any charge/invoice, including billability,
+    payer and provenance
+  liveExecutionStatus: not_verified

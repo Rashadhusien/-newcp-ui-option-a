@@ -113,12 +113,18 @@ describe('dependent options and resets', () => {
   });
 });
 
-describe('answers (reference carriers, D-41)', () => {
-  it('sends choices as optionCode, checkboxes as valueBoolean, text only when filled, and skips hidden fields', () => {
+describe('answers (canonical format, Q-B16, D-79)', () => {
+  it('sends choices as optionCodes, checkboxes as a boolean value, text only when filled, and skips hidden fields', () => {
     const fields = fieldsOf(BIOMODEL_SPEC);
     const answers = toAnswers(fields, valuesOf(BIOMODEL_SPEC, { customizationMaxilla: '1', rxNote: '  ' }));
-    expect(answers).toContainEqual({ fieldCode: 'customizationMaxilla', optionCode: '1' });
-    expect(answers).toContainEqual({ fieldCode: 'hasRequiredFiles', valueBoolean: false });
+    expect(answers).toContainEqual({ fieldCode: 'customizationMaxilla', optionCodes: ['1'] });
+    expect(answers).toContainEqual({ fieldCode: 'hasRequiredFiles', value: false });
+    // Never both carriers, and none of the removed ones.
+    for (const answer of answers) {
+      expect(Object.keys(answer).sort()).toEqual(
+        answer.optionCodes ? ['fieldCode', 'optionCodes'] : ['fieldCode', 'value'],
+      );
+    }
     expect(answers.find((answer) => answer.fieldCode === 'rxNote')).toBeUndefined();
     // Digital-only fields are hidden while digital design is No.
     expect(answers.find((answer) => answer.fieldCode === 'printerGroup.printerBrand')).toBeUndefined();
@@ -131,7 +137,7 @@ describe('answers (reference carriers, D-41)', () => {
 
   it('sends the hidden BSB format 13 the source sets programmatically', () => {
     const answers = toAnswers(fieldsOf(CONVERSION_SPEC), valuesOf(CONVERSION_SPEC, { software: '6', format: '13' }));
-    expect(answers).toContainEqual({ fieldCode: 'format', optionCode: '13' });
+    expect(answers).toContainEqual({ fieldCode: 'format', optionCodes: ['13'] });
   });
 
   it('reopens saved answers as the same values', () => {

@@ -55,7 +55,7 @@ export function withMockAccess(api: MockServiceApi, currentContext: () => Sessio
     item: (...args) => check(read, () => api.item(...args)),
     availableTransitions: (...args) => check(read, () => api.availableTransitions(...args)),
     history: (...args) => check(read, () => api.history(...args)),
-    zeroChargeReasons: () => check(read, () => api.zeroChargeReasons()),
+    zeroChargeReasons: (...args) => check(read, () => api.zeroChargeReasons(...args)),
     create: (orderUuid, item, ...rest) => {
       // Creating covers the answers and plain staff fields; money and payer fields need their own capability.
       const staff: PatchServiceItem = { ...item };

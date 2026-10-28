@@ -8,13 +8,12 @@
  * reason is the server's decision (422 ZERO_CHARGE_REASON_REQUIRED on
  * `zeroChargeReasonCode`), so the reason is never forced here.
  *
- * Redo, redo-of, pending reason and service notes (A23, restored from
- * D-55): the contract PATCH takes all four, but the item it returns has only
- * `isRedo` and `serviceNotes` (Q-B18). Redo-of and pending reason therefore
- * start empty and are sent only when the user enters a value; the saved
- * value is not shown. The source attaches no validator to them (v0.6
- * "No universal frontend validator proven"); redo-of only gets the
- * contract's uuid format as a usability check.
+ * Redo, redo-of, pending reason and service notes (A23): the canonical
+ * contract returns all four on the item (Q-B18, D-79), so they start from
+ * the saved values and only changes are sent. Redo-of is a uuid in PATCH and
+ * cannot be sent empty, so clearing it sends nothing. The source attaches no
+ * validator to them (v0.6 "No universal frontend validator proven"); redo-of
+ * only gets the contract's uuid format as a usability check.
  */
 
 import { z } from 'zod';
@@ -72,13 +71,12 @@ export const staffSchema = z.object({
 
 export function staffValuesOf(item: ServiceItem): StaffValues {
   return {
-    isRedo: item.isRedo ?? false,
-    // Not returned by the API (Q-B18): empty means "leave unchanged".
-    redoOfItemUuid: '',
-    pendingReason: '',
+    isRedo: item.isRedo,
+    redoOfItemUuid: item.redoOfItemUuid ?? '',
+    pendingReason: item.pendingReason ?? '',
     serviceNotes: item.serviceNotes ?? '',
-    quantity: String(item.quantity ?? 1),
-    unitPrice: item.unitPrice ?? '',
+    quantity: String(item.quantity),
+    unitPrice: item.unitPrice,
     isBillable: item.isBillable,
     zeroChargeReasonCode: item.zeroChargeReasonCode ?? '',
     zeroChargeNote: item.zeroChargeNote ?? '',
@@ -89,8 +87,9 @@ export function staffValuesOf(item: ServiceItem): StaffValues {
 export function staffPatch(initial: StaffValues, values: StaffValues): PatchServiceItem {
   const patch: PatchServiceItem = {};
   if (values.isRedo !== initial.isRedo) patch.isRedo = values.isRedo;
-  if (values.redoOfItemUuid.trim() !== '') patch.redoOfItemUuid = values.redoOfItemUuid.trim();
-  if (values.pendingReason.trim() !== '') patch.pendingReason = values.pendingReason.trim();
+  const redoOf = values.redoOfItemUuid.trim();
+  if (redoOf !== '' && redoOf !== initial.redoOfItemUuid) patch.redoOfItemUuid = redoOf;
+  if (values.pendingReason.trim() !== initial.pendingReason) patch.pendingReason = values.pendingReason.trim();
   if (values.serviceNotes !== initial.serviceNotes) patch.serviceNotes = values.serviceNotes;
   if (Number(values.quantity) !== Number(initial.quantity)) patch.quantity = Number(values.quantity);
   if (values.unitPrice.trim() !== initial.unitPrice) patch.unitPrice = values.unitPrice.trim();

@@ -36,8 +36,11 @@ describe('service adapter: Bill To with the real API (D-44, F07 absent)', () => 
     expect(JSON.parse(bodies[1] ?? '{}')).toEqual({ isBillable: false });
   });
 
-  it('has no zero-charge reasons source with the real API (Q-B17)', async () => {
-    await expect(createServiceApi(REAL, () => 'token').zeroChargeReasons()).rejects.toMatchObject({ kind: 'blocked' });
+  it('reads zero-charge reasons from the lookup endpoint with the real API (Q-B17, D-79)', async () => {
+    const fetchSpy = vi.fn<typeof fetch>(() => Promise.resolve(new Response('[]', { status: 200 })));
+    vi.stubGlobal('fetch', fetchSpy);
+    await expect(createServiceApi(REAL, () => 'token').zeroChargeReasons()).resolves.toEqual([]);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe('https://api.example.test/api/v1/lookups/zero-charge-reasons');
   });
 });
 

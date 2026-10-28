@@ -12,8 +12,8 @@
  * Bill To (D-44): current V3 has no `billed_to_contact_id` /
  * `billed_party_origin`, so with the real API the adapter never calls
  * eligible-billed-parties and never sends `billedToContactUuid`; the UI
- * shows Bill To as BLOCKED. Zero-charge reasons have no endpoint in the
- * reference contract (Q-B17), so only the mock lists them.
+ * shows Bill To as BLOCKED. Zero-charge reasons come from
+ * `GET /lookups/zero-charge-reasons` in both modes (Q-B17, D-79).
  *
  * Access (IAM v0.9.7): the mock checks the signed-in mock identity's
  * capabilities like the server would (`mockAccess.ts`). In both modes every
@@ -32,7 +32,6 @@ import {
   type NewCpClient,
   type RequestOptions,
   type TokenSource,
-  type ZeroChargeReason,
 } from '@/shared/api';
 import { MOCK_ORDERS, type MockOrderHeader } from '@/mocks/orderFixtures';
 import { MOCK_ORDER_UUID } from '@/mocks/serviceFixtures';
@@ -51,8 +50,6 @@ export interface ServiceApi extends NewCpClient {
   readonly demoOrderUuid: string | null;
   /** false = Bill To is BLOCKED (F07 columns absent); the UI must not offer it as real. */
   readonly billToAvailable: boolean;
-  /** Mock only; with the real API this rejects with kind `blocked` (Q-B17). */
-  zeroChargeReasons(): Promise<ZeroChargeReason[]>;
   /**
    * Order-level list with each order's services (A19). Mock only: the
    * endpoint is not in the contract yet (Q-B26); with the real API this
@@ -171,8 +168,6 @@ export function createServiceApi(
       client.create(orderUuid, withoutPayer(item), idempotencyKey, options),
     edit: (serviceItemUuid, patch, ifMatch, options) =>
       client.edit(serviceItemUuid, withoutPayer(patch), ifMatch, options),
-    zeroChargeReasons: () =>
-      Promise.reject(blocked('Zero-charge reasons are not in the API contract yet (question Q-B17).')),
     orders: () => Promise.reject(blocked('The order list is not in the API contract yet (question Q-B26).')),
     createOrder: () =>
       Promise.reject(blocked('Creating an order is not in the API contract yet (question Q-B24). Nothing was sent.')),

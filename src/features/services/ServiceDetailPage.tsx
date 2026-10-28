@@ -50,7 +50,7 @@ function ServiceDetail({ serviceItemUuid }: { serviceItemUuid: string }) {
   return (
     <>
       <PageHeader
-        title={`${serviceName} service, line ${String(item.lineNumber ?? '-')}`}
+        title={`${serviceName} service, line ${String(item.lineNumber)}`}
         description="This instance only: its own staff fields, status and history."
         evidence
         breadcrumbs={{ orderUuid: item.orderUuid, lineNumber: item.lineNumber }}

@@ -60,7 +60,7 @@ function ServiceLines({ order, catalog }: { order: OrderSummary; catalog: readon
           sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}
         >
           <Typography variant="body2" sx={{ minWidth: 150 }}>
-            {`Line ${String(item.lineNumber ?? '-')} · ${serviceName(catalog, item.sellableItemUuid)}`}
+            {`Line ${String(item.lineNumber)} · ${serviceName(catalog, item.sellableItemUuid)}`}
           </Typography>
           <StatusBadge status={item.status} size="sm" />
           <Typography variant="caption" color="text.secondary" sx={{ fontFamily: typographyTokens.fontFamily.mono }}>

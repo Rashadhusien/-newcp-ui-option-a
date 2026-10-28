@@ -12,8 +12,9 @@
  *   stay, "Reload latest" offered. 422 with `details.field`: error on that
  *   field (e.g. ZERO_CHARGE_REASON_REQUIRED). 409/403/other: above the form.
  * - Currency and rush are read-only (Q-B2); rush is not in the contract.
- * - Redo-of and pending reason are not returned by the API (Q-B18): they
- *   start empty and are sent only when filled in.
+ * - Redo-of and pending reason come back on the item (Q-B18, D-79).
+ * - An invoiced line locks quantity, unit price and Billable (the server
+ *   answers 422/409); the money breakdown is read-only.
  * - Success is shown only after the API returned the saved item.
  */
 
@@ -50,8 +51,6 @@ export interface StaffFieldsFormProps {
 
 const FIELD_ID = (field: StaffField) => `staff-${field}`;
 
-const NOT_RETURNED = 'The API does not return the saved value yet (Q-B18): fill in only to change it.';
-
 function focusField(key: string): void {
   const input = document.querySelector<HTMLElement>(`[name="${FIELD_ID(key as StaffField)}"]`);
   const root = input?.closest<HTMLElement>('.MuiFormControl-root') ?? input?.parentElement;
@@ -75,9 +74,9 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
     redoOfItemUuid: canUpdate,
     pendingReason: canUpdate,
     serviceNotes: canUpdate,
-    quantity: canUpdate,
-    unitPrice: item.canEditPrice !== false && can(context, 'service.price.override'),
-    isBillable: item.canEditBillability !== false && can(context, 'service.billing.is_billable.edit'),
+    quantity: canUpdate && !item.isInvoiced,
+    unitPrice: item.canEditPrice && !item.isInvoiced && can(context, 'service.price.override'),
+    isBillable: item.canEditBillability && !item.isInvoiced && can(context, 'service.billing.is_billable.edit'),
     zeroChargeReasonCode: can(context, 'service.zero_charge_reason.edit'),
     zeroChargeNote: can(context, 'service.zero_charge_reason.edit'),
   };
@@ -119,7 +118,7 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
       }
       try {
         await serviceApi.edit(item.uuid, patch, etag);
-        showToast(`Line ${String(item.lineNumber ?? '')} saved.`, {
+        showToast(`Line ${String(item.lineNumber)} saved.`, {
           severity: 'success',
         });
         onSaved();
@@ -146,14 +145,19 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
     },
   );
 
-  const readOnlyNote = (field: StaffField) => (editable[field] ? undefined : 'Read-only for you on this service.');
+  const lockedByInvoice = (field: StaffField) =>
+    item.isInvoiced && (field === 'quantity' || field === 'unitPrice' || field === 'isBillable');
+  const readOnlyNote = (field: StaffField) => {
+    if (editable[field]) return undefined;
+    return lockedByInvoice(field) ? 'Locked: this service is invoiced.' : 'Read-only for you on this service.';
+  };
 
   return (
     <Stack
       component="form"
       noValidate
       spacing={2}
-      aria-label={`Staff fields, line ${String(item.lineNumber ?? '')}`}
+      aria-label={`Staff fields, line ${String(item.lineNumber)}`}
       onSubmit={(event: React.SyntheticEvent) => {
         event.preventDefault();
         void submit();
@@ -204,7 +208,7 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
               onChange={field.onChange}
               onBlur={field.onBlur}
               error={fieldState.error?.message}
-              helperText={readOnlyNote('redoOfItemUuid') ?? NOT_RETURNED}
+              helperText={readOnlyNote('redoOfItemUuid') ?? 'The service instance this one remakes.'}
               disabled={!editable.redoOfItemUuid || formState.isSubmitting}
             />
           )}
@@ -220,7 +224,7 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
               onChange={field.onChange}
               onBlur={field.onBlur}
               error={fieldState.error?.message}
-              helperText={readOnlyNote('pendingReason') ?? NOT_RETURNED}
+              helperText={readOnlyNote('pendingReason') ?? 'Why this service waits for information.'}
               disabled={!editable.pendingReason || formState.isSubmitting}
             />
           )}
@@ -270,7 +274,7 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
           control={control}
           render={({ field, fieldState }) => (
             <AppTextField
-              label={`${STAFF_LABEL.unitPrice} (${item.currencyCode ?? 'currency unknown'})`}
+              label={`${STAFF_LABEL.unitPrice} (${item.currencyCode})`}
               name={FIELD_ID('unitPrice')}
               value={field.value}
               onChange={field.onChange}
@@ -344,11 +348,12 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
         columns={3}
         dense
         items={[
-          {
-            label: 'Line total',
-            value: item.lineTotal ? `${item.lineTotal} ${item.currencyCode ?? ''}` : '-',
-          },
-          { label: 'Currency (read-only)', value: item.currencyCode ?? '-' },
+          // Money breakdown from the server (D-79): lineTotal = unit price x quantity + fields - discount - voucher.
+          { label: 'Field surcharges', value: `${item.fieldsAmount} ${item.currencyCode}` },
+          { label: 'Discount', value: `${item.discountAmount} ${item.currencyCode}` },
+          { label: 'Voucher', value: `${item.voucherAmount} ${item.currencyCode}` },
+          { label: 'Line total', value: `${item.lineTotal} ${item.currencyCode}` },
+          { label: 'Currency (read-only)', value: item.currencyCode },
           {
             label: 'Rush (read-only)',
             value: 'Not in the API contract (Q-B2)',

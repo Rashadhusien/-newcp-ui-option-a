@@ -16,6 +16,7 @@ import { EvidenceBadge } from '@/shared/components/feedback';
 import { useSession } from '@/shared/hooks/useSession';
 import { BillToSection } from '../billing/BillToSection';
 import { serviceApi } from '../data/serviceApi';
+import { HoldDetails } from './HoldDetails';
 import { StaffFieldsForm } from './StaffFieldsForm';
 import { StatusPanel } from './StatusPanel';
 import type { ServiceDetail } from './useServiceDetail';
@@ -29,7 +30,7 @@ export interface ServiceInstanceSectionsProps {
 export function ServiceInstanceSections({ detail, onChanged }: ServiceInstanceSectionsProps) {
   const { context } = useSession();
   const { item, etag, serviceName, transitions, history } = detail;
-  const lineLabel = `line ${String(item.lineNumber ?? '-')}`;
+  const lineLabel = `line ${String(item.lineNumber)}`;
 
   return (
     <Stack spacing={3}>
@@ -38,9 +39,15 @@ export function ServiceInstanceSections({ detail, onChanged }: ServiceInstanceSe
           columns={3}
           items={[
             { label: 'Service', value: serviceName },
-            { label: 'Line', value: String(item.lineNumber ?? '-') },
+            { label: 'Line', value: String(item.lineNumber) },
             { label: 'Instance ID', value: item.uuid },
             { label: 'Status', value: <StatusBadge status={item.status} size="sm" /> },
+            // Q-B18: the item now carries its hold and pending details (D-79).
+            ...(item.holdType
+              ? [{ label: 'Hold', value: <HoldDetails holdType={item.holdType} holdReasonCode={item.holdReasonCode ?? null} /> }]
+              : []),
+            ...(item.pendingReason ? [{ label: 'Pending reason', value: item.pendingReason }] : []),
+            ...(item.isRedo ? [{ label: 'Redo of', value: item.redoOfItemUuid ?? 'Not given' }] : []),
             { label: 'Invoiced', value: item.isInvoiced ? 'Yes (financially locked)' : 'No' },
             {
               label: 'Form answers',

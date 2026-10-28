@@ -31,7 +31,7 @@ describe('mock: same-type instances', () => {
     const a = await mock.create(MOCK_ORDER_UUID, NEW_BIOMODEL);
     const b = await mock.create(MOCK_ORDER_UUID, NEW_BIOMODEL);
     expect(a.uuid).not.toBe(b.uuid);
-    expect(b.lineNumber).toBe((a.lineNumber ?? 0) + 1);
+    expect(b.lineNumber).toBe(a.lineNumber + 1);
     expect(a).toMatchObject({ quantity: 1, isBillable: true, unitPrice: '20.00', lineTotal: '20.00' });
     const items = await mock.orderItems(MOCK_ORDER_UUID);
     expect(items.filter((item) => item.sellableItemUuid === MOCK_BIOMODEL_UUID)).toHaveLength(4);
@@ -234,8 +234,9 @@ describe('mock: Q-B14 Billable and Bill To are independent (package fixture case
     const mock = api();
     const { etag } = await mock.item(INVOICED);
     expect((await rejection(mock.edit(INVOICED, { isBillable: false }, etag))).kind).toBe('forbidden');
+    // The canonical contract: invoiced lines reject payer, price and quantity changes with 422 (D-79).
     expect((await rejection(mock.edit(INVOICED, { billedToContactUuid: MOCK_SCAN_CENTER_UUID }, etag))).kind).toBe(
-      'conflict',
+      'validation',
     );
   });
 

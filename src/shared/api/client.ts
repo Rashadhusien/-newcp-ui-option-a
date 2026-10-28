@@ -1,9 +1,8 @@
 /**
  * New CP API client: the only place that calls `fetch`.
  *
- * Paths, verbs, headers and query parameters follow the reference contract
- * (package v0.9.2, references/f07/integration/newcp-demo-f07.openapi.yaml)
- * and its typed starter client. Q-B8: reading one item returns its ETag;
+ * Paths, verbs, headers and query parameters follow the canonical contract
+ * (docs/openapi/newcp.openapi.yaml, D-79). Q-B8: reading one item returns its ETag;
  * PATCH and transitions send it back as If-Match and return the new one.
  * No token is stored here; the caller supplies a token source. Response
  * bodies are trusted to match the contract at this one boundary.
@@ -20,6 +19,7 @@ import type {
   HoldReasonOption,
   HoldType,
   PatchServiceItem,
+  ZeroChargeReason,
   ServiceItem,
   TransitionRequest,
   TransitionResult,
@@ -36,6 +36,8 @@ export interface NewCpClient {
   catalog(categoryCode?: string, options?: RequestOptions): Promise<CatalogService[]>;
   formSchema(serviceUuid: string, options?: RequestOptions): Promise<FormDefinition>;
   holdReasons(holdType: HoldType, options?: RequestOptions): Promise<HoldReasonOption[]>;
+  /** Active reasons; a zero line total needs one (Q-B17). */
+  zeroChargeReasons(options?: RequestOptions): Promise<ZeroChargeReason[]>;
   eligibleBilledParties(orderUuid: string, options?: RequestOptions): Promise<BilledPartyChoice[]>;
   orderItems(orderUuid: string, options?: RequestOptions): Promise<ServiceItem[]>;
   create(
@@ -137,6 +139,7 @@ export function createNewCpClient(
       invoke(`/api/v1/catalog/services/${esc(serviceUuid)}/form-schema`, { signal: options?.signal }),
     holdReasons: (holdType, options) =>
       invoke(`/api/v1/catalog/hold-reasons?holdType=${esc(holdType)}`, { signal: options?.signal }),
+    zeroChargeReasons: (options) => invoke('/api/v1/lookups/zero-charge-reasons', { signal: options?.signal }),
     eligibleBilledParties: (orderUuid, options) =>
       invoke(`/api/v1/orders/${esc(orderUuid)}/eligible-billed-parties`, { signal: options?.signal }),
     orderItems: (orderUuid, options) =>

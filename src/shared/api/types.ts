@@ -1,11 +1,11 @@
 /**
  * Contract types for the New CP service-instance API.
  *
- * Source: the handoff package's reference contract
- * docs/newcp-ai/payload/references/f07/integration/newcp-demo-f07.openapi.yaml
- * (0.9.2-draft, NOT_FINAL), `components.schemas`. Q-B15 makes it the
- * reference over Bishoy's docs/openapi/newcp-v1.openapi.yaml (D-40).
- * Names and optionality follow the YAML exactly; nothing here is invented.
+ * Source: the backend's canonical contract docs/openapi/newcp.openapi.yaml
+ * (1.0.0, NOT_FINAL; D-79), `components.schemas`. It replaces the package
+ * reference (Q-B15, D-40). Names and optionality follow the YAML exactly;
+ * nothing here is invented. IAM admin schemas are left out: the UI has no
+ * IAM screen.
  * When the contract changes, change this file first.
  */
 
@@ -104,19 +104,15 @@ export interface FormDefinition {
 }
 
 /**
- * One answer: exactly one value carrier per field (`optionCodes` only for a
- * supported multi-select). Reference format; Bishoy's v1 uses `value`
- * instead (Q-B16), so all conversion lives in the form logic.
+ * One answer (Q-B16, `additionalProperties: false`): choice fields send
+ * `optionCodes` (single select: 0 or 1 item; cleared: []), every other field
+ * sends `value` (text, number, boolean, or an ISO date `YYYY-MM-DD`); never
+ * both. All conversion lives in the form logic.
  */
 export interface FormAnswer {
   fieldCode: string;
-  optionCode?: string;
+  value?: string | number | boolean;
   optionCodes?: string[];
-  valueText?: string;
-  valueNumber?: number;
-  valueBoolean?: boolean;
-  /** ISO date (yyyy-mm-dd). */
-  valueDate?: string;
 }
 
 export interface CreateServiceItem {
@@ -166,33 +162,50 @@ export type BilledPartyOrigin =
   | 'user_selected'
   | 'unresolved_legacy';
 
+/** The 24 required properties are guaranteed by the canonical contract (D-79). */
 export interface ServiceItem {
   uuid: string;
   orderUuid: string;
   sellableItemUuid: string;
-  lineNumber?: number;
+  lineNumber: number;
   /** Status value from the workflow; mapped for display by shared/status. */
   status: string;
-  isRedo?: boolean;
-  isInvoiced?: boolean;
-  currencyCode?: string;
+  isRedo: boolean;
+  /** Parent item this line remakes. */
+  redoOfItemUuid?: string | null;
+  /** true locks price, quantity, currency and payer (the server answers 422). */
+  isInvoiced: boolean;
+  currencyCode: string;
   /** Money amounts are decimal strings, not floating point. */
-  unitPrice?: string;
-  lineTotal?: string;
+  unitPrice: string;
+  /** Sum of answer surcharges (server trigger). */
+  fieldsAmount: string;
+  discountAmount: string;
+  voucherAmount: string;
+  /** unitPrice x quantity + fieldsAmount - discountAmount - voucherAmount. */
+  lineTotal: string;
   answers: FormAnswer[];
   serviceNotes?: string;
   billedToContactUuid: string;
   billedPartyOrigin: BilledPartyOrigin;
   /** Server hints only; the backend always enforces the rules. */
-  canEditBilledParty?: boolean;
+  canEditBilledParty: boolean;
   isBillable: boolean;
-  canEditBillability?: boolean;
-  quantity?: number;
+  canEditBillability: boolean;
+  quantity: number;
+  /** Reason the item is pending information. */
+  pendingReason?: string | null;
+  /** Active hold while the status is on_hold. */
+  holdType?: HoldType | null;
+  holdReasonCode?: string | null;
   zeroChargeReasonCode?: string | null;
   zeroChargeNote?: string | null;
   /** Convenience copy; the ETag response header is authoritative (Q-B8). */
-  etag?: string;
-  canEditPrice?: boolean;
+  etag: string;
+  canEditPrice: boolean;
+  /** ISO date-times. */
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** A response together with the aggregate version from its ETag header (Q-B8). */
@@ -251,16 +264,47 @@ export interface HoldReasonOption {
   label: string;
   isTemporary: boolean;
   holdType?: HoldType;
+  active?: boolean;
 }
 
-/**
- * Zero-charge reason. The reference contract has NO endpoint for these
- * (Q-B17); the shape is the one Bishoy's v1 draft used, served by the mock
- * adapter only.
- */
+/** Zero-charge reason from GET /lookups/zero-charge-reasons (Q-B17). */
 export interface ZeroChargeReason {
   code: string;
   label: string;
   description?: string | null;
   active: boolean;
+}
+
+export interface AuthLoginRequest {
+  /** Google ID token; sent to POST /auth/login only. */
+  idToken: string;
+}
+
+export interface AuthorizedLoginResponse {
+  accessStatus: 'AUTHORIZED';
+  /** Opaque New CP session token (Bearer). */
+  token: string;
+  expiresAt: string;
+}
+
+/** No tenant role yet: no session and no token are issued. */
+export interface PendingAccessLoginResponse {
+  accessStatus: 'PENDING_ACCESS';
+}
+
+export type LoginResponse = AuthorizedLoginResponse | PendingAccessLoginResponse;
+
+/** GET /auth/me: the backend is authoritative for tenant, roles and capabilities. */
+export interface AuthMeResponse {
+  email: string | null;
+  userUuid: string | null;
+  tenantSlug: string | null;
+  roleCodes: string[];
+  capabilities: string[];
+  isPendingAccess: boolean;
+}
+
+/** Auth endpoints wrap the Problem (other endpoints send it flat, Q-B22). */
+export interface AuthErrorResponse {
+  error: Problem;
 }

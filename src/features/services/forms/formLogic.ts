@@ -17,12 +17,16 @@ import {
   type FormValues,
 } from './formSpecs';
 
-/** A field ready to render: the spec, with the server's label and options when it sent them. */
+/** A field ready to render: the spec, with the server's label, options and data type. */
 export interface RenderField {
   spec: FieldSpec;
   label: string;
   options: readonly FormOption[];
+  /** The server's canonical type (Q-B11); decides the answer's JSON type. */
+  type: CanonicalFieldType;
 }
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface FieldIssue {
   key: string;
@@ -75,6 +79,7 @@ export function resolveFields(spec: FormSpec, definition: FormDefinition): Rende
         spec: fieldSpec,
         label: server.label || fieldSpec.label,
         options: server.options.length > 0 ? server.options : (fieldSpec.options ?? []),
+        type: server.type,
       },
     ];
   });
@@ -95,6 +100,7 @@ export function resolveFields(spec: FormSpec, definition: FormDefinition): Rende
         },
         label: field.label,
         options: field.options,
+        type: field.type,
       };
     });
   return [...known, ...extra];
@@ -118,6 +124,7 @@ export function optionsFor(field: RenderField, values: FormValues): FormOption[]
   return field.spec.filterOptions ? field.spec.filterOptions(active, values) : active;
 }
 
+/** Form values from the server's answers (Q-B16: `optionCodes` for choices, `value` for the rest). */
 export function initialValues(fields: readonly RenderField[], answers?: readonly FormAnswer[]): FormValues {
   const byCode = new Map((answers ?? []).map((answer) => [answer.fieldCode, answer]));
   const values: FormValues = {};
@@ -126,11 +133,11 @@ export function initialValues(fields: readonly RenderField[], answers?: readonly
     if (!answer) {
       values[spec.key] = spec.defaultValue;
     } else if (spec.control === 'radio' || spec.control === 'select') {
-      values[spec.key] = answer.optionCode ?? answer.optionCodes?.[0] ?? '';
+      values[spec.key] = answer.optionCodes?.[0] ?? '';
     } else if (spec.control === 'checkbox') {
-      values[spec.key] = answer.valueBoolean === true;
+      values[spec.key] = answer.value === true;
     } else {
-      values[spec.key] = answer.valueText ?? '';
+      values[spec.key] = answer.value === undefined ? '' : String(answer.value);
     }
   }
   return values;
@@ -153,13 +160,25 @@ function isEmpty(value: unknown): boolean {
   return value === undefined || value === '';
 }
 
-/** Blocking problems: source-attached required fields and group validators. */
+/**
+ * Blocking problems: source-attached required fields and group validators,
+ * plus the wire format of number and date fields (the server rejects a
+ * wrong JSON type with 422 INVALID_FIELD_TYPE, D-79).
+ */
 export function validate(formKey: FormKey, fields: readonly RenderField[], values: FormValues): FieldIssue[] {
   const issues: FieldIssue[] = [];
-  for (const { spec } of fields) {
-    if (spec.required && isVisible(spec, values) && isEmpty(values[spec.key])) {
+  for (const { spec, type } of fields) {
+    const value = values[spec.key];
+    if (!isVisible(spec, values)) continue;
+    if (spec.required && isEmpty(value)) {
       const choice = spec.control === 'radio' || spec.control === 'select';
       issues.push({ key: spec.key, message: choice ? 'Choose an option.' : 'Enter a value.' });
+    } else if (typeof value === 'string' && value.trim() !== '') {
+      if (type === 'number' && !Number.isFinite(Number(value))) {
+        issues.push({ key: spec.key, message: 'Enter a number.' });
+      } else if (type === 'date' && !DATE_PATTERN.test(value.trim())) {
+        issues.push({ key: spec.key, message: 'Enter a date as YYYY-MM-DD.' });
+      }
     }
   }
   const has = (key: string) => fields.some((field) => field.spec.key === key);
@@ -206,25 +225,28 @@ export function formSchema(formKey: FormKey, fields: readonly RenderField[]) {
 }
 
 /**
- * Answers in the reference contract's carriers (D-41): single choices send
- * `optionCode` (omitted when nothing is chosen), checkboxes `valueBoolean`,
- * text `valueText` (omitted when empty). Hidden fields are not sent, except
- * values the source sets programmatically (`sendWhenHidden`). This is the
- * ONE place that knows the wire format, so Bishoy's answer to Q-B16 only
- * changes this function and `initialValues`.
+ * Answers in the canonical format (Q-B16, D-79): a single choice sends
+ * `optionCodes: [code]` (omitted when nothing is chosen), a checkbox
+ * `value: true|false`, a number field a JSON number, text and date fields a
+ * string (dates `YYYY-MM-DD`); empty text is omitted. Never both `value`
+ * and `optionCodes`. Hidden fields are not sent, except values the source
+ * sets programmatically (`sendWhenHidden`). A PATCH sends this full list:
+ * it replaces the saved answers. This and `initialValues` are the ONE place
+ * that knows the wire format. File and tooth-chart fields have no confirmed
+ * payload and are never rendered, so never sent.
  */
 export function toAnswers(fields: readonly RenderField[], values: FormValues): FormAnswer[] {
   const answers: FormAnswer[] = [];
-  for (const { spec } of fields) {
+  for (const { spec, type } of fields) {
     const shown = isVisible(spec, values) || (spec.sendWhenHidden?.(values) ?? false);
     if (!shown) continue;
     const value = values[spec.key];
     if (spec.control === 'radio' || spec.control === 'select') {
-      if (typeof value === 'string' && value !== '') answers.push({ fieldCode: spec.code, optionCode: value });
+      if (typeof value === 'string' && value !== '') answers.push({ fieldCode: spec.code, optionCodes: [value] });
     } else if (spec.control === 'checkbox') {
-      answers.push({ fieldCode: spec.code, valueBoolean: value === true });
+      answers.push({ fieldCode: spec.code, value: value === true });
     } else if (typeof value === 'string' && value.trim() !== '') {
-      answers.push({ fieldCode: spec.code, valueText: value });
+      answers.push({ fieldCode: spec.code, value: type === 'number' ? Number(value) : value.trim() });
     }
   }
   return answers;
