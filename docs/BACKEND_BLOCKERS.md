@@ -7,7 +7,8 @@ Updated 28 Oct 2026 from the canonical `docs/openapi/newcp.openapi.yaml`, the v0
 
 | ID | Owner | What is missing | Until then |
 |---|---|---|---|
-| Q-B28 | Hesham | Client ID received 28 Oct (test web client). Still needed: confirm the allowed JavaScript origins (`http://localhost:5173`, `http://localhost:5175`, demo origin). | The Google button renders; a real sign-in is not yet proven. |
+| Q-B28 | Hesham | Client ID received 28 Oct (test web client); allowed JavaScript origin is `http://localhost:3000` (developer, 28 Oct), so the dev server now runs on 3000. Still needed: the demo origin, if the demo is not run locally. | The Google button renders on port 3000; a real sign-in is not yet proven. |
+| Q-B37 | Hesham | A real Google sign-in on `http://localhost:3000` (28 Oct): Google returned an ID token, but `POST /api/v1/auth/login` answered 401 `AUTHENTICATION_REQUIRED` "Authentication required". Which Google client ID (token audience) does the test backend verify, and is the developer's account allowed? Please check the server log for that request. | Real sign-in blocked; the app shows Access denied. |
 | Q-B31 | Hesham | CORS: the test server sends no `Access-Control-Allow-*` headers. Needed only for a deployed demo origin. | Dev proxy for `/api` (`npm run dev:integration`); not a blocker for local work. |
 | Q-B33 | Hesham / backend | Test Google accounts (one per role) and order UUIDs that have Biomodel and Conversion items. | Live service calls (A31) cannot be run. |
 | Q-B24 | Backend API owner | Create order endpoint and schema (adding a service to an existing order is not a replacement). | Add order stays MOCK. |

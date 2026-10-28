@@ -12,14 +12,15 @@ Option A is one of two independent UIs over the same API. The plan, demo scope a
 ```bash
 npm install
 cp .env.example .env.local   # then edit; placeholders only in git
-npm run dev                  # http://localhost:5173
+npm run dev                  # http://localhost:3000
 ```
 Until Google login lands (A4), the login page has a single **Sign in (mock)** button.
 
 ## Scripts
 | Script | What it does |
 |---|---|
-| `npm run dev` | Vite dev server |
+| `npm run dev` | Vite dev server on http://localhost:3000, mock data |
+| `npm run dev:integration` | Same port, mocks off, `/api` proxied to the test server; values in the git-ignored `.env.integration.local` (see `.env.example`) |
 | `npm run lint` | ESLint (TypeScript strict-type-checked, react-hooks, jsx-a11y) |
 | `npm run typecheck` | `tsc -b` in strict mode |
 | `npm run build` | Production build into `dist/` |

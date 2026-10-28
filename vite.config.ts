@@ -17,9 +17,12 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = env.VITE_API_PROXY_TARGET;
   return {
     plugins: [react()],
-    server: proxyTarget
-      ? { proxy: { "/api": { target: proxyTarget, changeOrigin: true } } }
-      : undefined,
+    // Port 3000 is the allowed Google JavaScript origin (Q-B28); strictPort fails instead of moving to another port.
+    server: {
+      port: 3000,
+      strictPort: true,
+      ...(proxyTarget ? { proxy: { "/api": { target: proxyTarget, changeOrigin: true } } } : {}),
+    },
     appType: "spa",
     define: {
       __APP_VERSION__: JSON.stringify(version),
