@@ -10,6 +10,11 @@ Owner: Rashad (FE intern). Mentor/reviewer: Aya Adel. Contract author: Bishoy. O
    ROLE_CAPABILITY_MATRIX; TENANT_OCT_DEMO_ACCEPTANCE_TESTS). The service OpenAPI is unchanged by it (D-50).
    API contract (28 Oct, D-79): the backend's canonical `docs/openapi/newcp.openapi.yaml` supersedes the package's
    F07 OpenAPI; the backend answers of 28 Oct are in docs/DEVIATIONS.md.
+   v0.9.8 REVIEW (28 Oct, D-85; `local_docs/NewCP_Approved_Developer_Handoff_v0.9.8_REVIEW_2026-10-28/`, folder
+   `2026-10-28_DASHBOARD_IAM_API_UPDATES/`): OD-01..OD-24 Orders Dashboard decisions, answers register, 22-column
+   map. The Orders Dashboard is DESIGN-ONLY (labelled mock, no dashboard API calls). Its proposed endpoints
+   (`02_ORDERS_DASHBOARD_PROPOSED_EXTENSION.yaml`) and the merged `03_...REVIEW.yaml` are NOT the contract.
+   Open backend blockers and questions: docs/BACKEND_BLOCKERS.md.
 2. Explicit New CP decisions > evidenced legacy rules (Connect create, CP clerk edit) > developer proposals.
 3. This file, then docs/PLAN.md and TASKS.md. Where they disagree with 1, 1 wins; log it in docs/DEVIATIONS.md.
 V0.7 files are archival. V0.6 form specs are the source for form controls.
@@ -89,8 +94,10 @@ status, history, payer and report rows. Never a type-level identifier.
 - Never send `tenantId` or `X-Tenant-Id`; no default or fallback tenant anywhere in config; the tenant label comes
   only from the context.
 - Capability flags are display-only (hide/disable actions); the server decides and its 403 is always shown. Codes
-  follow ROLE_CAPABILITY_MATRIX (`CANDIDATE_UNVERIFIED`, D-53). FINANCE and QC: reports only (G11 open). All five
-  roles view reports; export only FINANCE/QC/ADMIN, and there is no export endpoint, so no export control (D-54).
+  follow ROLE_CAPABILITY_MATRIX (`CANDIDATE_UNVERIFIED`, D-53). G11 confirmed (v0.9.8, OD-01..03): FINANCE and QC
+  see all tenant-authorized order/service details; FINANCE also makes the approved financial edits; QC is read-only
+  apart from audit actions (D-87). All five roles view reports; export only FINANCE/QC/ADMIN, and there is no export
+  endpoint, so no export control (D-54).
 - Sign-in page (A25): one primary action, "Sign in with Google". No email, password, "forgot password", "remember
   workstation" or role selector; the frontend never selects or infers a role, tenant or capability. States: Google
   loading, Google failure, authorized, Pending Access ("Your account is authenticated, but access has not been
@@ -103,9 +110,9 @@ status, history, payer and report rows. Never a type-level identifier.
 - Send `billedToContactUuid` for ONE service on create/patch. Never send billedPartyOrigin or tenantId.
   Never copy an order-level Bill To.
 - Honour `canEditBilledParty`; render 403/409/422. Never show success unless the API persisted it.
-- The canonical contract marks `billedToContactUuid`, `billedPartyOrigin` and `canEditBilledParty` required, but its
-  own `x-blockers` say the F07 migration (V204) on the deployed schema is unverified: Bill To stays MOCK only. With mocks off, the adapter never calls the payer endpoint or sends a payer, and the UI says
-  BLOCKED; Bill To is never shown as INTEGRATED until the DB owner confirms F07 (F07-01..05).
+- F07 is reported COMPLETE by the Technical Lead (v0.9.8, 28 Oct): Bill To is no longer a design blocker, but the
+  deployed runtime is still unverified. Until a live call on the test server shows the payer endpoint and PATCH work
+  (A31), the real adapter keeps Bill To BLOCKED; it is shown as INTEGRATED only after that executed check.
 - Billable and Bill To are independent: changing one never changes the other.
 
 ## Stack (pinned; every dependency approved)

@@ -98,6 +98,20 @@ The backend shared its canonical OpenAPI and a test server (D-79) and answered m
 
 Total 12.0 h. Stays MOCK whatever we do: All orders (no `GET /orders`, Q-B26), Add order (no create order, Q-B24), the order header (Q-B32), Bill To (F07 unverified), report figures (no report endpoint, Q-B3). A29, A32, A33 and A34 need nothing from the backend and can start now; A30's live part and A31 wait for Hesham.
 
+## 5c. Plan after v0.9.8 (28 Oct)
+v0.9.8 (D-85) makes the Orders Dashboard design-only (D-86), confirms FINANCE/QC access (D-87) and reports IAM and F07 complete. Done since 5b: A32, A29.
+
+| Order | Task | Hours | Blocked by |
+|---|---|---|---|
+| 1 | A30 real sign-in, `/auth/me`, logout, dev proxy | 1.5 | Q-B28 (live part) |
+| 2 | A33 nested sidebar, legacy labels, logo | 1.5 | none |
+| 3 | A35 FINANCE/QC order and service access | 1.0 | none (Q-B35 open) |
+| 4 | A34 Orders Dashboard design + table columns | 3.5 | none (design-only) |
+| 5 | A31 live service endpoints + Bill To runtime check | 2.0 | A30; Q-B33 |
+| 6 | A24 tests | 2.5 | after the above |
+
+Total 12.0 h. Open blockers and questions: `docs/BACKEND_BLOCKERS.md`.
+
 ## 6. What we reused (read-only sources, copied out)
 `sources/mui` (base: app, theme, components, table, status) and `sources/poc-mui` (token scripts; form host, fields, error summary, dirty guard, timeline and action panel still to be adapted in A6R/A7R). Full map: `docs/DEVIATIONS.md`, "Reuse map (A1)".
 
