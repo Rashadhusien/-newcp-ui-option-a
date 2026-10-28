@@ -3,11 +3,12 @@
  * - a 401 from any API call returns the app to "signed out" (sign-in page,
  *   which says the session ended) and drops the session token;
  * - a 403 refreshes the context, so revoked roles show up (tenant spec D1.5).
- * The context is held in memory only.
+ * The context is held in memory only. Signing out with the real API also
+ * calls `POST /auth/logout` (best effort; the token is dropped either way).
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { clearSessionToken, isApiError, setSessionToken } from '@/shared/api';
+import { clearSessionToken, isApiError, logoutSession, readApiConfig, sessionToken, setSessionToken } from '@/shared/api';
 import { SessionContextValue, type SessionState, type SessionValue } from '@/shared/hooks/useSession';
 import {
   chooseMockIdentity,
@@ -72,6 +73,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         refresh();
       },
       signOut: () => {
+        const config = readApiConfig();
+        const token = sessionToken();
+        if (!config.useMocks && token !== null) {
+          logoutSession(config.baseUrl, token).catch(() => {
+            // The server may already have ended the session; locally it ends now either way.
+          });
+        }
         clearMockIdentity();
         clearSessionToken();
         setState({ status: 'signedOut' });

@@ -23,16 +23,34 @@ describe('session context (IAM v0.9.7, D-51)', () => {
     await expect(loadSessionContext(MOCK)).resolves.toMatchObject({ accessStatus: 'AUTHORIZED', roles: ['OPS'] });
   });
 
-  it('with the real API: signed out without a session token, BLOCKED with one, and sends nothing (A25)', async () => {
-    const fetchSpy = vi.fn<typeof fetch>();
+  it('with the real API: signed out without a token, then GET /auth/me with the Bearer token (A30)', async () => {
+    const me = {
+      email: 'clerk@example.test',
+      userUuid: '00000000-0000-4000-a000-000000000099',
+      tenantSlug: 'demo-tenant',
+      roleCodes: ['CS'],
+      capabilities: ['service.read'],
+      isPendingAccess: false,
+    };
+    const fetchSpy = vi.fn<typeof fetch>(() => Promise.resolve(new Response(JSON.stringify(me), { status: 200 })));
     vi.stubGlobal('fetch', fetchSpy);
     const real = { useMocks: false, baseUrl: 'https://api.example.test' };
     chooseMockIdentity('CS');
     await expect(loadSessionContext(real)).rejects.toMatchObject({ kind: 'unauthorized' });
-    setSessionToken({ sessionToken: 'synthetic-session', expiresAt: null });
-    await expect(loadSessionContext(real)).rejects.toMatchObject({ kind: 'blocked' });
-    clearSessionToken();
     expect(fetchSpy).not.toHaveBeenCalled();
+    setSessionToken({ sessionToken: 'synthetic-session', expiresAt: null });
+    await expect(loadSessionContext(real)).resolves.toEqual({
+      user: { id: me.userUuid, displayName: me.email },
+      accessStatus: 'AUTHORIZED',
+      activeTenant: { label: 'demo-tenant' },
+      roles: ['CS'],
+      capabilities: ['service.read'],
+      tenantSwitchingEnabled: false,
+    });
+    const [url, init] = fetchSpy.mock.calls[0] ?? [];
+    expect(url).toBe('https://api.example.test/api/v1/auth/me');
+    expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer synthetic-session');
+    clearSessionToken();
     vi.unstubAllGlobals();
   });
 

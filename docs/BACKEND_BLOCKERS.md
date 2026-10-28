@@ -7,8 +7,8 @@ Updated 28 Oct 2026 from the canonical `docs/openapi/newcp.openapi.yaml`, the v0
 
 | ID | Owner | What is missing | Until then |
 |---|---|---|---|
-| Q-B28 | Hesham | Google OAuth client ID and allowed origin for `http://localhost:5173` (and the demo origin). | Real Google sign-in cannot start. |
-| Q-B31 | Hesham | CORS: the test server sends no `Access-Control-Allow-*` headers, and `ETag` is not exposed. | Dev proxy for `/api` (no browser-direct calls). |
+| Q-B28 | Hesham | Client ID received 28 Oct (test web client). Still needed: confirm the allowed JavaScript origins (`http://localhost:5173`, `http://localhost:5175`, demo origin). | The Google button renders; a real sign-in is not yet proven. |
+| Q-B31 | Hesham | CORS: the test server sends no `Access-Control-Allow-*` headers. Needed only for a deployed demo origin. | Dev proxy for `/api` (`npm run dev:integration`); not a blocker for local work. |
 | Q-B33 | Hesham / backend | Test Google accounts (one per role) and order UUIDs that have Biomodel and Conversion items. | Live service calls (A31) cannot be run. |
 | Q-B24 | Backend API owner | Create order endpoint and schema (adding a service to an existing order is not a replacement). | Add order stays MOCK. |
 | Q-B25 | Business / PHI | Which patient fields may be shown and sent. | Synthetic patient data only. |
@@ -28,7 +28,7 @@ Updated 28 Oct 2026 from the canonical `docs/openapi/newcp.openapi.yaml`, the v0
 | ID | Owner | Question | Meanwhile |
 |---|---|---|---|
 | Q-B29 | Hesham | Session after reload, refresh or re-auth, idle (30 min) and max (8 h) limits. | Token in memory; a reload signs in again. |
-| Q-B22 | Hesham | Final 401/403 code list, including tenant errors. | Accept both error shapes; route on status. |
+| Q-B22 | Hesham | Final 401/403 code list, including tenant errors. Seen live: auth endpoints `{error:{code,message,requestId}}` with `AUTHENTICATION_REQUIRED` (401) and `VALIDATION_ERROR` (400). | Accept both error shapes; route on status. |
 | Q-B20 | Hesham | Canonical capability codes behind `/auth/me` (matrix codes are `CANDIDATE_UNVERIFIED`). | Mock uses the matrix codes. |
 | Q-B35 | Hesham / Lead | G11 says FINANCE and QC see all order and service details, but the role matrix (unchanged since v0.9.7) still gives them report capabilities only. Which capabilities will `/auth/me` return for them? | Mock FINANCE/QC get read access to orders and services (D-87). |
 | Q-B36 | Backend API owner | The review YAML (`03_...REVIEW.yaml`) still lists `optionCode`/`valueText`/... on `FormAnswer`; the canonical file and the live server removed them. Confirm the canonical file wins. | We send only `value` / `optionCodes`, which both accept. |

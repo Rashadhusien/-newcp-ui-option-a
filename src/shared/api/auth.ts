@@ -1,19 +1,20 @@
 /**
- * New CP sign-in (A25, backend team request, D-67): the Google ID token
- * from Google Identity Services goes to `POST /api/v1/auth/login` once, and
- * the backend answers with the New CP session token and its expiry. Every
- * later request sends `Authorization: Bearer <session-token>`.
+ * New CP sign-in and session endpoints (canonical contract, Q-B27/Q-B20,
+ * D-79; A30). The Google ID token from Google Identity Services goes to
+ * `POST /api/v1/auth/login` once. The backend answers either AUTHORIZED
+ * with the New CP `token` and its `expiresAt`, or PENDING_ACCESS with no
+ * token (the account has no tenant role yet). Every later request sends
+ * `Authorization: Bearer <token>`; `GET /api/v1/auth/me` gives the session
+ * context and `POST /api/v1/auth/logout` ends the session.
  *
- * The endpoint is not in the reference OpenAPI yet (Q-B27): the response
- * field names below (`sessionToken`, `expiresAt`) are `[NEEDS VERIFICATION]`
- * and live only in `asLoginResult`, so a change stays local.
- *
- * The session token is kept in memory only (CLAUDE.md: no token storage), so
- * a page reload signs in again until the backend says otherwise (Q-B29). The
- * Google ID token is sent to this endpoint only and never kept.
+ * The token is kept in memory only (CLAUDE.md: no token storage), so a page
+ * reload signs in again until the backend says otherwise (Q-B29). The
+ * Google ID token is sent to the login endpoint only and never kept.
+ * Auth errors arrive as `{ error: Problem }`; `asProblem` reads both shapes.
  */
 
 import { ApiError, asProblem } from './apiError';
+import type { AuthMeResponse } from './types';
 
 export interface LoginResult {
   sessionToken: string;
@@ -21,42 +22,89 @@ export interface LoginResult {
   expiresAt: string | null;
 }
 
-/** [NEEDS VERIFICATION] response shape (Q-B27). */
-export function asLoginResult(body: unknown): LoginResult | null {
+/** What POST /auth/login answered. */
+export type LoginOutcome = { kind: 'authorized'; session: LoginResult } | { kind: 'pendingAccess' };
+
+/** Reads the contract's AuthorizedLoginResponse / PendingAccessLoginResponse. */
+export function asLoginOutcome(body: unknown): LoginOutcome | null {
   if (typeof body !== 'object' || body === null) return null;
   const record = body as Record<string, unknown>;
-  if (typeof record.sessionToken !== 'string' || record.sessionToken === '') return null;
+  if (record.accessStatus === 'PENDING_ACCESS') return { kind: 'pendingAccess' };
+  if (record.accessStatus !== 'AUTHORIZED' || typeof record.token !== 'string' || record.token === '') return null;
   const expiresAt =
     typeof record.expiresAt === 'string' && !Number.isNaN(Date.parse(record.expiresAt)) ? record.expiresAt : null;
-  return { sessionToken: record.sessionToken, expiresAt };
+  return { kind: 'authorized', session: { sessionToken: record.token, expiresAt } };
 }
 
-export async function loginWithGoogleIdToken(
+const defaultFetch: typeof fetch = (input, init) => fetch(input, init);
+
+async function authCall(
   baseUrl: string,
-  idToken: string,
-  fetchImpl: typeof fetch = (input, init) => fetch(input, init),
-): Promise<LoginResult> {
+  path: string,
+  init: RequestInit,
+  fetchImpl: typeof fetch,
+): Promise<{ response: Response; body: unknown }> {
   let response: Response;
   try {
-    response = await fetchImpl(`${baseUrl.replace(/\/$/, '')}/api/v1/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ idToken }),
-    });
+    response = await fetchImpl(`${baseUrl.replace(/\/$/, '')}${path}`, init);
   } catch {
     throw ApiError.network();
   }
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) throw new ApiError(response.status, asProblem(body));
-  const result = asLoginResult(body);
-  if (!result) {
+  return { response, body };
+}
+
+export async function loginWithGoogleIdToken(
+  baseUrl: string,
+  idToken: string,
+  fetchImpl: typeof fetch = defaultFetch,
+): Promise<LoginOutcome> {
+  const { body } = await authCall(
+    baseUrl,
+    '/api/v1/auth/login',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ idToken }),
+    },
+    fetchImpl,
+  );
+  const outcome = asLoginOutcome(body);
+  if (!outcome) {
     throw new ApiError(
       0,
       { code: 'client.login_response', message: 'The server answered the sign-in without a session token.' },
       'server',
     );
   }
-  return result;
+  return outcome;
+}
+
+/** GET /auth/me with the session token: who is signed in, tenant, roles, capabilities. */
+export async function fetchAuthMe(
+  baseUrl: string,
+  token: string,
+  fetchImpl: typeof fetch = defaultFetch,
+): Promise<AuthMeResponse> {
+  const { body } = await authCall(
+    baseUrl,
+    '/api/v1/auth/me',
+    { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } },
+    fetchImpl,
+  );
+  // Trusted to match the contract at this one boundary, like the service client.
+  return body as AuthMeResponse;
+}
+
+/** POST /auth/logout. Best effort: the token is dropped locally whatever the answer. */
+export async function logoutSession(baseUrl: string, token: string, fetchImpl: typeof fetch = defaultFetch): Promise<void> {
+  await authCall(
+    baseUrl,
+    '/api/v1/auth/logout',
+    { method: 'POST', headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } },
+    fetchImpl,
+  );
 }
 
 // ---------------------------------------------------------------------------

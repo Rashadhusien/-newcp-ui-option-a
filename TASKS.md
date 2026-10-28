@@ -264,12 +264,12 @@ Branch: feat/fe-a-a29-canonical-contract | Estimate: 2.0 h | Depends on: A32 | S
 - [x] A29.5 Update the existing tests that assert carriers (`formLogic.test.ts`, adapter tests); verify green.
 
 ## Task A30: Real sign-in and session against the test server
-Branch: feat/fe-a-a30-auth-session | Estimate: 1.5 h | Depends on: A29; Q-B28 (Google client ID + allowed origin from Hesham) for the live part | Status: **skipped 28 Oct until Hesham answers** (developer decision)
-- [ ] A30.1 Login response: AUTHORIZED (`token`, `expiresAt`) or PENDING_ACCESS (no token -> Pending Access page); token in memory only.
-- [ ] A30.2 `GET /auth/me` replaces the illustrative session context: mapped once to `SessionContext` (`userUuid`, `email` as the name until a display name exists, `tenantSlug` as the read-only badge, `roleCodes`, `capabilities`, `isPendingAccess`); with mocks off it is real, no longer BLOCKED.
-- [ ] A30.3 Sign-out calls `POST /auth/logout`, then drops the token.
-- [ ] A30.4 Dev proxy: Vite `server.proxy` for `/api` to `VITE_API_PROXY_TARGET` (set in the git-ignored `.env.local`, never committed); `VITE_API_BASE_URL` empty in dev; `.env.example` documents both (Q-B31).
-- [ ] A30.5 Evidence: real Google sign-in, `/auth/me`, logout, 401 after expiry: PASS only if executed on the test server.
+Branch: feat/fe-a-a30-auth-session | Estimate: 1.5 h | Depends on: A29; Q-B28 (Google client ID + allowed origin from Hesham) for the live part | Status: ready for review (code done 28 Oct with the client ID from the developer; real Google sign-in NOT RUN: needs a person's Google account)
+- [x] A30.1 Login response: AUTHORIZED (`token`, `expiresAt`) or PENDING_ACCESS (no token -> Pending Access page); token in memory only.
+- [x] A30.2 `GET /auth/me` replaces the illustrative session context: mapped once to `SessionContext` (`userUuid`, `email` as the name until a display name exists, `tenantSlug` as the read-only badge, `roleCodes`, `capabilities`, `isPendingAccess`); with mocks off it is real, no longer BLOCKED.
+- [x] A30.3 Sign-out calls `POST /auth/logout`, then drops the token.
+- [x] A30.4 Dev proxy: Vite `server.proxy` for `/api` to `VITE_API_PROXY_TARGET`, run by `npm run dev:integration` (mode `integration`, values in the git-ignored `.env.integration.local`, never committed); `VITE_API_BASE_URL=/` (same origin); `.env.example` documents them (Q-B31).
+- [ ] A30.5 Evidence: real Google sign-in, `/auth/me`, logout, 401 after expiry: PASS only if executed on the test server. Done: Google button renders with the client ID; login/me/logout error answers through the proxy. NOT RUN: a real sign-in (needs the developer's Google account) and whether Google allows the dev origin.
 
 ## Task A33: Nested sidebar, legacy names and logo (D-81, D-82)
 Branch: feat/fe-a-a33-nested-nav | Estimate: 1.5 h | Depends on: A32 | Status: ready for review
@@ -344,7 +344,7 @@ Estimate: 2.5 h (was 2.0) | Depends on: A29-A34 | Status: not started. Adds to A
 | A32 | merged | Dashboard removed (D-80); 122 tests (2 Dashboard tests deleted) |
 | A29 | merged | canonical contract: types, answer format, 24-field items, hold/pending/redo shown, invoiced locks, zero-charge lookup; 4 tests updated; 122 tests |
 | A00e | merged | docs only: v0.9.8 adopted (D-85), Orders Dashboard design-only (D-86), FINANCE/QC access (D-87), `docs/BACKEND_BLOCKERS.md`; A34 rescoped, A35 added |
-| A30 | skipped until Hesham answers (Q-B28) | developer decision 28 Oct |
+| A30 | ready for review | login per contract (AUTHORIZED / PENDING_ACCESS), session from GET /auth/me, logout, dev proxy (`npm run dev:integration`); 1 test rewritten; 123 tests; real sign-in NOT RUN |
 | A33 | merged | nested sidebar (Orders, Report groups), "All orders" / "Add order" labels, 3DDX logo; 2 tests updated; 122 tests |
-| A35 | ready for review | FINANCE/QC read orders and services (G11); FINANCE financial edits, QC read-only; 5 tests updated, 1 split in two; 123 tests |
+| A35 | merged | FINANCE/QC read orders and services (G11); FINANCE financial edits, QC read-only; 5 tests updated, 1 split in two; 123 tests |
 | A31, A34 | planned 28 Oct | next: A34, then A31 after Hesham, then A24 | order: A32, A29, A30, A33, A34, A31, then A24 |

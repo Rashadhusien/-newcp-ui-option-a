@@ -20,7 +20,7 @@ export type MockIdentity = 'CS' | 'OPS' | 'ADMIN' | 'FINANCE' | 'QC' | 'PENDING'
 
 export const MOCK_IDENTITIES: readonly MockIdentity[] = ['CS', 'OPS', 'ADMIN', 'FINANCE', 'QC', 'PENDING'];
 
-const MOCK_TENANT = { id: 1, label: 'Demo tenant (mock)' };
+const MOCK_TENANT = { label: 'Demo tenant (mock)' };
 
 const OPERATIONAL: readonly CapabilityCode[] = [
   'orders.read',

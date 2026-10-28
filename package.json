@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:integration": "vite --mode integration",
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "build": "vite build",

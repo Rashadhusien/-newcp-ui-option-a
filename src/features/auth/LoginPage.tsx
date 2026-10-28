@@ -81,7 +81,13 @@ export default function LoginPage() {
       },
       onIdToken: (idToken) => {
         setPhase({ kind: 'signingIn' });
-        loginWithGoogleIdToken(baseUrl, idToken).then(signInWithSession, (error: unknown) => {
+        loginWithGoogleIdToken(baseUrl, idToken).then(
+          (outcome) => {
+            // PENDING_ACCESS issues no token (Q-B27): show Pending Access, stay signed out.
+            if (outcome.kind === 'pendingAccess') setPhase({ kind: 'pending' });
+            else signInWithSession(outcome.session);
+          },
+          (error: unknown) => {
           if (isApiError(error) && error.kind === 'accessNotAssigned') setPhase({ kind: 'pending' });
           else if (isApiError(error) && (error.kind === 'forbidden' || error.kind === 'unauthorized')) {
             setPhase({ kind: 'denied', message: error.message });

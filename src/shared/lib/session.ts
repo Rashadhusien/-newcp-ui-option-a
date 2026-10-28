@@ -1,14 +1,12 @@
 /**
  * Session source (IAM v0.9.7, D-51).
  *
- * The session context endpoint is not in the reference OpenAPI (Q-B20) and
- * the auth transport is open (Q-B21), so:
  * - mock mode: the context is a mock fixture for the identity chosen on the
  *   sign-in page. The choice lives in sessionStorage (this tab only); it is
  *   not a token, and nothing else about the session is stored.
- * - real API: without a New CP session token (A25, in memory) the user is
- *   signed out; with one, the context is still BLOCKED because its endpoint
- *   is not in the contract (Q-B20), so no request is sent.
+ * - real API (A30): without a New CP session token (in memory) the user is
+ *   signed out; with one, the context comes from `GET /api/v1/auth/me`
+ *   (Q-B20), mapped once by `sessionContextFromMe`.
  *
  * Storage access is guarded: private windows or blocked site data can throw,
  * which must read as "signed out" rather than crash the app.
@@ -20,7 +18,9 @@
 
 import {
   ApiError,
+  fetchAuthMe,
   readApiConfig,
+  sessionContextFromMe,
   sessionToken,
   type ApiConfig,
   type ApiErrorKind,
@@ -55,24 +55,20 @@ export function clearMockIdentity(): void {
   }
 }
 
-export const SESSION_BLOCKED_MESSAGE =
-  'You are signed in, but your access cannot be loaded yet: the session context endpoint is not in the API contract (Q-B20).';
-
-/** Resolves the current context; rejects 401 when signed out and `blocked` with the real API. */
-export function loadSessionContext(config: ApiConfig = readApiConfig()): Promise<SessionContext> {
+/** Resolves the current context; rejects 401 when signed out. */
+export async function loadSessionContext(config: ApiConfig = readApiConfig()): Promise<SessionContext> {
   if (!config.useMocks) {
-    if (sessionToken() === null) {
-      return Promise.reject(new ApiError(401, { code: 'AUTHENTICATION_REQUIRED', message: 'Sign in to continue.' }));
+    const token = sessionToken();
+    if (token === null) {
+      throw new ApiError(401, { code: 'AUTHENTICATION_REQUIRED', message: 'Sign in to continue.' });
     }
-    return Promise.reject(new ApiError(0, { code: 'client.blocked', message: SESSION_BLOCKED_MESSAGE }, 'blocked'));
+    return sessionContextFromMe(await fetchAuthMe(config.baseUrl, token));
   }
   const identity = mockIdentity();
   if (identity === null) {
-    return Promise.reject(
-      new ApiError(401, { code: 'AUTHENTICATION_REQUIRED', message: 'Sign in to continue.' }),
-    );
+    throw new ApiError(401, { code: 'AUTHENTICATION_REQUIRED', message: 'Sign in to continue.' });
   }
-  return Promise.resolve(mockSessionContext(identity));
+  return mockSessionContext(identity);
 }
 
 export type AccessEvent = Extract<ApiErrorKind, 'unauthorized' | 'forbidden' | 'accessNotAssigned'>;
