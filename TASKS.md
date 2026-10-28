@@ -289,10 +289,10 @@ DESIGN-ONLY: labelled MOCK, no dashboard API call with mocks off (BLOCKED, nothi
 - [ ] A34.6 Mock fixtures extended (synthetic orders with several families, repeated same-type services, completed and on-hold instances, two currencies); no real data.
 
 ## Task A35: FINANCE and QC order/service access (D-87)
-Branch: feat/fe-a-a35-finance-qc-access | Estimate: 1.0 h | Depends on: A33 | Status: not started
-- [ ] A35.1 Mock identities: FINANCE and QC also get `orders.read` and `service.read` (demo assumption, Q-B35); FINANCE keeps price/Billable/Bill To/zero-charge edit codes; QC gets no edit code.
-- [ ] A35.2 Sidebar, Home cards, footer and breadcrumbs follow the capabilities (Orders group visible for both); QC sees every staff field and Bill To read-only with "Read-only for your role".
-- [ ] A35.3 Update the Home test (FINANCE/QC card lists) and REHEARSAL step 9.
+Branch: feat/fe-a-a35-finance-qc-access | Estimate: 1.0 h | Depends on: A33 | Status: ready for review
+- [x] A35.1 Mock identities: FINANCE and QC also get `orders.read` and `service.read` (demo assumption, Q-B35); FINANCE keeps price/Billable/Bill To/zero-charge edit codes; QC gets no edit code.
+- [x] A35.2 Sidebar, Home cards, footer and breadcrumbs follow the capabilities (Orders group visible for both); QC sees every staff field and Bill To read-only with "Read-only for your role".
+- [x] A35.3 Update the Home test (FINANCE/QC card lists) and REHEARSAL step 9; also the session, mock-access and service-page tests that asserted "reports only".
 
 ## Task A31: Connect the service endpoints (live, test server)
 Branch: feat/fe-a-a31-live-services | Estimate: 2.0 h | Depends on: A30; Q-B33 (test accounts, order UUIDs) | Status: not started
@@ -345,5 +345,6 @@ Estimate: 2.5 h (was 2.0) | Depends on: A29-A34 | Status: not started. Adds to A
 | A29 | merged | canonical contract: types, answer format, 24-field items, hold/pending/redo shown, invoiced locks, zero-charge lookup; 4 tests updated; 122 tests |
 | A00e | merged | docs only: v0.9.8 adopted (D-85), Orders Dashboard design-only (D-86), FINANCE/QC access (D-87), `docs/BACKEND_BLOCKERS.md`; A34 rescoped, A35 added |
 | A30 | skipped until Hesham answers (Q-B28) | developer decision 28 Oct |
-| A33 | ready for review | nested sidebar (Orders, Report groups), "All orders" / "Add order" labels, 3DDX logo; 2 tests updated; 122 tests |
-| A31, A34, A35 | planned 28 Oct | next: A35, A34, then A31 after Hesham, then A24 | order: A32, A29, A30, A33, A34, A31, then A24 |
+| A33 | merged | nested sidebar (Orders, Report groups), "All orders" / "Add order" labels, 3DDX logo; 2 tests updated; 122 tests |
+| A35 | ready for review | FINANCE/QC read orders and services (G11); FINANCE financial edits, QC read-only; 5 tests updated, 1 split in two; 123 tests |
+| A31, A34 | planned 28 Oct | next: A34, then A31 after Hesham, then A24 | order: A32, A29, A30, A33, A34, A31, then A24 |

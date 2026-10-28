@@ -5,9 +5,13 @@
  *
  * Capabilities follow ROLE_CAPABILITY_MATRIX.csv (PROPOSED codes, D-53):
  * OPS is scoped to Models and Conversion, which is the whole demo scope, so
- * its flags equal CS's here; FINANCE and QC reach orders and services
- * through reports only (G11 open), so they get no service capabilities.
- * Export flags are listed but no export control exists (D-54).
+ * its flags equal CS's here. FINANCE and QC (A35, D-87): G11 confirmed that
+ * both see all tenant-authorized orders and services, so they get
+ * `orders.read` and `service.read` although the unchanged matrix still says
+ * "REPORT" there (demo assumption, Q-B35; `/auth/me` decides for real).
+ * FINANCE keeps the matrix's financial edits (price, Billable, Bill To,
+ * zero-charge reason); QC has no edit code (read-only; audit actions are not
+ * implemented). Export flags are listed but no export control exists (D-54).
  */
 
 import type { CapabilityCode, SessionContext } from '@/shared/api';
@@ -36,8 +40,17 @@ const CAPABILITIES: Record<Exclude<MockIdentity, 'PENDING'>, readonly Capability
   CS: OPERATIONAL,
   OPS: OPERATIONAL,
   ADMIN: [...OPERATIONAL, 'reports.export'],
-  FINANCE: ['reports.view_all', 'reports.export'],
-  QC: ['reports.view_all', 'reports.export'],
+  FINANCE: [
+    'orders.read',
+    'service.read',
+    'service.price.override',
+    'service.billing.bill_to.edit',
+    'service.billing.is_billable.edit',
+    'service.zero_charge_reason.edit',
+    'reports.view_all',
+    'reports.export',
+  ],
+  QC: ['orders.read', 'service.read', 'reports.view_all', 'reports.export'],
 };
 
 const USER_NAMES: Record<MockIdentity, string> = {
@@ -53,8 +66,8 @@ export const MOCK_IDENTITY_LABEL: Record<MockIdentity, string> = {
   CS: 'CS (customer service)',
   OPS: 'OPS (Models and Conversion)',
   ADMIN: 'ADMIN',
-  FINANCE: 'FINANCE (reports only)',
-  QC: 'QC (reports only)',
+  FINANCE: 'FINANCE (view, financial edits)',
+  QC: 'QC (view only)',
   PENDING: 'Pending access (no role)',
 };
 

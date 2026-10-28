@@ -39,9 +39,21 @@ describe('mock access checks (IAM v0.9.7)', () => {
     await expect(access.edit(FIRST, { serviceNotes: 'Mock note' }, etag)).resolves.toBeDefined();
   });
 
-  it.each(['FINANCE', 'QC'] as const)('denies %s operational service pages (reports only)', async (identity) => {
-    const error = await rejection(api(identity).item(FIRST));
+  it.each(['FINANCE', 'QC'] as const)('lets %s read services but not change plain staff fields (G11, D-87)', async (identity) => {
+    const access = api(identity);
+    const { etag } = await access.item(FIRST);
+    const error = await rejection(access.edit(FIRST, { serviceNotes: 'Mock note' }, etag));
     expect(error).toMatchObject({ status: 403, kind: 'forbidden', code: 'PERMISSION_DENIED' });
+  });
+
+  it('lets FINANCE change the price and denies QC', async () => {
+    const finance = api('FINANCE');
+    const { etag } = await finance.item(FIRST);
+    await expect(finance.edit(FIRST, { unitPrice: '18.00' }, etag)).resolves.toBeDefined();
+    const qc = api('QC');
+    const latest = await qc.item(FIRST);
+    const error = await rejection(qc.edit(FIRST, { unitPrice: '17.00' }, latest.etag));
+    expect(error).toMatchObject({ status: 403, kind: 'forbidden' });
   });
 
   it('needs the capability of every field a PATCH changes', () => {

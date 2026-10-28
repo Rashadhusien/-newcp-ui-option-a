@@ -125,9 +125,9 @@ describe('ServiceDetailPage (A7R, mock)', () => {
     expect(screen.getByRole('textbox', { name: /Unit price/ })).toBeDisabled();
   });
 
-  it('shows No access without retry for a role that only sees reports', async () => {
-    renderDetail(LINE_1, 'FINANCE');
-    expect(await screen.findByText('No access', {}, SLOW)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Retry/ })).not.toBeInTheDocument();
+  it('shows QC the service read-only: no save, no status change (G11, D-87)', async () => {
+    renderDetail(LINE_1, 'QC');
+    expect(await screen.findByText('You cannot change the status of this service.', {}, SLOW)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save staff fields' })).not.toBeInTheDocument();
   });
 });

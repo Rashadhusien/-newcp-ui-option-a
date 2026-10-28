@@ -42,7 +42,7 @@ describe('HomePage (A27)', () => {
     expect(screen.getByLabelText('Role: CS')).toBeInTheDocument();
   });
 
-  it.each<MockIdentity>(['FINANCE', 'QC'])('shows %s only the report, settings and help', (identity) => {
-    expect(renderHome(identity)).toEqual(['Report', 'Settings', 'Help and support']);
+  it.each<MockIdentity>(['FINANCE', 'QC'])('shows %s the report, all orders, settings and help (G11)', (identity) => {
+    expect(renderHome(identity)).toEqual(['Report', 'All orders', 'Settings', 'Help and support']);
   });
 });

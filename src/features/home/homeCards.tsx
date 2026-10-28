@@ -2,7 +2,7 @@
  * Quick access cards on Home (A27). A card with a capability shows only
  * when the session context has it (display only; the server decides). The
  * capabilities match the pages' own gates, so FINANCE and QC get the report,
- * settings and help only. Help opens the support panel instead of a page.
+ * all orders, settings and help (G11, D-87). Help opens the support panel instead of a page.
  */
 
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';

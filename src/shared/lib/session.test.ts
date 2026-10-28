@@ -46,7 +46,7 @@ describe('session context (IAM v0.9.7, D-51)', () => {
     }
   });
 
-  it('follows the capability matrix: everyone views reports, export only FINANCE/QC/ADMIN, no service edits for FINANCE/QC', () => {
+  it('follows the capability matrix and G11: everyone views reports, export only FINANCE/QC/ADMIN, FINANCE/QC read services, only FINANCE edits money', () => {
     for (const identity of ['CS', 'OPS', 'ADMIN', 'FINANCE', 'QC'] as const) {
       expect(can(mockSessionContext(identity), 'reports.view_all')).toBe(true);
     }
@@ -55,7 +55,14 @@ describe('session context (IAM v0.9.7, D-51)', () => {
       'FINANCE',
       'QC',
     ]);
-    expect(can(mockSessionContext('FINANCE'), 'service.read')).toBe(false);
+    // G11 (D-87): both read orders and services; FINANCE edits money only, QC edits nothing.
+    for (const identity of ['FINANCE', 'QC'] as const) {
+      expect(can(mockSessionContext(identity), 'orders.read')).toBe(true);
+      expect(can(mockSessionContext(identity), 'service.read')).toBe(true);
+      expect(can(mockSessionContext(identity), 'service.update')).toBe(false);
+      expect(can(mockSessionContext(identity), 'service.status.transition')).toBe(false);
+    }
+    expect(can(mockSessionContext('FINANCE'), 'service.price.override')).toBe(true);
     expect(can(mockSessionContext('QC'), 'service.price.override')).toBe(false);
     expect(can(mockSessionContext('PENDING'), 'reports.view_all')).toBe(false);
     expect(can(null, 'reports.view_all')).toBe(false);

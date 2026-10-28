@@ -172,7 +172,7 @@ export function BillToSection({ item, etag, onSaved, onReload }: BillToSectionPr
       <InlineAlert severity="info">
         {editable
           ? `Applies to this service only (${lineLabel}). ${BILL_TO_INDEPENDENT_TEXT}`
-          : `${item.isInvoiced ? 'Locked: this service is invoiced.' : 'Read-only for you on this service.'} ${BILL_TO_INDEPENDENT_TEXT}`}
+          : `${item.isInvoiced ? 'Locked: this service is invoiced.' : 'Read-only for your role.'} ${BILL_TO_INDEPENDENT_TEXT}`}
       </InlineAlert>
       {editable && (
         <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>

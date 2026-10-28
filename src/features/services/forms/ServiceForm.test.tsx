@@ -82,7 +82,7 @@ describe('ServiceForm (create, Biomodel)', () => {
       expect(router.state.location.pathname).toMatch(/^\/services\/.+\/edit$/);
     });
     expect(await screen.findByText(/Biomodel service created \(line \d+\)\./)).toBeInTheDocument();
-  });
+  }, 15_000); // several form steps; the default 5 s is too tight under a full parallel run
 
   it('shows a server 422 on its field and saves nothing', async () => {
     const create = vi

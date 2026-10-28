@@ -149,7 +149,7 @@ export function StaffFieldsForm({ item, etag, onSaved, onReload }: StaffFieldsFo
     item.isInvoiced && (field === 'quantity' || field === 'unitPrice' || field === 'isBillable');
   const readOnlyNote = (field: StaffField) => {
     if (editable[field]) return undefined;
-    return lockedByInvoice(field) ? 'Locked: this service is invoiced.' : 'Read-only for you on this service.';
+    return lockedByInvoice(field) ? 'Locked: this service is invoiced.' : 'Read-only for your role.';
   };
 
   return (
