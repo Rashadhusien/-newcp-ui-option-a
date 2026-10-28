@@ -30,22 +30,19 @@ export function capabilitiesForPatch(patch: PatchServiceItem): CapabilityCode[] 
   return [...needed];
 }
 
-/** The error the server would answer for this context, or null when the call is allowed. */
-export function mockAccessError(context: SessionContext | null, needed: readonly CapabilityCode[]): ApiError | null {
-  if (!context) return denied(401, 'AUTHENTICATION_REQUIRED', 'Sign in to continue.');
-  if (context.accessStatus !== 'AUTHORIZED') {
-    return denied(403, 'ACCESS_NOT_ASSIGNED', 'Your account has no access assigned yet. Ask an administrator.');
-  }
-  if (needed.some((capability) => !context.capabilities.includes(capability))) {
-    return denied(403, 'PERMISSION_DENIED', 'You do not have access to this action.');
-  }
-  return null;
-}
-
 export function withMockAccess(api: MockServiceApi, currentContext: () => SessionContext | null): MockServiceApi {
   function check<T>(needed: readonly CapabilityCode[], run: () => Promise<T>): Promise<T> {
-    const error = mockAccessError(currentContext(), needed);
-    return error ? Promise.reject(error) : run();
+    const context = currentContext();
+    if (!context) return Promise.reject(denied(401, 'AUTHENTICATION_REQUIRED', 'Sign in to continue.'));
+    if (context.accessStatus !== 'AUTHORIZED') {
+      return Promise.reject(
+        denied(403, 'ACCESS_NOT_ASSIGNED', 'Your account has no access assigned yet. Ask an administrator.'),
+      );
+    }
+    if (needed.some((capability) => !context.capabilities.includes(capability))) {
+      return Promise.reject(denied(403, 'PERMISSION_DENIED', 'You do not have access to this action.'));
+    }
+    return run();
   }
   const read: CapabilityCode[] = ['service.read'];
 

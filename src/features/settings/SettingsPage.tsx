@@ -38,7 +38,7 @@ const ID_PREFIX = 'settings';
 /** Pages and fields that never reach the New CP API, whatever the data source. */
 const MOCK_ONLY = [
   'Bill To (payer per service): BLOCKED until the database has the F07 columns',
-  'Orders list, create order and Dashboard: no endpoint yet',
+  'Orders list and create order: no endpoint yet',
   'Session context (roles, tenant, capabilities): not in the OpenAPI yet',
 ] as const;
 

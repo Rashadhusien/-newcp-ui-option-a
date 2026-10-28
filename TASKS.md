@@ -250,10 +250,10 @@ Branch: feat/fe-a-a28-dashboard (stacked on A27) | Estimate: 1.5 h | Depends on:
 Inputs: canonical OpenAPI + migration guide (D-79), backend answers (DEVIATIONS "Backend answers of 28 Oct"), developer requests: remove the Dashboard (D-80), nested sidebar with legacy names (D-81), 3DDX logo (D-82), tables like the references (D-83), connect the endpoints. The order below is the recommended start order; each task still waits for `start A<NN>`.
 
 ## Task A32: Remove the Dashboard (D-80)
-Branch: refactor/fe-a-a32-remove-dashboard | Estimate: 0.5 h | Depends on: develop | Status: not started
-- [ ] A32.1 Delete `/dashboard` (route, `ROUTES.dashboard`, label), sidebar entry, Home card, breadcrumb case, `features/services/dashboard/`, `serviceApi.dashboardData()`, `data/dashboardData.ts`, and the `mockAccessError` export if nothing else uses it.
-- [ ] A32.2 Keep `shared/status/statusFigures.ts` (Report); update the Home and breadcrumb tests; remove REHEARSAL step 2a.
-- [ ] Verify; browser: no Dashboard anywhere for CS/FINANCE/QC, `/dashboard` shows Not found.
+Branch: refactor/fe-a-a32-remove-dashboard | Estimate: 0.5 h | Depends on: develop | Status: ready for review
+- [x] A32.1 Delete `/dashboard` (route, `ROUTES.dashboard`, label), sidebar entry, Home card, breadcrumb case, `features/services/dashboard/`, `serviceApi.dashboardData()`, `data/dashboardData.ts`, and the `mockAccessError` export if nothing else uses it. (Adapter and mockAccess hunks of the A28 commit reversed exactly.)
+- [x] A32.2 Keep `shared/status/statusFigures.ts` (Report; trimmed to `countBySemantic`, the only helper still used); update the Home and breadcrumb tests; remove REHEARSAL step 2a.
+- [x] Verify; browser: no Dashboard anywhere for CS/FINANCE/QC, `/dashboard` shows Not found.
 
 ## Task A29: Migrate to the canonical contract (D-79)
 Branch: feat/fe-a-a29-canonical-contract | Estimate: 2.0 h | Depends on: A32 | Status: not started
@@ -331,5 +331,6 @@ Estimate: 2.5 h (was 2.0) | Depends on: A29-A34 | Status: not started. Adds to A
 | A22 (plan) | planned 27 Oct | reference-pattern plan (shell, reports, orders, order details, create order, settings, carry-over) |
 | A8R, A11, A5R, A4, A12, A13 | cut 26 Oct / A4 replaced by A15 | PLAN section 8, restore order |
 | A6-A10 (20 Oct) | superseded / A10 blocked | |
-| A00d | ready for review | docs only: canonical contract adopted (D-79), backend answers recorded, Dashboard removal (D-80), nested nav (D-81), logo (D-82), tables (D-83); tasks A29-A34 planned |
-| A29, A30, A31, A32, A33, A34 | planned 28 Oct | order: A32, A29, A30, A33, A34, A31, then A24 |
+| A00d | merged | docs only: canonical contract adopted (D-79), backend answers recorded, Dashboard removal (D-80), nested nav (D-81), logo (D-82), tables (D-83); tasks A29-A34 planned |
+| A32 | ready for review | Dashboard removed (D-80); 122 tests (2 Dashboard tests deleted) |
+| A29, A30, A31, A33, A34 | planned 28 Oct | order: A32, A29, A30, A33, A34, A31, then A24 |

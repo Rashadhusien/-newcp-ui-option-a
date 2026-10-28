@@ -66,7 +66,6 @@ export default function ReportingPage() {
 
   const filters = { search, serviceType, status };
   const filtered = filterReport(rows, filters);
-  // Shared with the Dashboard (A28), so both pages count the same way.
   const bySemantic = (semantic: StatusSemantic) => countBySemantic(rows, semantic);
   const orderCount = new Set(rows.map((row) => row.orderId)).size;
   const controls = useUrlTableControls({

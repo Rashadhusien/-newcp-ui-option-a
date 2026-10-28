@@ -73,8 +73,6 @@ export function buildTrail(pathname: string, hints: TrailHints = {}): Crumb[] {
     switch (first) {
       case 'home':
         return current([HOME]);
-      case 'dashboard':
-        return current([HOME, { label: ROUTE_LABELS.dashboard }]);
       case 'reporting':
         return current([HOME, { label: ROUTE_LABELS.reporting }]);
       case 'orders':
