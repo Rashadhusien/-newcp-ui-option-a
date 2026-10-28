@@ -10,15 +10,15 @@ describe('buildTrail (A26)', () => {
     expect(labels('/')).toEqual(['Home']);
     expect(labels('/home')).toEqual(['Home']);
     expect(labels('/reporting')).toEqual(['Home', 'Report']);
-    expect(labels('/orders')).toEqual(['Home', 'Orders']);
+    expect(labels('/orders')).toEqual(['Home', 'All orders']);
     expect(labels('/settings')).toEqual(['Home', 'Settings']);
-    expect(labels('/orders/new')).toEqual(['Home', 'Orders', 'New order']);
+    expect(labels('/orders/new')).toEqual(['Home', 'All orders', 'Add order']);
   });
 
   it('shows an order by short id and a service by line number, never a full UUID', () => {
-    expect(labels(`/orders/${ORDER}`)).toEqual(['Home', 'Orders', 'Order …00000001']);
+    expect(labels(`/orders/${ORDER}`)).toEqual(['Home', 'All orders', 'Order …00000001']);
     const service = labels(`/services/${ITEM}`, { orderUuid: ORDER, lineNumber: 1 });
-    expect(service).toEqual(['Home', 'Orders', 'Order …00000001', 'Service line 1']);
+    expect(service).toEqual(['Home', 'All orders', 'Order …00000001', 'Service line 1']);
     expect(labels(`/services/${ITEM}/edit`, { orderUuid: ORDER, lineNumber: 2 }).at(-1)).toBe('Edit form');
     for (const label of [...service, ...labels(`/orders/${ORDER}`)]) expect(label).not.toContain(ORDER);
   });
@@ -37,7 +37,7 @@ describe('buildTrail (A26)', () => {
   });
 
   it('falls back to a short trail before the service is loaded and for unknown paths', () => {
-    expect(labels(`/services/${ITEM}`)).toEqual(['Home', 'Orders', 'Service']);
+    expect(labels(`/services/${ITEM}`)).toEqual(['Home', 'All orders', 'Service']);
     expect(labels('/nowhere')).toEqual(['Home', 'Page not found']);
   });
 });

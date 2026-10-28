@@ -47,8 +47,8 @@ export const ROUTES = {
 export const ROUTE_LABELS = {
   home: "Home",
   reporting: "Report",
-  orders: "Orders",
-  orderNew: "New order",
+  orders: "All orders",
+  orderNew: "Add order",
   models: "Models",
   conversion: "Conversion",
   settings: "Settings",

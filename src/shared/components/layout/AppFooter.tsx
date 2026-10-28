@@ -22,7 +22,7 @@ const EVIDENCE = evidenceOf(readApiConfig());
 
 const LINKS = [
   { to: ROUTES.reporting, label: 'Report' },
-  { to: ROUTES.orders, label: 'Orders' },
+  { to: ROUTES.orders, label: 'All orders' },
   { to: ROUTES.settings, label: 'Settings' },
 ] as const;
 

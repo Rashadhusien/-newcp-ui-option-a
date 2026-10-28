@@ -103,7 +103,7 @@ v0.9.8 (D-85) makes the Orders Dashboard design-only (D-86), confirms FINANCE/QC
 
 | Order | Task | Hours | Blocked by |
 |---|---|---|---|
-| 1 | A30 real sign-in, `/auth/me`, logout, dev proxy | 1.5 | Q-B28 (live part) |
+| 1 | A30 real sign-in, `/auth/me`, logout, dev proxy (**skipped until Hesham answers**) | 1.5 | Q-B28 (live part) |
 | 2 | A33 nested sidebar, legacy labels, logo | 1.5 | none |
 | 3 | A35 FINANCE/QC order and service access | 1.0 | none (Q-B35 open) |
 | 4 | A34 Orders Dashboard design + table columns | 3.5 | none (design-only) |

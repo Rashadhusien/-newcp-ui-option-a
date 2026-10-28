@@ -202,7 +202,7 @@ export default function OrdersPage() {
   return (
     <>
       <PageHeader
-        title="Orders"
+        title="All orders"
         description="One row per order. Open a row to see its services: each service is its own instance with its own status."
         evidence
         action={<NewOrderButton />}
@@ -212,7 +212,7 @@ export default function OrdersPage() {
       ) : (
         <Paper variant="outlined">
           <TableToolbar
-            title="Orders"
+            title="All orders"
             count={
               state.status === 'loading'
                 ? 'Loading orders…'
@@ -242,7 +242,7 @@ export default function OrdersPage() {
             columns={columns}
             getRowId={(order) => order.orderUuid}
             controls={controls}
-            ariaLabel="Orders"
+            ariaLabel="All orders"
             loading={state.status === 'loading'}
             error={state.status === 'error' ? (state.error?.message ?? 'Could not load the orders.') : null}
             onRetry={() => {

@@ -264,7 +264,7 @@ Branch: feat/fe-a-a29-canonical-contract | Estimate: 2.0 h | Depends on: A32 | S
 - [x] A29.5 Update the existing tests that assert carriers (`formLogic.test.ts`, adapter tests); verify green.
 
 ## Task A30: Real sign-in and session against the test server
-Branch: feat/fe-a-a30-auth-session | Estimate: 1.5 h | Depends on: A29; Q-B28 (Google client ID + allowed origin from Hesham) for the live part | Status: not started
+Branch: feat/fe-a-a30-auth-session | Estimate: 1.5 h | Depends on: A29; Q-B28 (Google client ID + allowed origin from Hesham) for the live part | Status: **skipped 28 Oct until Hesham answers** (developer decision)
 - [ ] A30.1 Login response: AUTHORIZED (`token`, `expiresAt`) or PENDING_ACCESS (no token -> Pending Access page); token in memory only.
 - [ ] A30.2 `GET /auth/me` replaces the illustrative session context: mapped once to `SessionContext` (`userUuid`, `email` as the name until a display name exists, `tenantSlug` as the read-only badge, `roleCodes`, `capabilities`, `isPendingAccess`); with mocks off it is real, no longer BLOCKED.
 - [ ] A30.3 Sign-out calls `POST /auth/logout`, then drops the token.
@@ -272,11 +272,11 @@ Branch: feat/fe-a-a30-auth-session | Estimate: 1.5 h | Depends on: A29; Q-B28 (G
 - [ ] A30.5 Evidence: real Google sign-in, `/auth/me`, logout, 401 after expiry: PASS only if executed on the test server.
 
 ## Task A33: Nested sidebar, legacy names and logo (D-81, D-82)
-Branch: feat/fe-a-a33-nested-nav | Estimate: 1.5 h | Depends on: A32 | Status: not started
-- [ ] A33.1 Sidebar groups that open on click (Enter/Space, `aria-expanded`): Home; Orders -> All orders (`/orders`), Add order (`/orders/new`), Models, Conversion (service filter); Report -> Service instances, Status overview (the Report tabs, `?view=`); Settings. Capability gating unchanged; the group of the active route starts open.
-- [ ] A33.2 Labels "All orders" and "Add order" everywhere (page titles, breadcrumbs, Home cards, buttons, footer); URLs unchanged; other labels per Q-B34.
-- [ ] A33.3 Logo: `public/brand/3ddx-logo.svg` (copied from the iSmile assets) in the header and sidebar brand with `alt="3D Diagnostix"`; replaced when the developer sends the references.
-- [ ] A33.4 The phone drawer uses the same groups; the A17 peek/pin behaviour is kept.
+Branch: feat/fe-a-a33-nested-nav | Estimate: 1.5 h | Depends on: A32 | Status: ready for review
+- [x] A33.1 Sidebar groups that open on click (Enter/Space, `aria-expanded`): Home; Orders -> All orders (`/orders`), Add order (`/orders/new`), Models, Conversion (service filter); Report -> Service instances, Status overview (the Report tabs, `?view=`); Settings. Capability gating unchanged; the group of the active route starts open.
+- [x] A33.2 Labels "All orders" and "Add order" everywhere (page titles, breadcrumbs, Home cards, buttons, footer); URLs unchanged; other labels per Q-B34.
+- [x] A33.3 Logo: `public/brand/3ddx-logo.png` (the 4.8 KB PNG from the iSmile assets; the SVG is a 2 MB wrapper around the same PNG) in the header, sidebar and sign-in card with `alt="3D Diagnostix"`; replaced when the developer sends the references.
+- [x] A33.4 The phone drawer uses the same groups; the A17 peek/pin behaviour is kept.
 
 ## Task A34: Orders Dashboard design (All orders) and table columns (D-83, D-86)
 Branch: feat/fe-a-a34-orders-dashboard | Estimate: 3.5 h (was 2.0; scope from v0.9.8) | Depends on: A33 | Status: not started | Source: v0.9.8 `2026-10-28_DASHBOARD_IAM_API_UPDATES/` (OD-01..24, `06_DASHBOARD_22_COLUMN_MAPPING.csv`, `02_...EXTENSION.yaml` for the mock shape only); POC-1 `ColumnVisibilityMenu`; POC-2 `pages/orders/*`, `pages/orderDetails/*`
@@ -343,5 +343,7 @@ Estimate: 2.5 h (was 2.0) | Depends on: A29-A34 | Status: not started. Adds to A
 | A00d | merged | docs only: canonical contract adopted (D-79), backend answers recorded, Dashboard removal (D-80), nested nav (D-81), logo (D-82), tables (D-83); tasks A29-A34 planned |
 | A32 | merged | Dashboard removed (D-80); 122 tests (2 Dashboard tests deleted) |
 | A29 | merged | canonical contract: types, answer format, 24-field items, hold/pending/redo shown, invoiced locks, zero-charge lookup; 4 tests updated; 122 tests |
-| A00e | ready for review | docs only: v0.9.8 adopted (D-85), Orders Dashboard design-only (D-86), FINANCE/QC access (D-87), `docs/BACKEND_BLOCKERS.md`; A34 rescoped, A35 added |
-| A30, A31, A33, A34, A35 | planned 28 Oct | order: A30, A33, A35, A34, A31, then A24 | order: A32, A29, A30, A33, A34, A31, then A24 |
+| A00e | merged | docs only: v0.9.8 adopted (D-85), Orders Dashboard design-only (D-86), FINANCE/QC access (D-87), `docs/BACKEND_BLOCKERS.md`; A34 rescoped, A35 added |
+| A30 | skipped until Hesham answers (Q-B28) | developer decision 28 Oct |
+| A33 | ready for review | nested sidebar (Orders, Report groups), "All orders" / "Add order" labels, 3DDX logo; 2 tests updated; 122 tests |
+| A31, A34, A35 | planned 28 Oct | next: A35, A34, then A31 after Hesham, then A24 | order: A32, A29, A30, A33, A34, A31, then A24 |

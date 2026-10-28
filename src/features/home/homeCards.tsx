@@ -32,7 +32,7 @@ export const HOME_CARDS: readonly HomeCardSpec[] = [
     capability: 'reports.view_all',
   },
   {
-    title: 'Orders',
+    title: 'All orders',
     description: 'Orders with their services; open one to edit, move or review it.',
     icon: <AssignmentOutlinedIcon />,
     to: ROUTES.orders,

@@ -14,9 +14,6 @@
 
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
@@ -30,6 +27,7 @@ import { EvidenceBadge } from '@/shared/components/feedback/EvidenceBadge';
 import { TenantBadge } from '@/shared/components/feedback/TenantBadge';
 import { useSession } from '@/shared/hooks/useSession';
 import type { SidebarState } from '@/shared/hooks/useSidebarState';
+import { BrandLogo } from './BrandLogo';
 import { SIDEBAR_ID } from './Sidebar';
 import { UserMenu } from './UserMenu';
 
@@ -81,12 +79,7 @@ export function Header({ state, floating, onMenuClick, menuButtonRef, menuHoverP
           </IconButton>
         </Tooltip>
         {state !== 'pinned' && (
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <MedicalServicesIcon color="primary" aria-hidden="true" />
-            <Typography variant="h3" component="span" noWrap>
-              New CP
-            </Typography>
-          </Stack>
+          <BrandLogo showName={!isPhone} />
         )}
 
         <Box sx={{ flexGrow: 1 }} />

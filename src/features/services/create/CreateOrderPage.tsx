@@ -175,7 +175,7 @@ export default function CreateOrderPage() {
   if (load.status === 'loading') {
     return (
       <>
-        <PageHeader title="Create order" evidence />
+        <PageHeader title="Add order" evidence />
         <LoadingState label="Loading the services…" rows={4} />
       </>
     );
@@ -184,7 +184,7 @@ export default function CreateOrderPage() {
     const kind = load.error?.kind;
     return (
       <>
-        <PageHeader title="Create order" evidence />
+        <PageHeader title="Add order" evidence />
         <ErrorState
           title={kind === 'forbidden' ? 'No access' : 'Could not load the services'}
           message={load.error?.message ?? 'Something went wrong. Try again.'}
@@ -245,7 +245,7 @@ export default function CreateOrderPage() {
   return (
     <>
       <PageHeader
-        title="Create order"
+        title="Add order"
         description="Five steps: patient and client, services, teeth, service details, review."
         evidence
       />

@@ -207,6 +207,7 @@ export const layoutTokens = {
   gridGap: 24, // px between dashboard cards
   cardGap: 20, // px inside card groups
   fieldHeight: 40, // px, min control height at 768 and wider (DS field-height)
+  logoHeight: 28, // px, 3DDX logo in the header, sidebar and sign-in card (D-82)
 } as const;
 
 // ============================================================================

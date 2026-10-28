@@ -1,5 +1,5 @@
 /**
- * "New order" entry point to the create-order wizard (A21). Shown only with
+ * "Add order" entry point (legacy label, D-81) to the create-order wizard (A21). Shown only with
  * the service-create capability (display only; the server decides).
  */
 
@@ -21,7 +21,7 @@ export function NewOrderButton() {
         void navigate(ROUTES.orderNew);
       }}
     >
-      New order
+      Add order
     </AppButton>
   );
 }

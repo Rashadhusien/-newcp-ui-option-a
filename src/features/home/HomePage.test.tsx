@@ -32,7 +32,7 @@ describe('HomePage (A27)', () => {
   it('shows CS every card its capabilities allow, greeting and role from the context', () => {
     expect(renderHome('CS')).toEqual([
       'Report',
-      'Orders',
+      'All orders',
       'New Biomodel',
       'New Conversion',
       'Settings',

@@ -9,10 +9,15 @@
  * SidebarContent is kept for a later compact mode but unused now.)
  *
  * Follows the active color scheme. Active items expose aria-current="page".
+ * Groups (Orders, Report; A33, D-81) open on click and expose aria-expanded;
+ * the group holding the current page opens by itself.
  */
 
-import { NavLink, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+// A plain Link: NavLink would set its own aria-current by URL prefix (two items current at once).
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
@@ -23,21 +28,17 @@ import ListItemText from '@mui/material/ListItemText';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import { ROUTES } from '@/app/routes';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { layoutTokens } from '@/theme/tokens';
 import { can } from '@/shared/api';
 import { useSession } from '@/shared/hooks/useSession';
-import { NAV_GROUPS, type NavEntry } from './navigation';
+import { BrandLogo } from './BrandLogo';
+import { NAV_SECTIONS, type NavItem, type NavLink, type NavParent } from './navigation';
 
 const SIDEBAR_WIDTH = layoutTokens.sidebarWidth;
 
 export type SidebarVariant = 'docked' | 'floating' | 'modal';
-
-function isActivePath(pathname: string, to: string): boolean {
-  if (to === ROUTES.home) return pathname === ROUTES.home || pathname === '/';
-  return pathname === to || pathname.startsWith(`${to}/`);
-}
 
 interface SidebarContentProps {
   rail: boolean;
@@ -45,26 +46,52 @@ interface SidebarContentProps {
 }
 
 function SidebarContent({ rail, onNavigate }: SidebarContentProps) {
-  const { pathname } = useLocation();
+  const location = useLocation();
   const { context } = useSession();
-  const groups = NAV_GROUPS.map((group) => ({
-    ...group,
-    entries: group.entries.filter((entry) => entry.capability === undefined || can(context, entry.capability)),
-  })).filter((group) => group.entries.length > 0);
+  const allowed = (link: NavLink) => link.capability === undefined || can(context, link.capability);
+  const sections = NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.flatMap((item): NavItem[] => {
+      if (item.kind === 'link') return allowed(item) ? [item] : [];
+      const links = item.links.filter(allowed);
+      return links.length > 0 ? [{ ...item, links }] : [];
+    }),
+  })).filter((section) => section.items.length > 0);
 
-  const renderEntry = (entry: NavEntry) => {
-    const active = isActivePath(pathname, entry.to);
+  // A group opens on click; the group of the current page is open unless the user closed it.
+  const activeGroup = sections
+    .flatMap((section) => section.items)
+    .find((item): item is NavParent => item.kind === 'group' && item.links.some((link) => link.isActive(location)))?.id;
+  const [overrides, setOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const [seenActive, setSeenActive] = useState(activeGroup);
+  if (seenActive !== activeGroup) {
+    // Entering another group's page opens that group again (state adjusted during render, no effect).
+    setSeenActive(activeGroup);
+    if (activeGroup !== undefined && overrides.has(activeGroup)) {
+      const next = new Map(overrides);
+      next.delete(activeGroup);
+      setOverrides(next);
+    }
+  }
+  const isOpen = (id: string) => overrides.get(id) ?? id === activeGroup;
+  const toggle = (id: string) => {
+    setOverrides(new Map(overrides).set(id, !isOpen(id)));
+  };
+
+  const renderLink = (link: NavLink, nested: boolean) => {
+    const active = link.isActive(location);
     const button = (
       <ListItemButton
-        component={NavLink}
-        to={entry.to}
+        component={RouterLink}
+        to={link.to}
         aria-current={active ? 'page' : undefined}
         selected={active}
         onClick={onNavigate}
         sx={{
           minHeight: 40,
           mx: 1,
-          px: rail ? 0 : 1.5,
+          pl: rail ? 0 : nested ? 4 : 1.5,
+          pr: rail ? 0 : 1.5,
           borderRadius: 1.5,
           justifyContent: rail ? 'center' : 'flex-start',
           color: active ? 'primary.main' : 'text.primary',
@@ -78,11 +105,11 @@ function SidebarContent({ rail, onNavigate }: SidebarContentProps) {
             color: active ? 'primary.main' : 'text.secondary',
           }}
         >
-          {entry.icon}
+          {link.icon}
         </ListItemIcon>
         {!rail && (
           <ListItemText
-            primary={entry.label}
+            primary={link.label}
             slotProps={{
               primary: { variant: 'body2', sx: { fontWeight: active ? 600 : 500 } },
             }}
@@ -91,14 +118,55 @@ function SidebarContent({ rail, onNavigate }: SidebarContentProps) {
       </ListItemButton>
     );
     return (
-      <ListItem key={entry.to} disablePadding sx={{ py: 0.25 }}>
+      <ListItem key={link.to} disablePadding sx={{ py: 0.25 }}>
         {rail ? (
-          <Tooltip title={entry.label} placement="right">
+          <Tooltip title={link.label} placement="right">
             {button}
           </Tooltip>
         ) : (
           button
         )}
+      </ListItem>
+    );
+  };
+
+  const renderGroup = (group: NavParent) => {
+    // The rail has no room for nesting: its links are listed flat.
+    if (rail) return group.links.map((link) => renderLink(link, false));
+    const expanded = isOpen(group.id);
+    const containsActive = group.links.some((link) => link.isActive(location));
+    const listId = `nav-group-${group.id}`;
+    return (
+      <ListItem key={group.id} disablePadding sx={{ py: 0.25, display: 'block' }}>
+        <ListItemButton
+          aria-expanded={expanded}
+          aria-controls={listId}
+          onClick={() => {
+            toggle(group.id);
+          }}
+          sx={{ minHeight: 40, mx: 1, px: 1.5, borderRadius: 1.5, color: 'text.primary' }}
+        >
+          <ListItemIcon
+            sx={{
+              minWidth: 0,
+              mr: 1.5,
+              justifyContent: 'center',
+              color: containsActive ? 'primary.main' : 'text.secondary',
+            }}
+          >
+            {group.icon}
+          </ListItemIcon>
+          <ListItemText
+            primary={group.label}
+            slotProps={{ primary: { variant: 'body2', sx: { fontWeight: containsActive ? 600 : 500 } } }}
+          />
+          {expanded ? <ExpandLessIcon fontSize="small" aria-hidden="true" /> : <ExpandMoreIcon fontSize="small" aria-hidden="true" />}
+        </ListItemButton>
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
+          <List id={listId} disablePadding aria-label={group.label}>
+            {group.links.map((link) => renderLink(link, true))}
+          </List>
+        </Collapse>
       </ListItem>
     );
   };
@@ -110,17 +178,12 @@ function SidebarContent({ rail, onNavigate }: SidebarContentProps) {
       sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
       <Toolbar sx={{ gap: 1, px: rail ? 0 : 2.5, justifyContent: rail ? 'center' : 'flex-start' }}>
-        <MedicalServicesIcon color="primary" aria-hidden="true" />
-        {!rail && (
-          <Typography variant="h3" component="span" noWrap>
-            New CP
-          </Typography>
-        )}
+        <BrandLogo showName={!rail} />
       </Toolbar>
       <Divider />
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', py: 1 }}>
-        {groups.map((group, index) => (
-          <Box component="section" key={group.label} aria-label={group.label}>
+        {sections.map((section, index) => (
+          <Box component="section" key={section.label} aria-label={section.label}>
             {rail ? (
               index > 0 && <Divider sx={{ mx: 2, my: 1 }} />
             ) : (
@@ -137,10 +200,12 @@ function SidebarContent({ rail, onNavigate }: SidebarContentProps) {
                   letterSpacing: '0.06em',
                 }}
               >
-                {group.label}
+                {section.label}
               </Typography>
             )}
-            <List disablePadding>{group.entries.map(renderEntry)}</List>
+            <List disablePadding>
+              {section.items.map((item) => (item.kind === 'link' ? renderLink(item, false) : renderGroup(item)))}
+            </List>
           </Box>
         ))}
       </Box>
