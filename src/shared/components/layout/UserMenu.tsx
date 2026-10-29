@@ -27,7 +27,7 @@ function initialsOf(name: string): string {
 
 export function UserMenu() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const { context, signOut } = useSession();
+  const { context, signOut, signingOut = false } = useSession();
   if (!context) return null;
   const user = { name: context.user.displayName };
   const roles = context.roles.length > 0 ? context.roles.join(', ') : 'No role';
@@ -76,10 +76,8 @@ export function UserMenu() {
         </Box>
         <Divider />
         <MenuItem
-          onClick={() => {
-            setAnchor(null);
-            signOut();
-          }}
+          disabled={signingOut}
+          onClick={signOut}
         >
           <ListItemIcon>
             <LogoutIcon fontSize="small" />

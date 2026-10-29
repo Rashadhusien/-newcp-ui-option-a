@@ -1,5 +1,6 @@
 /**
- * In-memory mock of the service-instance API, shaped like the canonical
+ * TEST ONLY (A38: the app always calls the real API). In-memory fake of the
+ * service-instance API for page tests, shaped like the canonical
  * contract (docs/openapi/newcp.openapi.yaml, D-79). Behaviour follows the
  * contract and the approved Q-B8 to Q-B15 decisions:
  * - create always makes a NEW instance (new UUID, next line number), even
@@ -50,8 +51,9 @@ import {
   MOCK_TRANSITIONS,
   MOCK_ZERO_CHARGE_REASONS,
 } from '@/mocks/serviceFixtures';
-import { specForService } from '../forms/formSpecs';
-import { mockFormDefinition } from '../forms/mockFormDefinition';
+import type { ServiceApi } from '@/features/services/data/serviceApi';
+import { resolveFormSpec } from '@/features/services/forms/catalogFormBridge';
+import { mockFormDefinition } from './mockFormDefinition';
 
 export interface MockOptions {
   /** Artificial latency in ms (default 300; 0 in tests). */
@@ -236,7 +238,7 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
   function definitionOf(sellableItemUuid: string): FormDefinition {
     const service = MOCK_CATALOG.find((entry) => entry.uuid === sellableItemUuid);
     if (!service) throw invalid('sellableItemUuid', 'Unknown service.', 'mock.unknown_service');
-    const spec = specForService(service.code);
+    const spec = resolveFormSpec(service);
     return spec ? mockFormDefinition(service, spec) : { service, fields: [], evidence: 'MOCK: no form spec for this service' };
   }
 
@@ -466,5 +468,16 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
         getItem(serviceItemUuid);
         return history.get(serviceItemUuid) ?? [];
       }),
+  };
+}
+
+/** The fake behind the app's `ServiceApi` interface (Bill To BLOCKED, no orders list), no latency. */
+export function createFakeServiceApi(options: MockOptions = {}): ServiceApi {
+  return {
+    ...createMockServiceApi({ latencyMs: 0, ...options }),
+    orders: () => Promise.resolve([]),
+    createOrder: () => Promise.reject(new ApiError(0, { code: 'client.blocked', message: 'Not in the contract.' }, 'blocked')),
+    ordersEvidence: 'MOCK',
+    billToAvailable: false,
   };
 }

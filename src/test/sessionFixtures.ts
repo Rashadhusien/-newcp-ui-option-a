@@ -1,5 +1,5 @@
 /**
- * Mock session contexts for the five IAM access families plus a pending
+ * TEST ONLY (A38: the context always comes from `GET /auth/me`). Session contexts for the five IAM access families plus a pending
  * user (IAM v0.9.7). Synthetic: invented names, synthetic UUIDs, and a
  * tenant label that is clearly mock, never a real tenant value.
  *
@@ -15,6 +15,7 @@
  */
 
 import type { CapabilityCode, SessionContext } from '@/shared/api';
+import type { SessionValue } from '@/shared/hooks/useSession';
 
 export type MockIdentity = 'CS' | 'OPS' | 'ADMIN' | 'FINANCE' | 'QC' | 'PENDING';
 
@@ -98,5 +99,17 @@ export function mockSessionContext(identity: MockIdentity): SessionContext {
     roles: [identity],
     capabilities: [...CAPABILITIES[identity]],
     tenantSwitchingEnabled: false,
+  };
+}
+
+/** A ready session for `SessionContextValue.Provider` in page tests. */
+export function readySession(identity: MockIdentity): SessionValue {
+  const context = mockSessionContext(identity);
+  return {
+    state: { status: 'ready', context },
+    context,
+    refresh: () => undefined,
+    signInWithSession: () => undefined,
+    signOut: () => undefined,
   };
 }

@@ -5,7 +5,6 @@
 
 import { createContext, useContext } from 'react';
 import type { ApiError, LoginResult, SessionContext } from '@/shared/api';
-import type { MockIdentity } from '@/mocks/sessionFixtures';
 
 /**
  * Why the session ended without the user signing out: `expired` = a 401 or
@@ -26,11 +25,11 @@ export interface SessionValue {
   /** The context when ready, else null. */
   context: SessionContext | null;
   refresh: () => void;
-  /** Mock mode only. */
-  signIn: (identity: MockIdentity) => void;
-  /** Real API: keeps the New CP session token (memory only) and loads access. */
+  /** Keeps the New CP session token (memory only) and loads access. */
   signInWithSession: (result: LoginResult) => void;
   signOut: () => void;
+  /** true while POST /auth/logout is running (the menu item is disabled). */
+  signingOut?: boolean;
 }
 
 export const SessionContextValue = createContext<SessionValue | null>(null);

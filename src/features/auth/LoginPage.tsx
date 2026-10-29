@@ -11,9 +11,7 @@
  * the requested in-app page), Pending Access, session expired (401), access
  * denied (403), not configured (BLOCKED: no Google client ID, Q-B28).
  *
- * Mock mode: Google is simulated (nothing is sent to Google) and the mock
- * identity stands in for the server's answer (G18). `?fail=google` or
- * `?fail=403` on this page shows the failure and denied states.
+ * Always real (A38): the mock identity picker is gone, whatever VITE_USE_MOCKS says.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -22,22 +20,16 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useColorScheme } from '@mui/material/styles';
-import GoogleIcon from '@mui/icons-material/Google';
 import type { LoginRedirectState } from '@/app/AuthBoundary';
-import { ROUTES } from '@/app/routes';
 import { isApiError, loginWithGoogleIdToken, readApiConfig, readGoogleClientId } from '@/shared/api';
-import { AppButton, AppRadioGroup } from '@/shared/components/basic';
-import { EvidenceBadge, InlineAlert } from '@/shared/components/feedback';
+import { InlineAlert } from '@/shared/components/feedback';
 import { AuthLayout } from '@/shared/components/layout';
 import { useSession } from '@/shared/hooks/useSession';
-import { safeReturnPath } from '@/shared/lib/session';
-import { MOCK_IDENTITIES, MOCK_IDENTITY_LABEL, isMockIdentity, type MockIdentity } from '@/mocks/sessionFixtures';
+import { clearReturnTo } from '@/shared/lib/returnTo';
+import { resolveLanding } from './landing';
 import { renderGoogleButton } from './googleIdentity';
 
-const OPTIONS = MOCK_IDENTITIES.map((identity) => ({ value: identity, label: MOCK_IDENTITY_LABEL[identity] }));
 const GOOGLE_BUTTON_WIDTH = 320;
-/** Simulated Google round trip in mock mode (ms), so the loading state is visible. */
-const MOCK_GOOGLE_DELAY = 700;
 
 type Phase =
   | { kind: 'idle' }
@@ -48,31 +40,30 @@ type Phase =
   | { kind: 'pending' }
   | { kind: 'error'; message: string };
 
-function failParam(): string | null {
-  return new URLSearchParams(window.location.search).get('fail');
-}
-
 export default function LoginPage() {
   const location = useLocation();
-  const { state, signIn, signInWithSession } = useSession();
+  const { state, signInWithSession } = useSession();
   const { mode, systemMode } = useColorScheme();
   const dark = (mode === 'system' ? systemMode : mode) === 'dark';
-  const { useMocks, baseUrl } = readApiConfig();
-  const clientId = useMocks ? null : readGoogleClientId();
-  const destination = safeReturnPath((location.state as LoginRedirectState | null)?.from, ROUTES.home);
-  const [identity, setIdentity] = useState<MockIdentity>('CS');
-  const [phase, setPhase] = useState<Phase>(() =>
-    !useMocks && readGoogleClientId() !== null ? { kind: 'googleLoading' } : { kind: 'idle' },
-  );
+  const { baseUrl } = readApiConfig();
+  const clientId = readGoogleClientId();
+
+  const [phase, setPhase] = useState<Phase>(() => (clientId !== null ? { kind: 'googleLoading' } : { kind: 'idle' }));
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   // A36: silent Google re-sign-in only on a fresh load (a reload), never after a sign-out or a timeout.
   const endedBy = state.status === 'signedOut' ? state.reason : undefined;
   const autoSelect = endedBy === undefined;
+  const signedIn = state.status === 'ready';
 
-  // Real API: render Google's button once GIS has loaded.
+  // The saved page is used once: clear it as soon as the next sign-in lands.
+  useEffect(() => {
+    if (signedIn) clearReturnTo();
+  }, [signedIn]);
+
+  // Render Google's button once GIS has loaded.
   useEffect(() => {
     const parent = googleButtonRef.current;
-    if (useMocks || clientId === null || !parent) return;
+    if (clientId === null || !parent) return;
     let active = true;
     parent.replaceChildren();
     renderGoogleButton(parent, {
@@ -109,26 +100,19 @@ export default function LoginPage() {
     return () => {
       active = false;
     };
-  }, [useMocks, clientId, dark, baseUrl, signInWithSession, autoSelect]);
+  }, [clientId, dark, baseUrl, signInWithSession, autoSelect]);
 
-  if (state.status === 'ready') return <Navigate to={destination} replace />;
-
-  const mockGoogleSignIn = () => {
-    setPhase({ kind: 'signingIn' });
-    window.setTimeout(() => {
-      const fail = failParam();
-      if (fail === 'google') setPhase({ kind: 'googleFailed', message: 'Google sign-in was cancelled or failed (mock). Try again.' });
-      else if (fail === '403') setPhase({ kind: 'denied', message: 'You do not have access to New CP (mock 403).' });
-      else signIn(identity);
-    }, MOCK_GOOGLE_DELAY);
-  };
+  if (state.status === 'ready') {
+    const requested = (location.state as LoginRedirectState | null)?.from;
+    return <Navigate to={resolveLanding(state.context, requested)} replace />;
+  }
 
   const busy = phase.kind === 'signingIn' || state.status === 'loading';
   const endedMessage =
     phase.kind !== 'idle' || endedBy === undefined
       ? null
       : {
-          expired: 'Your session has ended. Sign in again to continue.',
+          expired: 'Your session expired. Please sign in again.',
           idle: 'You were signed out after 30 minutes without activity. Sign in again to continue.',
           max: 'Your session reached its 8-hour limit. Sign in again to continue.',
         }[endedBy];
@@ -136,17 +120,14 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       <Stack spacing={2.5}>
-        <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
-          <Box>
-            <Typography variant="h2" component="h1">
-              Sign in to New CP
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Use your 3D Diagnostix Google account. Access is checked by the New CP server for every request.
-            </Typography>
-          </Box>
-          {useMocks && <EvidenceBadge evidence="MOCK" />}
-        </Stack>
+        <Box>
+          <Typography variant="h2" component="h1">
+            Sign in to New CP
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Use your 3D Diagnostix Google account. Access is checked by the New CP server for every request.
+          </Typography>
+        </Box>
 
         {endedMessage !== null && <InlineAlert severity="warning">{endedMessage}</InlineAlert>}
         {phase.kind === 'googleFailed' && <InlineAlert severity="error">{phase.message}</InlineAlert>}
@@ -160,24 +141,7 @@ export default function LoginPage() {
           </InlineAlert>
         )}
 
-        {useMocks ? (
-          <>
-            <AppButton fullWidth startIcon={<GoogleIcon />} loading={busy} onClick={mockGoogleSignIn}>
-              Sign in with Google (mock)
-            </AppButton>
-            <AppRadioGroup
-              label="Mock identity (simulates the server's answer)"
-              name="mock-identity"
-              options={OPTIONS}
-              value={identity}
-              onChange={(value) => {
-                if (isMockIdentity(value)) setIdentity(value);
-              }}
-              disabled={busy}
-              helperText="Mock mode only: on the real server the role comes from New CP access, never from this page."
-            />
-          </>
-        ) : clientId === null ? (
+        {clientId === null ? (
           <InlineAlert severity="warning">
             Sign-in is BLOCKED: no Google client ID is configured for this build (VITE_GOOGLE_CLIENT_ID, question Q-B28).
           </InlineAlert>

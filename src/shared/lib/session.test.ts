@@ -1,29 +1,15 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ApiError, can, clearSessionToken, setSessionToken } from '@/shared/api';
-import { MOCK_IDENTITIES, mockSessionContext } from '@/mocks/sessionFixtures';
+import { MOCK_IDENTITIES, mockSessionContext } from '@/test/sessionFixtures';
 import {
-  chooseMockIdentity,
-  clearMockIdentity,
   loadSessionContext,
   onAccessEvent,
   reportAccessError,
   safeReturnPath,
 } from './session';
 
-const MOCK = { useMocks: true, baseUrl: '' };
-
-afterEach(() => {
-  clearMockIdentity();
-});
-
 describe('session context (IAM v0.9.7, D-51)', () => {
-  it('is signed out (401) until a mock identity is chosen, then returns its context', async () => {
-    await expect(loadSessionContext(MOCK)).rejects.toMatchObject({ kind: 'unauthorized' });
-    chooseMockIdentity('OPS');
-    await expect(loadSessionContext(MOCK)).resolves.toMatchObject({ accessStatus: 'AUTHORIZED', roles: ['OPS'] });
-  });
-
-  it('with the real API: signed out without a token, then GET /auth/me with the Bearer token (A30)', async () => {
+  it('is signed out without a token, then GET /auth/me with the Bearer token (A30, A38)', async () => {
     const me = {
       email: 'clerk@example.test',
       userUuid: '00000000-0000-4000-a000-000000000099',
@@ -35,7 +21,6 @@ describe('session context (IAM v0.9.7, D-51)', () => {
     const fetchSpy = vi.fn<typeof fetch>(() => Promise.resolve(new Response(JSON.stringify(me), { status: 200 })));
     vi.stubGlobal('fetch', fetchSpy);
     const real = { useMocks: false, baseUrl: 'https://api.example.test' };
-    chooseMockIdentity('CS');
     await expect(loadSessionContext(real)).rejects.toMatchObject({ kind: 'unauthorized' });
     expect(fetchSpy).not.toHaveBeenCalled();
     setSessionToken({ sessionToken: 'synthetic-session', expiresAt: null });
@@ -54,7 +39,7 @@ describe('session context (IAM v0.9.7, D-51)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('gives PENDING no tenant, roles or capabilities, and every other identity one read-only tenant', () => {
+  it('gives the PENDING test fixture no tenant, roles or capabilities, and every other identity one read-only tenant', () => {
     const pending = mockSessionContext('PENDING');
     expect(pending).toMatchObject({ accessStatus: 'PENDING', activeTenant: null, roles: [], capabilities: [] });
     for (const identity of MOCK_IDENTITIES.filter((value) => value !== 'PENDING')) {

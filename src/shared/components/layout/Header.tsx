@@ -3,8 +3,6 @@
  * - menu button at every width: hover peeks the hidden sidebar, click pins
  *   or hides it (phones: opens the drawer); the brand shows here while the
  *   sidebar is not docked;
- * - data source (MOCK / INTEGRATED) on phones only: from 640 up it sits in
- *   each data page's PageHeader;
  * - read-only active tenant (IAM v0.9.7, from 640 up; the account menu
  *   repeats it on phones);
  * - segmented colour theme (Light / Dark / System) from 640 up, icons only
@@ -21,9 +19,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import { evidenceOf, readApiConfig } from '@/shared/api';
 import { ThemeModeSwitch } from '@/shared/components/basic/ThemeModeSwitch';
-import { EvidenceBadge } from '@/shared/components/feedback/EvidenceBadge';
 import { TenantBadge } from '@/shared/components/feedback/TenantBadge';
 import { useSession } from '@/shared/hooks/useSession';
 import type { SidebarState } from '@/shared/hooks/useSidebarState';
@@ -31,7 +27,6 @@ import { BrandLogo } from './BrandLogo';
 import { SIDEBAR_ID } from './Sidebar';
 import { UserMenu } from './UserMenu';
 
-const EVIDENCE = evidenceOf(readApiConfig());
 
 export interface HeaderProps {
   state: SidebarState;
@@ -84,7 +79,6 @@ export function Header({ state, floating, onMenuClick, menuButtonRef, menuHoverP
 
         <Box sx={{ flexGrow: 1 }} />
 
-        {isPhone && <EvidenceBadge evidence={EVIDENCE} />}
         {tenant && <TenantBadge tenant={tenant} />}
         {!isPhone && <ThemeModeSwitch compact={!isDesktop} />}
 

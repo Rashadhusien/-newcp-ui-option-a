@@ -204,7 +204,7 @@ export default function OrdersPage() {
       <PageHeader
         title="All orders"
         description="One row per order. Open a row to see its services: each service is its own instance with its own status."
-        evidence
+        evidence={serviceApi.ordersEvidence}
         action={<NewOrderButton />}
       />
       {blocked ? (

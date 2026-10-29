@@ -7,11 +7,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('service adapter: Bill To with the real API (D-44, F07 absent)', () => {
-  it('labels the real adapter INTEGRATED but Bill To unavailable', () => {
+describe('service adapter: Bill To BLOCKED (F07 runtime unverified)', () => {
+  it('keeps Bill To unavailable and labels the screens without an endpoint (A38)', () => {
     const api = createServiceApi(REAL, () => 'token');
-    expect(api).toMatchObject({ evidence: 'INTEGRATED', billToAvailable: false, demoOrderUuid: null });
-    expect(createServiceApi({ useMocks: true, baseUrl: '' })).toMatchObject({ evidence: 'MOCK', billToAvailable: true });
+    expect(api).toMatchObject({ ordersEvidence: 'BLOCKED', billToAvailable: false });
+    expect(createServiceApi({ useMocks: true, baseUrl: '' })).toMatchObject({ ordersEvidence: 'MOCK', billToAvailable: false });
   });
 
   it('never calls the payer endpoint', async () => {

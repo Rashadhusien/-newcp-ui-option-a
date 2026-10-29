@@ -3,13 +3,13 @@
  * patient and client -> services -> teeth (react-odontogram, FDI) ->
  * service details (the Connect form fields of every Biomodel and Conversion
  * instance) -> review. Back is always allowed; forward needs a client and
- * patient code, at least one service, and valid service details. Creating
- * makes the order and one service instance per added service, then opens
- * the new order.
+ * patient code, at least one service, and valid service details.
  *
- * MOCK ONLY: the reference contract only creates services on an existing
- * order. Create order and its new database fields are Q-B24, patient fields
- * Q-B25; with the real API "Create order" is BLOCKED and nothing is sent.
+ * NOT IN THE CONTRACT: the contract only creates services on an existing
+ * order. Create order is Q-B24, patient fields Q-B25. With VITE_USE_MOCKS a
+ * synthetic order header is kept in this tab (MOCK; no service is sent to
+ * the API); otherwise "Create order" is BLOCKED and nothing is sent.
+ * Catalog and form schema are INTEGRATED.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,7 +29,8 @@ import { PageHeader } from '@/shared/components/layout';
 import { MOCK_ORDERS } from '@/mocks/orderFixtures';
 import { serviceApi } from '../data/serviceApi';
 import { initialValues, resolveFields, toAnswers } from '../forms/formLogic';
-import { specForService, type FormSpec } from '../forms/formSpecs';
+import { resolveFormSpec } from '../forms/catalogFormBridge';
+import type { FormSpec } from '../forms/formSpecs';
 import { InstanceDetailsForm } from './InstanceDetailsForm';
 import { PatientStep } from './PatientStep';
 import { ReviewStep } from './ReviewStep';
@@ -72,7 +73,7 @@ export default function CreateOrderPage() {
     const run = async (): Promise<Offered[]> => {
       const catalog = await serviceApi.catalog(undefined, options);
       const withSpec = catalog.flatMap((service) => {
-        const spec = specForService(service.code);
+        const spec = resolveFormSpec(service);
         return spec ? [{ service, spec }] : [];
       });
       return Promise.all(
@@ -175,7 +176,7 @@ export default function CreateOrderPage() {
   if (load.status === 'loading') {
     return (
       <>
-        <PageHeader title="Add order" evidence />
+        <PageHeader title="Add order" evidence={serviceApi.ordersEvidence} />
         <LoadingState label="Loading the services…" rows={4} />
       </>
     );
@@ -184,7 +185,7 @@ export default function CreateOrderPage() {
     const kind = load.error?.kind;
     return (
       <>
-        <PageHeader title="Add order" evidence />
+        <PageHeader title="Add order" evidence={serviceApi.ordersEvidence} />
         <ErrorState
           title={kind === 'forbidden' ? 'No access' : 'Could not load the services'}
           message={load.error?.message ?? 'Something went wrong. Try again.'}
@@ -247,7 +248,7 @@ export default function CreateOrderPage() {
       <PageHeader
         title="Add order"
         description="Five steps: patient and client, services, teeth, service details, review."
-        evidence
+        evidence={serviceApi.ordersEvidence}
       />
       <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
         <WizardStepper steps={STEP_LABELS} current={step} canReach={canReach} onSelect={goTo} />

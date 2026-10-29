@@ -18,7 +18,7 @@ describe('PageHeader (A16b)', () => {
   it('leads the actions with the data source badge on data pages', () => {
     renderWithTheme(<PageHeader title="Report" evidence action={<button type="button">Act</button>} />);
     expect(screen.getByRole('heading', { level: 1, name: 'Report' })).toBeInTheDocument();
-    const badge = screen.getByLabelText(/^Data source: MOCK/);
+    const badge = screen.getByLabelText(/^Data source: INTEGRATED/);
     const action = screen.getByRole('button', { name: 'Act' });
     expect(badge.compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

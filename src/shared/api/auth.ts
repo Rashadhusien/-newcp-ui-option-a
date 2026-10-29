@@ -7,8 +7,8 @@
  * `Authorization: Bearer <token>`; `GET /api/v1/auth/me` gives the session
  * context and `POST /api/v1/auth/logout` ends the session.
  *
- * The token is kept in memory only (CLAUDE.md: no token storage), so a page
- * reload signs in again until the backend says otherwise (Q-B29). The
+ * The token is kept in memory and mirrored in sessionStorage (see below), so a page
+ * reload keeps the tab signed in until the token expires (Q-B29). The
  * Google ID token is sent to the login endpoint only and never kept.
  * Auth errors arrive as `{ error: Problem }`; `asProblem` reads both shapes.
  */
@@ -108,27 +108,77 @@ export async function logoutSession(baseUrl: string, token: string, fetchImpl: t
 }
 
 // ---------------------------------------------------------------------------
-// In-memory session token (never written to storage)
+// Session token: memory, backed by sessionStorage so a reload keeps the tab
+// signed in (developer decision, 29 Oct; this departs from the memory-only
+// rule in CLAUDE.md / D-67 and needs Aya's approval). sessionStorage is per
+// tab and ends with it; every access is guarded because it can throw.
 // ---------------------------------------------------------------------------
 
-let current: LoginResult | null = null;
+const STORAGE_KEY = 'newcp-session';
+
+interface StoredSession extends LoginResult {
+  signedInAt: number;
+}
+
+let current: StoredSession | null = null;
+
+function readStored(): StoredSession | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (raw === null) return null;
+    const value: unknown = JSON.parse(raw);
+    if (typeof value !== 'object' || value === null) return null;
+    const record = value as Record<string, unknown>;
+    if (typeof record.sessionToken !== 'string' || record.sessionToken === '') return null;
+    return {
+      sessionToken: record.sessionToken,
+      expiresAt: typeof record.expiresAt === 'string' ? record.expiresAt : null,
+      signedInAt: typeof record.signedInAt === 'number' ? record.signedInAt : Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function loaded(): StoredSession | null {
+  current ??= readStored();
+  return current;
+}
 
 export function setSessionToken(result: LoginResult): void {
-  current = result;
+  current = { ...result, signedInAt: Date.now() };
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  } catch {
+    // Without storage the session still works until a reload.
+  }
 }
 
 export function clearSessionToken(): void {
   current = null;
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Nothing persisted to clear.
+  }
+}
+
+/** When this tab's current sign-in started and when the server ends it, for the session clock after a reload. */
+export function sessionTimes(): { signedInAt: number; expiresAt: number | null } | null {
+  const session = loaded();
+  if (!session) return null;
+  return { signedInAt: session.signedInAt, expiresAt: session.expiresAt === null ? null : Date.parse(session.expiresAt) };
 }
 
 /** The token while it is present and unexpired; null otherwise. */
 export function sessionToken(now: number = Date.now()): string | null {
-  if (!current) return null;
-  if (current.expiresAt !== null && Date.parse(current.expiresAt) <= now) {
-    current = null;
+  const session = loaded();
+  if (!session) return null;
+  if (session.expiresAt !== null && Date.parse(session.expiresAt) <= now) {
+    clearSessionToken();
     return null;
   }
-  return current.sessionToken;
+  return session.sessionToken;
 }
 
 /** Token source for the API client: a missing or expired session is a 401 (back to sign-in). */

@@ -1,20 +1,12 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-import { SessionContextValue, type SessionValue } from '@/shared/hooks/useSession';
-import { mockSessionContext, type MockIdentity } from '@/mocks/sessionFixtures';
+import { SessionContextValue } from '@/shared/hooks/useSession';
+import { readySession, type MockIdentity } from '@/test/sessionFixtures';
 import HomePage from './HomePage';
 
 function renderHome(identity: MockIdentity) {
-  const context = mockSessionContext(identity);
-  const session: SessionValue = {
-    state: { status: 'ready', context },
-    context,
-    refresh: () => undefined,
-    signIn: () => undefined,
-    signInWithSession: () => undefined,
-    signOut: () => undefined,
-  };
+  const session = readySession(identity);
   render(
     <MemoryRouter initialEntries={['/home']}>
       <SessionContextValue.Provider value={session}>

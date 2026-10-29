@@ -13,12 +13,9 @@ import Typography from '@mui/material/Typography';
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import { APP_NAME, APP_VERSION } from '@/app/appInfo';
 import { ROUTES } from '@/app/routes';
-import { evidenceOf, readApiConfig } from '@/shared/api';
 import { AppButton } from '@/shared/components/basic';
 import { useSupport } from '@/shared/hooks/useSupport';
 import { typographyTokens } from '@/theme/tokens';
-
-const EVIDENCE = evidenceOf(readApiConfig());
 
 const LINKS = [
   { to: ROUTES.reporting, label: 'Report' },
@@ -54,9 +51,7 @@ export function AppFooter() {
           {APP_NAME} · 3D Diagnostix
         </Typography>
         <Typography variant="caption" color="text.secondary" component="p">
-          {EVIDENCE === 'MOCK'
-            ? 'Internal clerk portal demo on mock data; nothing is sent to a real system.'
-            : 'Internal clerk portal, connected to the New CP API.'}
+          Internal clerk portal, connected to the New CP API.
         </Typography>
       </Box>
       <Box
@@ -77,7 +72,7 @@ export function AppFooter() {
         <Box component="span" sx={{ fontFamily: typographyTokens.fontFamily.mono }}>
           v{APP_VERSION}
         </Box>
-        {` · ${EVIDENCE} · © ${String(new Date().getFullYear())} 3D Diagnostix`}
+        {` · INTEGRATED · © ${String(new Date().getFullYear())} 3D Diagnostix`}
       </Typography>
     </Box>
   );

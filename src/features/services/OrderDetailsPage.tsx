@@ -80,7 +80,7 @@ function SelectedService({ serviceItemUuid, onChanged }: { serviceItemUuid: stri
 
 export default function OrderDetailsPage() {
   const { orderUuid: orderParam } = useParams();
-  const orderUuid = orderParam ?? serviceApi.demoOrderUuid ?? '';
+  const orderUuid = orderParam ?? '';
   const [params, setParams] = useSearchParams();
   const { context } = useSession();
   const [state, setState] = useState<OrderState>({ status: 'loading' });
@@ -94,7 +94,7 @@ export default function OrderDetailsPage() {
     const options = { signal: controller.signal };
     const header = serviceApi.orders(options).then(
       (orders) => orders.find((order) => order.orderUuid === orderUuid) ?? null,
-      () => null, // header is mock-only; without it the services still show
+      () => null, // the header has no endpoint (MOCK or BLOCKED); without it the services still show
     );
     Promise.all([serviceApi.orderItems(orderUuid, options), serviceApi.catalog(undefined, options), header]).then(
       ([services, catalog, found]) => {

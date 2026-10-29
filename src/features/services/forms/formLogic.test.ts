@@ -13,7 +13,7 @@ import {
   warnings,
 } from './formLogic';
 import { BIOMODEL_SPEC, CONVERSION_SPEC, type FormSpec, type FormValues } from './formSpecs';
-import { mockFormDefinition } from './mockFormDefinition';
+import { mockFormDefinition } from '@/test/mockFormDefinition';
 
 const SERVICE: CatalogService = { uuid: 's', code: 'mock-x', name: 'X', itemKind: 'service' };
 

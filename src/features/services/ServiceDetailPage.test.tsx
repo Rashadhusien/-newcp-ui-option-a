@@ -1,48 +1,40 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SessionProvider } from '@/app/SessionProvider';
 import { ApiError } from '@/shared/api';
 import { ToastProvider } from '@/shared/components/feedback';
-import { chooseMockIdentity, clearMockIdentity } from '@/shared/lib/session';
+import { SessionContextValue } from '@/shared/hooks/useSession';
 import { MOCK_SERVICE_ITEMS } from '@/mocks/serviceFixtures';
-import type { MockIdentity } from '@/mocks/sessionFixtures';
+import { readySession, type MockIdentity } from '@/test/sessionFixtures';
 import { serviceApi } from './data/serviceApi';
 import { staffPatch, staffValuesOf } from './detail/staffFields';
 import ServiceDetailPage from './ServiceDetailPage';
 
-// The app's mock adapter waits 300 ms per call; this page chains several calls, which made the
-// On Hold test load-sensitive (D-63). Here the mock answers without delay, so every wait below
-// depends only on rendered state, never on wall-clock time.
-vi.mock('./data/mockServiceApi', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./data/mockServiceApi')>();
-  return {
-    ...actual,
-    createMockServiceApi: (options: Parameters<typeof actual.createMockServiceApi>[0] = {}) =>
-      actual.createMockServiceApi({ ...options, latencyMs: 0 }),
-  };
+// The app always calls the real API (A38); here an in-memory fake stands in for it. It answers
+// without delay, so every wait below depends only on rendered state, never on wall-clock time (D-63).
+vi.mock('./data/serviceApi', async () => {
+  const { createFakeServiceApi } = await import('@/test/fakeServiceApi');
+  return { serviceApi: createFakeServiceApi() };
 });
 
 const [LINE_1, LINE_2] = MOCK_SERVICE_ITEMS.map((item) => item.uuid);
 const SLOW = { timeout: 4000 };
 
 function renderDetail(uuid: string | undefined, identity: MockIdentity = 'CS') {
-  chooseMockIdentity(identity);
   const router = createMemoryRouter([{ path: '/services/:serviceItemUuid', element: <ServiceDetailPage /> }], {
     initialEntries: [`/services/${uuid ?? ''}`],
   });
   render(
     <ToastProvider>
-      <SessionProvider>
+      <SessionContextValue.Provider value={readySession(identity)}>
         <RouterProvider router={router} />
-      </SessionProvider>
+      </SessionContextValue.Provider>
     </ToastProvider>,
   );
 }
 
 afterEach(() => {
   vi.restoreAllMocks();
-  clearMockIdentity();
 });
 
 describe('staffPatch', () => {

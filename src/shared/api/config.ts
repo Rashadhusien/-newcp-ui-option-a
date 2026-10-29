@@ -1,12 +1,14 @@
 /**
  * API runtime configuration from Vite env (see .env.example).
  *
- * Mocks are the default: only an explicit `VITE_USE_MOCKS=false` switches to
- * the real API, and only when a base URL is set. The evidence label shown
- * in the UI (MOCK / INTEGRATED) follows this value.
+ * A38: every operation in the canonical contract always calls the real API
+ * (`VITE_API_BASE_URL`; empty = same origin through the Vite /api proxy).
+ * `VITE_USE_MOCKS` now only decides what the screens WITHOUT an endpoint
+ * show (orders list, create order): synthetic data labelled MOCK (the
+ * default), or BLOCKED with `VITE_USE_MOCKS=false`.
  */
 
-export type ApiEvidence = 'MOCK' | 'INTEGRATED';
+export type ApiEvidence = 'MOCK' | 'INTEGRATED' | 'BLOCKED';
 
 export interface ApiConfig {
   useMocks: boolean;
@@ -15,12 +17,13 @@ export interface ApiConfig {
 
 export function readApiConfig(env: Record<string, unknown> = import.meta.env): ApiConfig {
   const baseUrl = typeof env.VITE_API_BASE_URL === 'string' ? env.VITE_API_BASE_URL : '';
-  const useMocks = env.VITE_USE_MOCKS !== 'false' || baseUrl === '';
+  const useMocks = env.VITE_USE_MOCKS !== 'false';
   return { useMocks, baseUrl };
 }
 
-export function evidenceOf(config: ApiConfig): ApiEvidence {
-  return config.useMocks ? 'MOCK' : 'INTEGRATED';
+/** Label for a screen whose operation is not in the contract: synthetic (MOCK) or unavailable (BLOCKED). */
+export function evidenceOf(config: ApiConfig): Exclude<ApiEvidence, 'INTEGRATED'> {
+  return config.useMocks ? 'MOCK' : 'BLOCKED';
 }
 
 /**

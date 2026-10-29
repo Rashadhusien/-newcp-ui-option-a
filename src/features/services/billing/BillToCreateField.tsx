@@ -1,8 +1,8 @@
 /**
  * Optional Bill To when creating ONE service (F07 `CreateServiceItem`):
  * empty = the order default is copied once by the server; a choice applies
- * to this new service only. MOCK only (D-44): with the real API it says
- * BLOCKED and the form sends no payer. The page shows it only with the
+ * to this new service only. BLOCKED (A38) until a live check of the payer
+ * endpoint (A31): it says BLOCKED and the form sends no payer. The page shows it only with the
  * Bill To capability (display only; the server decides).
  */
 

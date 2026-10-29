@@ -65,10 +65,7 @@ export function ServiceInstanceSections({ detail, onChanged }: ServiceInstanceSe
       <SectionCard title="Staff fields">
         <StaffFieldsForm key={etag} item={item} etag={etag} onSaved={onChanged} onReload={onChanged} />
       </SectionCard>
-      <SectionCard
-        title="Bill To"
-        action={serviceApi.billToAvailable ? <EvidenceBadge evidence={serviceApi.evidence} /> : undefined}
-      >
+      <SectionCard title="Bill To" action={serviceApi.billToAvailable ? undefined : <EvidenceBadge evidence="BLOCKED" />}>
         <BillToSection key={etag} item={item} etag={etag} onSaved={onChanged} onReload={onChanged} />
       </SectionCard>
       <SectionCard title="Status">

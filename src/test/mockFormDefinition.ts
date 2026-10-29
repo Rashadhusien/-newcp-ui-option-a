@@ -1,14 +1,14 @@
 /**
- * Builds the mock's contract-shaped FormDefinition from the local specs, so
+ * TEST ONLY (A38). Builds a contract-shaped FormDefinition from the local specs, so
  * the UI renders from `GET /catalog/services/{uuid}/form-schema` exactly as
  * it will against the real API. Field UUIDs are synthetic; `type` is the
  * canonical data type of the control (Q-B11).
  */
 
 import type { CatalogService, FormDefinition, FormField } from '@/shared/api';
-import { MOCK_RUNTIME_OPTIONS } from '@/mocks/formOptions';
-import { canonicalTypeOf } from './formLogic';
-import type { FormSpec } from './formSpecs';
+import { canonicalTypeOf } from '@/features/services/forms/formLogic';
+import type { FormSpec } from '@/features/services/forms/formSpecs';
+import { MOCK_RUNTIME_OPTIONS } from './formOptions';
 
 export function mockFormDefinition(service: CatalogService, spec: FormSpec): FormDefinition {
   const prefix = spec.key === 'biomodel' ? 'b' : 'c';

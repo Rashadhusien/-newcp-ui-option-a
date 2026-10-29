@@ -4,8 +4,9 @@
  * really has is interactive: the theme (a per-viewer convenience kept by
  * MUI's colour-scheme storage; on phones the only place to change it).
  * Account facts come from the session context and are read-only: the
- * frontend never edits a name, role, tenant or capability. The data source
- * follows VITE_USE_MOCKS. Profile, notifications and password have no
+ * frontend never edits a name, role, tenant or capability. Contract
+ * operations are INTEGRATED (A38); VITE_USE_MOCKS only labels the screens
+ * without an endpoint. Profile, notifications and password have no
  * backend: they are listed as "Not available in this demo", with no control.
  */
 
@@ -16,12 +17,13 @@ import { APP_NAME, APP_VERSION } from '@/app/appInfo';
 import { evidenceOf, readApiConfig } from '@/shared/api';
 import { ThemeModeSwitch } from '@/shared/components/basic';
 import { DetailList, SectionCard, SectionTabs, sectionTabIds, type SectionTab } from '@/shared/components/data-display';
+import { AfterSignInSetting } from '@/features/auth/AfterSignInSetting';
 import { EvidenceBadge } from '@/shared/components/feedback';
 import { PageHeader } from '@/shared/components/layout';
 import { useSession } from '@/shared/hooks/useSession';
 import { useTabParam } from '@/shared/hooks/useTabParam';
 
-const EVIDENCE = evidenceOf(readApiConfig());
+const NO_ENDPOINT = evidenceOf(readApiConfig());
 
 const SECTIONS = ['account', 'appearance', 'data', 'about'] as const;
 type Section = (typeof SECTIONS)[number];
@@ -35,11 +37,11 @@ const TABS: readonly SectionTab<Section>[] = [
 
 const ID_PREFIX = 'settings';
 
-/** Pages and fields that never reach the New CP API, whatever the data source. */
-const MOCK_ONLY = [
-  'Bill To (payer per service): BLOCKED until the database has the F07 columns',
-  'Orders list and create order: no endpoint yet',
-  'Session context (roles, tenant, capabilities): not in the OpenAPI yet',
+/** Pages and fields that never reach the New CP API. */
+const NOT_INTEGRATED = [
+  'Bill To (payer per service): BLOCKED until a live check of the payer endpoint (F07 runtime unverified)',
+  `Orders list and create order: no endpoint in the contract (${NO_ENDPOINT})`,
+  'Report: synthetic rows, no endpoint in the contract (MOCK)',
 ] as const;
 
 const NOT_AVAILABLE = ['Profile editing', 'Notifications', 'Password and security'] as const;
@@ -80,6 +82,7 @@ function AccountSection() {
           Your access is assigned on the server. Ask an administrator to change your roles or tenant.
         </Typography>
       </SectionCard>
+      <AfterSignInSetting />
       <SectionCard title="Not available in this demo">
         <Stack component="ul" spacing={0.5} sx={{ m: 0, pl: 2.5 }}>
           {NOT_AVAILABLE.map((item) => (
@@ -114,17 +117,15 @@ function AppearanceSection() {
 
 function DataSection() {
   return (
-    <SectionCard title="Data source" action={<EvidenceBadge evidence={EVIDENCE} />}>
+    <SectionCard title="Data source" action={<EvidenceBadge evidence="INTEGRATED" />}>
       <Typography variant="body2">
-        {EVIDENCE === 'MOCK'
-          ? 'Mock data: nothing is saved to the New CP API. Mock data stays until a real API is demonstrated.'
-          : 'Connected to the New CP API.'}
+        Sign-in, services, status, history, lookups and users and roles are connected to the New CP API.
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        Set by the deployment (VITE_USE_MOCKS); it cannot be changed here. These stay mock only:
+        Set by the deployment; it cannot be changed here. Not connected:
       </Typography>
       <Stack component="ul" spacing={0.5} sx={{ m: 0, pl: 2.5 }}>
-        {MOCK_ONLY.map((item) => (
+        {NOT_INTEGRATED.map((item) => (
           <Typography component="li" variant="body2" key={item}>
             {item}
           </Typography>
@@ -143,11 +144,11 @@ function AboutSection() {
           { label: 'Application', value: APP_NAME },
           { label: 'Version', value: APP_VERSION },
           { label: 'Build', value: import.meta.env.DEV ? 'Development' : 'Production' },
-          { label: 'Data source', value: EVIDENCE },
+          { label: 'Data source', value: 'INTEGRATED' },
         ]}
       />
       <Typography variant="body2" color="text.secondary">
-        Internal clerk workspace for Biomodel and Conversion services. Demo build: data is synthetic.
+        Internal clerk workspace for Biomodel and Conversion services.
       </Typography>
     </SectionCard>
   );

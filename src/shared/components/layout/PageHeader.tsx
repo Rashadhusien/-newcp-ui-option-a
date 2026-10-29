@@ -2,9 +2,9 @@
  * Page header: title, optional meta row (status, priority, dates),
  * description, and actions on the right.
  *
- * `evidence`: pages that show service data set it, and the data source
- * badge (MOCK / INTEGRATED) leads the actions, as the design system asks.
- * On phones the app header shows the badge instead, so it is hidden here.
+ * `evidence`: pages that show data set it, and the data source badge leads
+ * the actions, as the design system asks. `true` = INTEGRATED (the real
+ * API, A38); a page without an endpoint passes MOCK or BLOCKED.
  *
  * Titles use the page-title scale (h1: 22/28 semibold).
  *
@@ -15,12 +15,10 @@
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { evidenceOf, readApiConfig } from '@/shared/api';
+import type { ApiEvidence } from '@/shared/api';
 import { EvidenceBadge } from '@/shared/components/feedback/EvidenceBadge';
 import type { TrailHints } from '@/shared/lib/breadcrumbs';
 import { AppBreadcrumbs } from './AppBreadcrumbs';
-
-const EVIDENCE = evidenceOf(readApiConfig());
 
 export interface PageHeaderProps {
   title: string;
@@ -28,8 +26,8 @@ export interface PageHeaderProps {
   description?: string;
   /** Inline facts under the title, e.g. status and priority badges. */
   meta?: React.ReactNode;
-  /** Show the data source badge (pages with service data). */
-  evidence?: boolean;
+  /** Show the data source badge: `true` = INTEGRATED, or the page's own label. */
+  evidence?: boolean | ApiEvidence;
   /** Breadcrumb hints for dynamic segments the URL does not carry. */
   breadcrumbs?: TrailHints;
 }
@@ -61,13 +59,9 @@ export function PageHeader({ title, action, description, meta, evidence = false,
             </Typography>
           )}
         </Box>
-        {(action != null || evidence) && (
+        {(action != null || evidence !== false) && (
           <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-            {evidence && (
-              <Box sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
-                <EvidenceBadge evidence={EVIDENCE} />
-              </Box>
-            )}
+            {evidence !== false && <EvidenceBadge evidence={evidence === true ? 'INTEGRATED' : evidence} />}
             {action}
           </Stack>
         )}

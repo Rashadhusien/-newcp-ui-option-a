@@ -6,7 +6,7 @@
 import type { BilledPartyChoice, BilledPartyOrigin } from '@/shared/api';
 
 export const BILL_TO_BLOCKED_TEXT =
-  'Bill To is not available yet: the payer columns are missing in the current database (F07 not applied). Nothing is sent.';
+  'Bill To is not available yet: the payer endpoint has not been checked live on the test server (F07 runtime unverified). Nothing is sent.';
 
 export const BILL_TO_INDEPENDENT_TEXT = 'Independent of Billable: changing one never changes the other.';
 

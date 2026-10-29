@@ -1,8 +1,7 @@
 /**
  * Loads who may be billed for ONE order (F07,
- * `GET /orders/{orderUuid}/eligible-billed-parties`). Mock only (D-44): with
- * the real API Bill To is BLOCKED, so nothing is called and the state says
- * so.
+ * `GET /orders/{orderUuid}/eligible-billed-parties`). BLOCKED (A38) until a
+ * live check (A31): nothing is called and the state says so.
  */
 
 import { useEffect, useState } from 'react';

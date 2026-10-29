@@ -3,8 +3,8 @@
  * for this service, Doctor or Scanning Center, chosen from the order's
  * eligible billed parties.
  *
- * - MOCK only (D-44): with the real API the section says BLOCKED, the
- *   payer endpoint is never called and nothing is sent.
+ * - BLOCKED (A38): until a live check of the payer endpoint (A31) the
+ *   section says BLOCKED, the endpoint is never called and nothing is sent.
  * - Saves only `billedToContactUuid`, for this one instance, with If-Match.
  *   Never billedPartyOrigin or a tenant; never an order-level payer.
  * - Its own save, separate from the staff fields, so Billable and Bill To

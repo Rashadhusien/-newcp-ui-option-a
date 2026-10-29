@@ -36,7 +36,7 @@ export const MOCK_CONVERSION_UUID = '00000000-0000-0000-0000-000000000004';
 export const MOCK_CATALOG: readonly CatalogService[] = [
   {
     uuid: MOCK_BIOMODEL_UUID,
-    code: 'mock-biomodel',
+    code: 'biomodel_other_services',
     name: 'Biomodel',
     itemKind: 'service',
     isDigital: false,
@@ -44,7 +44,7 @@ export const MOCK_CATALOG: readonly CatalogService[] = [
   },
   {
     uuid: MOCK_CONVERSION_UUID,
-    code: 'mock-conversion',
+    code: 'legacy_price_convcostbsbbasicfull',
     name: 'Conversion',
     itemKind: 'service',
     isDigital: true,

@@ -10,7 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/shared/components/feedba
 import { PageHeader } from '@/shared/components/layout';
 import type { TrailHints } from '@/shared/lib/breadcrumbs';
 import { useSession } from '@/shared/hooks/useSession';
-import { specForService } from './forms/formSpecs';
+import { resolveFormSpec } from './forms/catalogFormBridge';
 import { ServiceForm } from './forms/ServiceForm';
 import { useServiceFormData, type ServiceFormTarget } from './forms/useServiceFormData';
 
@@ -58,7 +58,7 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
   }
 
   const { definition, item, etag } = data;
-  const spec = specForService(definition.service.code);
+  const spec = resolveFormSpec(definition.service);
   const orderUuid = item?.orderUuid ?? (target.mode === 'create' ? target.orderUuid : '');
   const title =
     item === null
@@ -80,8 +80,8 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
       <>
         <PageHeader title={title} description={description} evidence breadcrumbs={breadcrumbs} />
         <EmptyState
-          title="No form for this service"
-          description="Option A has form rules for Biomodel and Conversion only."
+          title={`No form for ${definition.service.name} yet`}
+          description={`Catalog code ${definition.service.code} is not mapped to a form. Option A has form rules for Biomodel and Conversion only.`}
         />
       </>
     );

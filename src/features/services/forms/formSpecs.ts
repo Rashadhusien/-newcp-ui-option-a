@@ -417,13 +417,3 @@ export const CONVERSION_SPEC: FormSpec = {
     },
   ],
 };
-
-/** Catalog service code -> form spec. Mock codes until the tenant catalog is known (R01). */
-const SPEC_BY_SERVICE_CODE: Readonly<Record<string, FormSpec>> = {
-  'mock-biomodel': BIOMODEL_SPEC,
-  'mock-conversion': CONVERSION_SPEC,
-};
-
-export function specForService(serviceCode: string): FormSpec | undefined {
-  return Object.hasOwn(SPEC_BY_SERVICE_CODE, serviceCode) ? SPEC_BY_SERVICE_CODE[serviceCode] : undefined;
-}
