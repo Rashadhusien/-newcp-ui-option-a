@@ -181,6 +181,8 @@ describe('ServiceForm (create payload by service family, PR #28)', () => {
     const body = create.mock.calls[0]?.[1];
     expect(body).toMatchObject({ serviceFamily: 'conversion', answers: expect.any(Array) as unknown });
     expect(body).not.toHaveProperty('sellableItemUuid');
+    // Default software Simplant -> the backend's resolver value.
+    expect(body.answers).toContainEqual({ fieldCode: 'conversionSoftware', optionCodes: ['simplant'] });
   });
 
   it('shows the server 422 for an unresolved Conversion combination and saves nothing', async () => {

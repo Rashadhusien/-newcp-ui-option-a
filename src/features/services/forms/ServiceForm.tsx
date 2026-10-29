@@ -51,6 +51,7 @@ import {
   unsupportedFields,
   warnings,
 } from './formLogic';
+import { withConversionResolverAnswers } from './conversionResolver';
 import { FormSection } from './FormSection';
 import type { FormSpec, FormValues } from './formSpecs';
 import { ServiceFormFields } from './ServiceFormFields';
@@ -133,9 +134,8 @@ export function ServiceForm({
             orderUuid,
             {
               ...(definition.service.serviceFamily === 'conversion'
-                ? { serviceFamily: 'conversion' as const }
-                : { sellableItemUuid: definition.service.uuid }),
-              answers,
+                ? { serviceFamily: 'conversion' as const, answers: withConversionResolverAnswers(answers) }
+                : { sellableItemUuid: definition.service.uuid, answers }),
               quantity: 1,
               ...(billTo !== '' ? { billedToContactUuid: billTo } : {}),
             },
