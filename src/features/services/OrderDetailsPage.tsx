@@ -29,6 +29,7 @@ import { useSession } from '@/shared/hooks/useSession';
 import { formatDate } from '@/shared/lib/formatters';
 import { typographyTokens } from '@/theme/tokens';
 import { serviceApi } from './data/serviceApi';
+import { serviceChoices, serviceLabel } from './forms/catalogFormBridge';
 import type { OrderSummary } from './data/orderSummary';
 import { ServiceInstanceSections } from './detail/ServiceInstanceSections';
 import { useServiceDetail } from './detail/useServiceDetail';
@@ -45,7 +46,7 @@ type OrderState =
     };
 
 function nameOf(catalog: readonly CatalogService[], uuid: string): string {
-  return catalog.find((entry) => entry.uuid === uuid)?.name ?? 'Service';
+  return serviceLabel(catalog.find((entry) => entry.uuid === uuid)) ?? 'Service';
 }
 
 function SelectedService({ serviceItemUuid, onChanged }: { serviceItemUuid: string; onChanged: () => void }) {
@@ -141,15 +142,15 @@ export default function OrderDetailsPage() {
   const selected = services.find((item) => item.uuid === params.get('service')) ?? services.at(0) ?? null;
   const title = header ? `Order ${header.orderNumber}` : `Order …${orderUuid.slice(-8)}`;
   const addActions = can(context, 'service.create')
-    ? catalog.map((service) => (
+    ? serviceChoices(catalog).map(({ family, spec, service }) => (
         <Box
-          key={service.uuid}
+          key={family}
           component={RouterLink}
-          to={ROUTES.serviceNew(orderUuid, service.uuid)}
+          to={service ? ROUTES.serviceNew(orderUuid, service.uuid) : ROUTES.serviceNewFamily(orderUuid, 'conversion')}
           sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, typography: 'body2', color: 'primary.main' }}
         >
           <AddOutlinedIcon fontSize="small" aria-hidden="true" />
-          {`New ${service.name}`}
+          {`New ${spec.title}`}
         </Box>
       ))
     : null;

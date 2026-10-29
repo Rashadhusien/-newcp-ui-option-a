@@ -17,6 +17,9 @@ export const ROUTES = {
   /** Create a service instance of one catalog service on an order. */
   serviceNew: (orderUuid: string, serviceUuid: string) =>
     `/orders/${encodeURIComponent(orderUuid)}/services/new/${encodeURIComponent(serviceUuid)}`,
+  /** Create a Conversion on an order; the server resolves the catalog variant (PR #28). */
+  serviceNewFamily: (orderUuid: string, serviceFamily: 'conversion') =>
+    `/orders/${encodeURIComponent(orderUuid)}/services/new/family/${serviceFamily}`,
   /** One order: summary and its services (A20). */
   orderServices: (orderUuid: string) =>
     `/orders/${encodeURIComponent(orderUuid)}`,
@@ -39,6 +42,7 @@ export const ROUTES = {
   settings: string;
   adminUsers: string;
   serviceNew: (orderUuid: string, serviceUuid: string) => string;
+  serviceNewFamily: (orderUuid: string, serviceFamily: 'conversion') => string;
   orderServices: (orderUuid: string) => string;
   serviceDetail: (serviceItemUuid: string) => string;
   serviceEdit: (serviceItemUuid: string) => string;

@@ -5,7 +5,8 @@ import { ApiError, type CatalogService, type ServiceItem } from '@/shared/api';
 import { ToastProvider } from '@/shared/components/feedback';
 import { MOCK_ORDER_UUID, MOCK_SERVICE_ITEMS } from '@/mocks/serviceFixtures';
 import { serviceApi } from '../data/serviceApi';
-import { BIOMODEL_SPEC } from './formSpecs';
+import { conversionFamilyDefinition } from './catalogFormBridge';
+import { BIOMODEL_SPEC, CONVERSION_SPEC } from './formSpecs';
 import { mockFormDefinition } from '@/test/mockFormDefinition';
 import { ServiceForm } from './ServiceForm';
 
@@ -14,6 +15,7 @@ const BIOMODEL: CatalogService = {
   code: 'biomodel_other_services',
   name: 'Biomodel',
   itemKind: 'service',
+  serviceFamily: 'biomodel',
 };
 
 // The app always calls the real API (A38); here an in-memory fake stands in for it.
@@ -134,5 +136,75 @@ describe('ServiceForm (edit, Q-B8 concurrency)', () => {
     expect(mandible.getByLabelText('Q-L')).toBeChecked();
     fireEvent.click(screen.getByRole('button', { name: 'Reload latest' }));
     expect(onReload).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ServiceForm (create payload by service family, PR #28)', () => {
+  const CREATED = MOCK_SERVICE_ITEMS.at(0);
+  if (!CREATED) throw new Error('fixture missing');
+
+  function renderConversion() {
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/new',
+          element: (
+            <ServiceForm
+              spec={CONVERSION_SPEC}
+              definition={conversionFamilyDefinition()}
+              item={null}
+              etag={null}
+              orderUuid={MOCK_ORDER_UUID}
+              onReload={vi.fn()}
+            />
+          ),
+        },
+        { path: '/services/:serviceItemUuid/edit', element: <p>Edit page</p> },
+      ],
+      { initialEntries: ['/new'] },
+    );
+    render(
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>,
+    );
+    return router;
+  }
+
+  it('creates Conversion with serviceFamily and no guessed sellableItemUuid', async () => {
+    const create = vi.spyOn(serviceApi, 'create').mockResolvedValue(CREATED);
+    renderConversion();
+    fireEvent.click(screen.getByRole('button', { name: 'Create Conversion service' }));
+    await waitFor(() => {
+      expect(create).toHaveBeenCalledTimes(1);
+    });
+    const body = create.mock.calls[0]?.[1];
+    expect(body).toMatchObject({ serviceFamily: 'conversion', answers: expect.any(Array) as unknown });
+    expect(body).not.toHaveProperty('sellableItemUuid');
+  });
+
+  it('shows the server 422 for an unresolved Conversion combination and saves nothing', async () => {
+    vi.spyOn(serviceApi, 'create').mockRejectedValue(
+      new ApiError(422, { code: 'CONVERSION_VARIANT_UNRESOLVED', message: 'No single Conversion variant matches these answers.' }),
+    );
+    const router = renderConversion();
+    fireEvent.click(screen.getByRole('button', { name: 'Create Conversion service' }));
+    expect(
+      await screen.findByText('No single Conversion variant matches these answers. Nothing was saved.'),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/new');
+  });
+
+  it('keeps creating Biomodel by its catalog row (sellableItemUuid), with no serviceFamily', async () => {
+    const create = vi.spyOn(serviceApi, 'create').mockResolvedValue(CREATED);
+    renderCreateForm();
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Customization (mandible)' })).getByLabelText('Q-L'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create Biomodel service' }));
+    await waitFor(() => {
+      expect(create).toHaveBeenCalledTimes(1);
+    });
+    const body = create.mock.calls[0]?.[1];
+    expect(body).toMatchObject({ sellableItemUuid: BIOMODEL.uuid });
+    expect(body).not.toHaveProperty('serviceFamily');
   });
 });

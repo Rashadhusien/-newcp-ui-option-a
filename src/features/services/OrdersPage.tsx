@@ -30,6 +30,7 @@ import { presentStatus } from '@/shared/status/status';
 import { typographyTokens } from '@/theme/tokens';
 import { NewOrderButton } from './create/NewOrderButton';
 import { serviceApi } from './data/serviceApi';
+import { serviceLabel } from './forms/catalogFormBridge';
 import type { OrderSummary } from './data/orderSummary';
 
 const ALL = 'all';
@@ -40,7 +41,7 @@ type LoadState =
   | { status: 'ready'; orders: OrderSummary[]; catalog: CatalogService[] };
 
 function serviceName(catalog: readonly CatalogService[], uuid: string): string {
-  return catalog.find((entry) => entry.uuid === uuid)?.name ?? 'Service';
+  return serviceLabel(catalog.find((entry) => entry.uuid === uuid)) ?? 'Service';
 }
 
 function ServiceLines({ order, catalog }: { order: OrderSummary; catalog: readonly CatalogService[] }) {

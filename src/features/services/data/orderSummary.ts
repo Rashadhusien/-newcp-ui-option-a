@@ -5,7 +5,7 @@
  * are display-only (D-61); `services` are contract-shaped service items.
  */
 
-import type { FormAnswer, ServiceItem } from '@/shared/api';
+import type { FormAnswer, ServiceFamily, ServiceItem } from '@/shared/api';
 import type { MockOrderHeader } from '@/mocks/orderFixtures';
 
 export interface OrderSummary extends MockOrderHeader {
@@ -24,7 +24,8 @@ export interface CreateOrderRequest {
   patientCode: string;
   /** ISO date (yyyy-mm-dd). */
   dueOn: string;
-  services: { sellableItemUuid: string; answers: FormAnswer[]; teeth: number[] }[];
+  /** One entry per instance, by service family (the server would resolve Conversion). */
+  services: { serviceFamily: ServiceFamily; answers: FormAnswer[]; teeth: number[] }[];
 }
 
 export interface CreateOrderResult {

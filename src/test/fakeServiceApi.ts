@@ -44,6 +44,7 @@ import {
   MOCK_BILLED_PARTIES,
   MOCK_CATALOG,
   MOCK_CONTRACT_UNIT_PRICE,
+  MOCK_CONVERSION_UUID,
   MOCK_CURRENCY,
   MOCK_DOCTOR_UUID,
   MOCK_HOLD_REASONS,
@@ -290,7 +291,9 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
           const existing = idempotent.get(idempotencyKey);
           if (existing) return withEtag(getItem(existing));
         }
-        assertAnswers(request.answers, definitionOf(request.sellableItemUuid));
+        // Test fake: a family create resolves to the one fixture Conversion row (the real server picks the variant).
+        const sellableItemUuid = request.serviceFamily === 'conversion' ? MOCK_CONVERSION_UUID : request.sellableItemUuid;
+        assertAnswers(request.answers, definitionOf(sellableItemUuid));
         if (request.billedToContactUuid) assertEligiblePayer(orderUuid, request.billedToContactUuid);
         assertQuantity(request.quantity);
         assertUnitPrice(request.unitPrice);
@@ -309,7 +312,7 @@ export function createMockServiceApi(options: MockOptions = {}): MockServiceApi 
         const created: ServiceItem = {
           uuid: newUuid(),
           orderUuid,
-          sellableItemUuid: request.sellableItemUuid,
+          sellableItemUuid,
           lineNumber: Math.max(0, ...lines) + 1,
           ...money,
           lineTotal,

@@ -14,14 +14,15 @@ import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import SyncAltOutlinedIcon from '@mui/icons-material/SyncAltOutlined';
 import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined';
-import type { CatalogService } from '@/shared/api';
+import type { ServiceFamily } from '@/shared/api';
 import { AppButton } from '@/shared/components/basic';
 import { InlineAlert } from '@/shared/components/feedback';
 import { MAX_PER_SERVICE, type CreateOrderWizard } from './useCreateOrderWizard';
 
 export interface ServicesStepProps {
   wizard: CreateOrderWizard;
-  services: readonly { service: CatalogService; prefix: string }[];
+  /** One entry per service family: Conversion is one choice, however many catalog rows it has. */
+  services: readonly { family: ServiceFamily; name: string }[];
 }
 
 export function ServicesStep({ wizard, services }: ServicesStepProps) {
@@ -34,16 +35,16 @@ export function ServicesStep({ wizard, services }: ServicesStepProps) {
       <Box
         sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' } }}
       >
-        {services.map(({ service, prefix }) => {
-          const instances = state.instances.filter((instance) => instance.serviceUuid === service.uuid);
-          const Icon = prefix === 'biomodel' ? ViewInArOutlinedIcon : SyncAltOutlinedIcon;
+        {services.map(({ family, name }) => {
+          const instances = state.instances.filter((instance) => instance.family === family);
+          const Icon = family === 'biomodel' ? ViewInArOutlinedIcon : SyncAltOutlinedIcon;
           return (
-            <Paper key={service.uuid} variant="outlined" sx={{ p: 2.5 }} component="section" aria-label={service.name}>
+            <Paper key={family} variant="outlined" sx={{ p: 2.5 }} component="section" aria-label={name}>
               <Stack spacing={1.5}>
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}>
                   <Icon color="primary" aria-hidden="true" />
                   <Typography variant="h3" component="h2" sx={{ flex: 1 }}>
-                    {service.name}
+                    {name}
                   </Typography>
                   <AppButton
                     variant="secondary"
@@ -51,10 +52,10 @@ export function ServicesStep({ wizard, services }: ServicesStepProps) {
                     startIcon={<AddOutlinedIcon />}
                     disabled={instances.length >= MAX_PER_SERVICE}
                     onClick={() => {
-                      addInstance(service.uuid, prefix);
+                      addInstance(family);
                     }}
                   >
-                    {instances.length === 0 ? `Add ${service.name}` : `Add another ${service.name}`}
+                    {instances.length === 0 ? `Add ${name}` : `Add another ${name}`}
                   </AppButton>
                 </Stack>
                 {instances.length === 0 ? (
@@ -66,12 +67,12 @@ export function ServicesStep({ wizard, services }: ServicesStepProps) {
                     {instances.map((instance, index) => (
                       <Stack key={instance.id} component="li" direction="row" sx={{ alignItems: 'center' }}>
                         <Typography variant="body2" sx={{ flex: 1 }}>
-                          {`${service.name} ${String(index + 1)}`}
+                          {`${name} ${String(index + 1)}`}
                         </Typography>
                         <Tooltip title="Remove">
                           <IconButton
                             size="small"
-                            aria-label={`Remove ${service.name} ${String(index + 1)}`}
+                            aria-label={`Remove ${name} ${String(index + 1)}`}
                             onClick={() => {
                               removeInstance(instance.id);
                             }}

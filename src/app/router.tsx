@@ -38,6 +38,10 @@ export const router = createBrowserRouter([
         path: 'orders/:orderUuid/services/new/:serviceUuid',
         lazy: page(() => import('@/features/services/ServiceFormPage')),
       },
+      {
+        path: 'orders/:orderUuid/services/new/family/:serviceFamily',
+        lazy: page(() => import('@/features/services/ServiceFormPage')),
+      },
       { path: 'services/:serviceItemUuid', lazy: page(() => import('@/features/services/ServiceDetailPage')) },
       { path: 'services/:serviceItemUuid/edit', lazy: page(() => import('@/features/services/ServiceFormPage')) },
       { path: 'admin/users', lazy: page(() => import('@/features/iam/UsersAndRolesPage')) },

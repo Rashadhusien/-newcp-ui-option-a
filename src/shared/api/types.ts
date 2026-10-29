@@ -30,7 +30,15 @@ export interface CatalogService {
   itemKind: 'service';
   isDigital?: boolean;
   workflowCode?: string | null;
+  /**
+   * Additive classification (PR #28): absent when the code is not a verified member of a
+   * known family. `code` stays the persisted pricing identifier.
+   */
+  serviceFamily?: ServiceFamily;
 }
+
+/** `CatalogService.serviceFamily` enum. */
+export type ServiceFamily = 'biomodel' | 'conversion';
 
 /** Q-B11: data types of V3 catalog.field_types; radio vs select is presentation only. */
 export type CanonicalFieldType =
@@ -115,8 +123,16 @@ export interface FormAnswer {
   optionCodes?: string[];
 }
 
-export interface CreateServiceItem {
-  sellableItemUuid: string;
+/**
+ * Exactly one of `sellableItemUuid` (direct, unchanged path) or `serviceFamily`
+ * (`conversion` only: the backend resolves the concrete sellable item from the answers
+ * `conversionSoftware`, `conversionSegmentationType`, `conversionArchScope`, and rejects
+ * ambiguous or unsupported selections with 422).
+ */
+export type CreateServiceItem = CreateServiceItemFields &
+  ({ sellableItemUuid: string; serviceFamily?: never } | { serviceFamily: 'conversion'; sellableItemUuid?: never });
+
+export interface CreateServiceItemFields {
   answers: FormAnswer[];
   isRedo?: boolean;
   redoOfItemUuid?: string;

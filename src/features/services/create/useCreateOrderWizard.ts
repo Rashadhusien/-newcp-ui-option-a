@@ -9,13 +9,15 @@
  * allowed. Mock only (Q-B24, Q-B25): see CreateOrderPage.
  */
 
+import type { ServiceFamily } from '@/shared/api';
 import { useState } from 'react';
 import type { FormValues } from '../forms/formSpecs';
 
 export interface WizardInstance {
   /** Local id, e.g. "biomodel-1"; the server gives the real UUID on create. */
   id: string;
-  serviceUuid: string;
+  /** The service family the instance belongs to (one choice per family, PR #28). */
+  family: ServiceFamily;
 }
 
 export interface WizardState {
@@ -84,13 +86,14 @@ export function useCreateOrderWizard() {
     setState((current) => ({ ...current, ...patch }));
   };
 
-  const addInstance = (serviceUuid: string, prefix: string) => {
+  const addInstance = (family: ServiceFamily) => {
+    const prefix = family;
     setState((current) => {
-      const count = current.instances.filter((instance) => instance.serviceUuid === serviceUuid).length;
+      const count = current.instances.filter((instance) => instance.family === family).length;
       if (count >= MAX_PER_SERVICE) return current;
       let n = count + 1;
       while (current.instances.some((instance) => instance.id === `${prefix}-${String(n)}`)) n += 1;
-      return { ...current, instances: [...current.instances, { id: `${prefix}-${String(n)}`, serviceUuid }] };
+      return { ...current, instances: [...current.instances, { id: `${prefix}-${String(n)}`, family }] };
     });
   };
 

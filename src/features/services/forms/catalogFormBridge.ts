@@ -1,47 +1,79 @@
 /**
- * Catalog service -> v0.6 FormSpec: the one place that knows real catalog codes.
+ * Catalog -> v0.6 FormSpec, by the backend's `CatalogService.serviceFamily` (PR #28).
+ * The one place that turns catalog rows into user-facing service choices.
  *
  * TODO(schema-driven forms): temporary compatibility bridge. Remove it once the
  * forms render from `GET /api/v1/catalog/services/{serviceUuid}/form-schema`.
  *
- * Codes are exact matches from the test server's `GET /api/v1/catalog/services`
- * (29 Oct 2026). Never matched by name or prefix: a code not listed here, now or
- * later, has no form (unsupported).
+ * No catalog code, name or prefix is interpreted here: a row without a known
+ * `serviceFamily` has no form (unsupported).
  */
 
-import type { CatalogService } from '@/shared/api';
+import type { CatalogService, FormDefinition, FormField, ServiceFamily } from '@/shared/api';
+import { canonicalTypeOf } from './formLogic';
 import { BIOMODEL_SPEC, CONVERSION_SPEC, type FormSpec } from './formSpecs';
 
-const BIOMODEL_SERVICE_CODES: ReadonlySet<string> = new Set(['biomodel_other_services']);
+export function resolveFormSpec(service: Pick<CatalogService, 'serviceFamily'>): FormSpec | undefined {
+  switch (service.serviceFamily) {
+    case 'biomodel':
+      return BIOMODEL_SPEC;
+    case 'conversion':
+      return CONVERSION_SPEC;
+    default:
+      return undefined;
+  }
+}
 
-/** Demo assumption (developer, A40): every listed code uses the current Conversion form. */
-const CONVERSION_SERVICE_CODES: ReadonlySet<string> = new Set([
-  'legacy_price_convcostbsbbasicfull',
-  'legacy_price_convcostbsbbasicquad',
-  'legacy_price_convcostbsbcustomfull',
-  'legacy_price_convcostbsbcustomquad',
-  'legacy_price_convcostcodxbasicfull',
-  'legacy_price_convcostcodxbasicquad',
-  'legacy_price_convcostcodxcustomfull',
-  'legacy_price_convcostcodxcustomquad',
-  'legacy_price_convcostcustomdoublefullarch',
-  'legacy_price_convcostimplantstudiobasicfull',
-  'legacy_price_convcostimplantstudiobasicquad',
-  'legacy_price_convcostimplantstudiocustomfull',
-  'legacy_price_convcostimplantstudiocustomquad',
-  'legacy_price_convcostoneshot',
-  'legacy_price_convcostrealguidebasicfull',
-  'legacy_price_convcostrealguidebasicquad',
-  'legacy_price_convcostrealguidecustomfull',
-  'legacy_price_convcostrealguidecustomquad',
-  'legacy_price_convcostsimplantbasicfull',
-  'legacy_price_convcostsimplantbasicquad',
-  'legacy_price_convcostsimplantcustomfull',
-  'legacy_price_convcostsimplantcustomquad',
-]);
+/** One user-facing service, however many catalog rows belong to its family. */
+export interface ServiceChoice {
+  family: ServiceFamily;
+  spec: FormSpec;
+  /**
+   * Biomodel: the catalog row created directly (`sellableItemUuid`).
+   * Conversion: null; create sends `serviceFamily: 'conversion'` and the backend resolves the variant.
+   */
+  service: CatalogService | null;
+}
 
-export function resolveFormSpec(service: Pick<CatalogService, 'code'>): FormSpec | undefined {
-  if (BIOMODEL_SERVICE_CODES.has(service.code)) return BIOMODEL_SPEC;
-  if (CONVERSION_SERVICE_CODES.has(service.code)) return CONVERSION_SPEC;
-  return undefined;
+/** Biomodel then Conversion, each at most once. */
+export function serviceChoices(catalog: readonly CatalogService[]): ServiceChoice[] {
+  const choices: ServiceChoice[] = [];
+  const biomodel = catalog.filter((service) => service.serviceFamily === 'biomodel');
+  // The contract creates Biomodel only by sellableItemUuid; with several rows there is no defined choice.
+  if (biomodel.length === 1) choices.push({ family: 'biomodel', spec: BIOMODEL_SPEC, service: biomodel[0] ?? null });
+  if (catalog.some((service) => service.serviceFamily === 'conversion')) {
+    choices.push({ family: 'conversion', spec: CONVERSION_SPEC, service: null });
+  }
+  return choices;
+}
+
+/** User-facing name of a catalog row: its family's form title, else the row's own name. */
+export function serviceLabel(service: CatalogService | undefined): string | undefined {
+  return service ? (resolveFormSpec(service)?.title ?? service.name) : undefined;
+}
+
+/**
+ * Form definition for creating a Conversion: the contract has no family-level
+ * form schema and no row may be picked for it, so the fields are the existing
+ * Conversion form's own (labels, options, required). `uuid` and `code` stay
+ * empty: no single catalog row applies, and neither is ever sent.
+ */
+export function conversionFamilyDefinition(): FormDefinition {
+  const fields = CONVERSION_SPEC.fields.map(
+    (field): FormField => ({
+      uuid: '',
+      code: field.code,
+      label: field.label,
+      type: canonicalTypeOf(field.control),
+      required: field.required === true,
+      defaultValue: typeof field.defaultValue === 'string' ? field.defaultValue : String(field.defaultValue),
+      options: [...(field.options ?? [])],
+    }),
+  );
+  return {
+    service: { uuid: '', code: '', name: CONVERSION_SPEC.title, itemKind: 'service', serviceFamily: 'conversion' },
+    fields,
+    evidence:
+      'Conversion fields from the existing form; the server picks the Conversion variant from the answers when it creates the service.',
+  };
 }

@@ -1048,6 +1048,19 @@ components:
         workflowCode:
           type: string
           nullable: true
+        serviceFamily:
+          type: string
+          enum:
+          - biomodel
+          - conversion
+          description: >-
+            Additive classification metadata so the frontend can group catalog rows (e.g. all 22
+            legacy Conversion pricing codes) without hardcoding or understanding individual
+            sellable-item codes. Absent when the code is not a verified member of a known family.
+            `code` remains the authoritative persisted pricing/order-item identifier; this field
+            never replaces it. For Conversion, use POST .../services with
+            `serviceFamily: conversion` (see CreateServiceItem) so the backend resolves the exact
+            sellable item instead of the frontend choosing one of the legacy UUIDs directly.
     CanonicalFieldType:
       type: string
       enum:
@@ -1243,12 +1256,25 @@ components:
     CreateServiceItem:
       type: object
       required:
-      - sellableItemUuid
       - answers
       properties:
         sellableItemUuid:
           type: string
           format: uuid
+          description: >-
+            Direct sellable-item selection (existing path, unchanged). Provide exactly one of
+            `sellableItemUuid` or `serviceFamily`.
+        serviceFamily:
+          type: string
+          enum:
+          - conversion
+          description: >-
+            Additive alternative to `sellableItemUuid`: the backend resolves the concrete
+            Conversion sellable item internally from `answers` (fields `conversionSoftware`,
+            `conversionSegmentationType`, `conversionArchScope`) so the frontend never chooses one
+            of the legacy Conversion UUIDs/codes directly. Provide exactly one of
+            `sellableItemUuid` or `serviceFamily`. Rejects (422) ambiguous, unsupported, or
+            not-exactly-one-match selections instead of silently choosing the first match.
         answers:
           type: array
           items:

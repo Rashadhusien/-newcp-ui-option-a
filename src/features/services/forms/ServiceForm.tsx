@@ -6,6 +6,9 @@
  *   same type on one order); one Idempotency-Key per form, so a retried
  *   submit can't create a duplicate, while a second intentional create
  *   (a new form) gets a new key.
+ * - Create sends the catalog row as `sellableItemUuid`, except Conversion:
+ *   `serviceFamily: 'conversion'`, and the server resolves the variant from
+ *   the answers (a 422 for an unsupported combination is shown like any other).
  * - Create sends quantity 1 (demo default, Q-B13) and, when one was chosen,
  *   a Bill To for this new service only (A23, mock only; otherwise the
  *   server copies the order default once).
@@ -129,7 +132,9 @@ export function ServiceForm({
           const created = await serviceApi.create(
             orderUuid,
             {
-              sellableItemUuid: definition.service.uuid,
+              ...(definition.service.serviceFamily === 'conversion'
+                ? { serviceFamily: 'conversion' as const }
+                : { sellableItemUuid: definition.service.uuid }),
               answers,
               quantity: 1,
               ...(billTo !== '' ? { billedToContactUuid: billTo } : {}),

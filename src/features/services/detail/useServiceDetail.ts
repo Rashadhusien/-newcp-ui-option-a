@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { isApiError, type ApiError, type AvailableTransition, type HistoryEvent, type ServiceItem } from '@/shared/api';
 import { serviceApi } from '../data/serviceApi';
+import { serviceLabel } from '../forms/catalogFormBridge';
 
 export interface ServiceDetail {
   item: ServiceItem;
@@ -39,7 +40,7 @@ export function useServiceDetail(serviceItemUuid: string): {
         serviceApi.history(serviceItemUuid, options),
         serviceApi.catalog(undefined, options),
       ]);
-      const serviceName = catalog.find((entry) => entry.uuid === item.sellableItemUuid)?.name ?? 'Service';
+      const serviceName = serviceLabel(catalog.find((entry) => entry.uuid === item.sellableItemUuid)) ?? 'Service';
       return { item, etag, serviceName, transitions, history };
     };
     load().then(

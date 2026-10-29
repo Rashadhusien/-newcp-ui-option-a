@@ -1,6 +1,7 @@
 /**
  * Service form page: `/orders/:orderUuid/services/new/:serviceUuid` creates
- * a new instance; `/services/:serviceItemUuid/edit` edits one (and is where
+ * a new instance (`.../new/family/conversion`: a Conversion the server
+ * resolves); `/services/:serviceItemUuid/edit` edits one (and is where
  * a created instance reopens, showing what was saved).
  */
 
@@ -19,8 +20,9 @@ function shortId(uuid: string): string {
 }
 
 function useTarget(): ServiceFormTarget | null {
-  const { orderUuid, serviceUuid, serviceItemUuid } = useParams();
+  const { orderUuid, serviceUuid, serviceFamily, serviceItemUuid } = useParams();
   if (serviceItemUuid) return { mode: 'edit', serviceItemUuid };
+  if (orderUuid && serviceFamily === 'conversion') return { mode: 'createFamily', orderUuid, serviceFamily };
   if (orderUuid && serviceUuid) return { mode: 'create', orderUuid, serviceUuid };
   return null;
 }
@@ -32,7 +34,7 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
   if (data.status === 'loading') {
     return (
       <>
-        <PageHeader title={target.mode === 'create' ? 'New service' : 'Service'} />
+        <PageHeader title={target.mode === 'edit' ? 'Service' : 'New service'} />
         <LoadingState label="Loading the service form…" rows={6} />
       </>
     );
@@ -59,7 +61,7 @@ function ServiceFormContent({ target }: { target: ServiceFormTarget }) {
 
   const { definition, item, etag } = data;
   const spec = resolveFormSpec(definition.service);
-  const orderUuid = item?.orderUuid ?? (target.mode === 'create' ? target.orderUuid : '');
+  const orderUuid = item?.orderUuid ?? (target.mode === 'edit' ? '' : target.orderUuid);
   const title =
     item === null
       ? `New ${definition.service.name} service`
@@ -114,6 +116,11 @@ export default function ServiceFormPage() {
       </>
     );
   }
-  const key = target.mode === 'create' ? `${target.orderUuid}/${target.serviceUuid}` : target.serviceItemUuid;
+  const key =
+    target.mode === 'create'
+      ? `${target.orderUuid}/${target.serviceUuid}`
+      : target.mode === 'createFamily'
+        ? `${target.orderUuid}/${target.serviceFamily}`
+        : target.serviceItemUuid;
   return <ServiceFormContent key={key} target={target} />;
 }

@@ -21,7 +21,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckIcon from '@mui/icons-material/Check';
 import { ROUTES } from '@/app/routes';
-import { isApiError, type ApiError, type CatalogService, type FormDefinition } from '@/shared/api';
+import { isApiError, type ApiError, type FormDefinition, type ServiceFamily } from '@/shared/api';
 import { AppButton } from '@/shared/components/basic';
 import { WizardStepper } from '@/shared/components/composite';
 import { ErrorState, InlineAlert, LoadingState, useToast } from '@/shared/components/feedback';
@@ -29,7 +29,7 @@ import { PageHeader } from '@/shared/components/layout';
 import { MOCK_ORDERS } from '@/mocks/orderFixtures';
 import { serviceApi } from '../data/serviceApi';
 import { initialValues, resolveFields, toAnswers } from '../forms/formLogic';
-import { resolveFormSpec } from '../forms/catalogFormBridge';
+import { conversionFamilyDefinition, serviceChoices } from '../forms/catalogFormBridge';
 import type { FormSpec } from '../forms/formSpecs';
 import { InstanceDetailsForm } from './InstanceDetailsForm';
 import { PatientStep } from './PatientStep';
@@ -38,11 +38,12 @@ import { ServicesStep } from './ServicesStep';
 import { TeethStep } from './TeethStep';
 import { LAST_STEP, STEP_LABELS, teethFor, useCreateOrderWizard } from './useCreateOrderWizard';
 
+/** One per service family (PR #28): Conversion is offered once, never per catalog row. */
 interface Offered {
-  service: CatalogService;
+  family: ServiceFamily;
+  name: string;
   spec: FormSpec;
   definition: FormDefinition;
-  prefix: string;
 }
 
 type LoadState =
@@ -72,16 +73,13 @@ export default function CreateOrderPage() {
     const options = { signal: controller.signal };
     const run = async (): Promise<Offered[]> => {
       const catalog = await serviceApi.catalog(undefined, options);
-      const withSpec = catalog.flatMap((service) => {
-        const spec = resolveFormSpec(service);
-        return spec ? [{ service, spec }] : [];
-      });
+      // Biomodel loads its row's form schema; Conversion uses its family definition (no row is chosen or preloaded).
       return Promise.all(
-        withSpec.map(async ({ service, spec }) => ({
-          service,
+        serviceChoices(catalog).map(async ({ family, spec, service }) => ({
+          family,
+          name: spec.title,
           spec,
-          definition: await serviceApi.formSchema(service.uuid, options),
-          prefix: spec.key,
+          definition: service ? await serviceApi.formSchema(service.uuid, options) : conversionFamilyDefinition(),
         })),
       );
     };
@@ -103,14 +101,14 @@ export default function CreateOrderPage() {
 
   const offered = useMemo(() => (load.status === 'ready' ? load.offered : []), [load]);
   const offeredFor = useCallback(
-    (serviceUuid: string) => offered.find((entry) => entry.service.uuid === serviceUuid),
+    (family: ServiceFamily) => offered.find((entry) => entry.family === family),
     [offered],
   );
   const instanceLabel = (instanceId: string): string => {
     const instance = state.instances.find((entry) => entry.id === instanceId);
     if (!instance) return instanceId;
-    const name = offeredFor(instance.serviceUuid)?.service.name ?? 'Service';
-    const sameType = state.instances.filter((entry) => entry.serviceUuid === instance.serviceUuid);
+    const name = offeredFor(instance.family)?.name ?? 'Service';
+    const sameType = state.instances.filter((entry) => entry.family === instance.family);
     return `${name} ${String(sameType.indexOf(instance) + 1)}`;
   };
 
@@ -134,8 +132,8 @@ export default function CreateOrderPage() {
     if (ok) goTo(DETAILS_STEP + 1);
   };
 
-  const answersFor = (instanceId: string, serviceUuid: string) => {
-    const entry = offeredFor(serviceUuid);
+  const answersFor = (instanceId: string, family: ServiceFamily) => {
+    const entry = offeredFor(family);
     if (!entry) return [];
     const fields = resolveFields(entry.spec, entry.definition);
     return toAnswers(fields, state.values[instanceId] ?? initialValues(fields));
@@ -150,8 +148,8 @@ export default function CreateOrderPage() {
         patientCode: state.patientCode.trim(),
         dueOn: state.dueOn,
         services: state.instances.map((instance) => ({
-          sellableItemUuid: instance.serviceUuid,
-          answers: answersFor(instance.id, instance.serviceUuid),
+          serviceFamily: instance.family,
+          answers: answersFor(instance.id, instance.family),
           teeth: teethFor(state, instance.id),
         })),
       });
@@ -211,7 +209,7 @@ export default function CreateOrderPage() {
               </InlineAlert>
             )}
             {state.instances.map((instance) => {
-              const entry = offeredFor(instance.serviceUuid);
+              const entry = offeredFor(instance.family);
               if (!entry) return null;
               return (
                 <InstanceDetailsForm
@@ -236,7 +234,7 @@ export default function CreateOrderPage() {
             instanceLabel={instanceLabel}
             answeredCount={(instanceId) => {
               const instance = state.instances.find((entry) => entry.id === instanceId);
-              return instance ? answersFor(instanceId, instance.serviceUuid).length : 0;
+              return instance ? answersFor(instanceId, instance.family).length : 0;
             }}
           />
         );

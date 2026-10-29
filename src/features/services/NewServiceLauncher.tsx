@@ -8,10 +8,10 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
-import { isApiError, type CatalogService } from '@/shared/api';
+import { isApiError } from '@/shared/api';
 import { ErrorState, InlineAlert, LoadingState } from '@/shared/components/feedback';
 import { serviceApi } from './data/serviceApi';
-import { resolveFormSpec } from './forms/catalogFormBridge';
+import { serviceChoices, type ServiceChoice } from './forms/catalogFormBridge';
 import { BIOMODEL_SPEC, CONVERSION_SPEC, type FormKey } from './forms/formSpecs';
 
 export interface NewServiceLauncherProps {
@@ -21,7 +21,7 @@ export interface NewServiceLauncherProps {
 type CatalogState =
   | { status: 'loading' }
   | { status: 'error'; message: string; denied: boolean }
-  | { status: 'ready'; service: CatalogService | null };
+  | { status: 'ready'; service: ServiceChoice | null };
 
 export function NewServiceLauncher({ formKey }: NewServiceLauncherProps) {
   const [state, setState] = useState<CatalogState>({ status: 'loading' });
@@ -32,7 +32,8 @@ export function NewServiceLauncher({ formKey }: NewServiceLauncherProps) {
     serviceApi.catalog(undefined, { signal: controller.signal }).then(
       (services) => {
         if (controller.signal.aborted) return;
-        const service = services.find((entry) => resolveFormSpec(entry)?.key === formKey) ?? null;
+        // One choice per family: Conversion is found by serviceFamily, never by a catalog row's position or code.
+        const service = serviceChoices(services).find((choice) => choice.family === formKey) ?? null;
         setState({ status: 'ready', service });
       },
       (error: unknown) => {
@@ -71,7 +72,7 @@ export function NewServiceLauncher({ formKey }: NewServiceLauncherProps) {
     const title = (formKey === 'biomodel' ? BIOMODEL_SPEC : CONVERSION_SPEC).title;
     return (
       <InlineAlert severity="warning">
-        {`${title} is not available yet: no service in your account's catalog is mapped to the ${title} form.`}
+        {`${title} is not available yet: no service in your account's catalog belongs to the ${title} family.`}
       </InlineAlert>
     );
   }
@@ -81,8 +82,8 @@ export function NewServiceLauncher({ formKey }: NewServiceLauncherProps) {
     <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}>
       <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
         <Typography variant="body1">
-          Add a {service.name} service to an existing order. Each one is a separate instance with its own ID, even
-          when the order already has a {service.name} service.
+          Add a {service.spec.title} service to an existing order. Each one is a separate instance with its own ID, even
+          when the order already has a {service.spec.title} service.
         </Typography>
         <InlineAlert severity="info">
           The API has no order lookup yet, so an order cannot be chosen here (question Q-B3 to the backend). Open an

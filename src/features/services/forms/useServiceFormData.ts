@@ -1,6 +1,7 @@
 /**
  * Loads what a service form needs: for create, the catalog service's form
- * definition; for edit, the service item with its version (ETag, Q-B8) and
+ * definition (Conversion: the family's own definition, no API call, since no
+ * catalog row may be chosen for it); for edit, the service item with its version (ETag, Q-B8) and
  * then its service's form definition. Errors arrive as ApiError (404 not found or tenant-masked,
  * 403, 5xx, network).
  */
@@ -8,9 +9,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { isApiError, type ApiError, type FormDefinition, type ServiceItem } from '@/shared/api';
 import { serviceApi } from '../data/serviceApi';
+import { conversionFamilyDefinition } from './catalogFormBridge';
 
 export type ServiceFormTarget =
   | { mode: 'create'; orderUuid: string; serviceUuid: string }
+  | { mode: 'createFamily'; orderUuid: string; serviceFamily: 'conversion' }
   | { mode: 'edit'; serviceItemUuid: string };
 
 export type ServiceFormData =
@@ -24,12 +27,18 @@ export function useServiceFormData(target: ServiceFormTarget): {
 } {
   const [data, setData] = useState<ServiceFormData>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
-  const targetKey = target.mode === 'create' ? `${target.orderUuid}|${target.serviceUuid}` : target.serviceItemUuid;
+  const targetKey =
+    target.mode === 'create'
+      ? `${target.orderUuid}|${target.serviceUuid}`
+      : target.mode === 'createFamily'
+        ? `${target.orderUuid}|${target.serviceFamily}`
+        : target.serviceItemUuid;
 
   useEffect(() => {
     const controller = new AbortController();
     const options = { signal: controller.signal };
     const load = async () => {
+      if (target.mode === 'createFamily') return { definition: conversionFamilyDefinition(), item: null, etag: null };
       const versioned = target.mode === 'edit' ? await serviceApi.item(target.serviceItemUuid, options) : null;
       const item = versioned?.data ?? null;
       const serviceUuid = item ? item.sellableItemUuid : target.mode === 'create' ? target.serviceUuid : '';

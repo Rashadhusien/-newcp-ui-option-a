@@ -95,7 +95,8 @@ export function buildTrail(pathname: string, hints: TrailHints = {}): Crumb[] {
   if (first === 'orders' && parts.length === 2) {
     return current([HOME, ORDERS, orderCrumb(decode(second))]);
   }
-  if (first === 'orders' && third === 'services' && fourth === 'new' && parts.length === 5) {
+  const familyCreate = parts.length === 6 && parts[4] === 'family';
+  if (first === 'orders' && third === 'services' && fourth === 'new' && (parts.length === 5 || familyCreate)) {
     const parent = hints.section ? [sectionCrumb(hints.section)] : [ORDERS, orderCrumb(decode(second))];
     return current([HOME, ...parent, { label: ROUTE_LABELS.serviceNew }]);
   }
