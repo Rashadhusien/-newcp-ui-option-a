@@ -1,0 +1,1006 @@
+openapi: 3.0.3
+info:
+  title: New CP — Service-Instance API (V1 Canonical)
+  version: 1.0.0
+  description: Canonical service-instance API contract for New CP, integrating F07
+    per-item billed party, Connect customer creation, CP internal clerk editing, full
+    pricing breakdown, optimistic concurrency, and strict V3 database schema validation.
+servers:
+- url: http://localhost:3000
+  description: Local New CP backend; URL example, not a verified deployment
+x-contract-status: F07_TARGET_DESIGN_SOURCE_VERIFIED; LIVE_SCHEMA_ETL_AND_API_UNVERIFIED;
+  NOT_FINAL
+x-source-authority:
+- Connect Add/Create Service form fields/validators
+- CP internal editing behavior
+- Sanitized PostgreSQL V3 migrations V008 V011 V013 V020 V100 V130
+- 'October demo decisions: multiple same-type instances'
+- F07 supplied remediation V204 + stage-30/stage-90 source; runtime not executed by
+  this handoff
+x-blockers:
+- Actual V3 applied migration V204 and non-null payer finalization require read-only
+  verification of deployed schema
+- ETL policy approved against exact MySQL source domain and stage-90 reconciliation
+  need owner evidence
+- Selected tenant catalog codes/UUIDs and field mapping remain unverified
+- Actual state transitions and role checks remain unverified
+- Financial charging/price/voucher/invoice code must be validated against persisted
+  order item payer
+- No backend or both React app live integration evidence available
+tags:
+- name: Catalog
+- name: Service Instances
+- name: Workflow
+- name: Lookups
+  description: System lookup values such as zero-charge reasons and hold reasons
+security:
+- BearerAuth: []
+paths:
+  /api/v1/catalog/services:
+    get:
+      tags:
+      - Catalog
+      operationId: listDemoCatalogServices
+      summary: List authorized sellable service options (tenant scoped)
+      parameters:
+      - in: query
+        name: categoryCode
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogService'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/catalog/services/{serviceUuid}/form-schema:
+    get:
+      tags:
+      - Catalog
+      operationId: getServiceFormSchema
+      summary: Get actual tenant catalog field and condition metadata
+      parameters:
+      - in: path
+        name: serviceUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormDefinition'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/orders/{orderUuid}/services:
+    get:
+      tags:
+      - Service Instances
+      operationId: listOrderServiceItems
+      parameters:
+      - in: path
+        name: orderUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceItem'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    post:
+      tags:
+      - Service Instances
+      operationId: createOrderServiceItem
+      description: Create a new independent service-instance UUID even when same sellable
+        item already exists. Server enforces field rules, authorization and tenant-scoped
+        transaction. Idempotency-Key proposal requires explicit policy confirmation;
+        intentional second submissions use distinct keys.
+      parameters:
+      - in: path
+        name: orderUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+        description: Proposed retry protection; exact retention/replay policy is a
+          technical decision.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceItem'
+      responses:
+        '201':
+          description: Created service item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceItem'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/services/{serviceItemUuid}:
+    get:
+      tags:
+      - Service Instances
+      operationId: getServiceItem
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceItem'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    patch:
+      tags:
+      - Service Instances
+      operationId: patchServiceItem
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchServiceItem'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceItem'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/services/{serviceItemUuid}/available-transitions:
+    get:
+      tags:
+      - Workflow
+      operationId: listServiceTransitions
+      description: Return currently authorized manual transitions from selected workflow
+        instance. Do not hardcode legacy numeric statuses.
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AvailableTransition'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/services/{serviceItemUuid}/transitions:
+    post:
+      tags:
+      - Workflow
+      operationId: advanceServiceWorkflow
+      description: Authorized workflow transition via engine; status summary/history
+        consistency must be integration-tested.
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransitionResult'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/services/{serviceItemUuid}/history:
+    get:
+      tags:
+      - Workflow
+      operationId: getServiceHistory
+      parameters:
+      - in: path
+        name: serviceItemUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoryEvent'
+        '400':
+          description: Bad request / invalid field value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Not found or masked by tenant access
+        '409':
+          description: Business state conflict
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/orders/{orderUuid}/eligible-billed-parties:
+    get:
+      tags:
+      - Service Instances
+      operationId: listEligibleOrderItemBilledParties
+      summary: List eligible service-level billed parties for one authorized order
+      description: Resolve order Doctor/default and Scanning Center within tenant
+        and staff permission, return contact UUIDs for selection; do not return unrestricted
+        contacts. Endpoint proposal until backend contract review.
+      parameters:
+      - in: path
+        name: orderUuid
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Eligible billed parties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BilledPartyChoice'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+        '404':
+          description: Order not found or tenant-masked
+  /api/v1/lookups/zero-charge-reasons:
+    get:
+      tags:
+      - Lookups
+      operationId: listZeroChargeReasons
+      summary: List active zero charge reasons
+      description: Returns active reasons required when an order item line total is
+        $0.00 to satisfy DB constraint ck_order_items__zero_charge_has_reason.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ZeroChargeReason'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+  /api/v1/lookups/hold-reasons:
+    get:
+      tags:
+      - Lookups
+      operationId: listHoldReasons
+      summary: List active hold reasons
+      description: Returns valid reasons when placing an item on hold with customer
+        or internal hold type.
+      parameters:
+      - in: query
+        name: holdType
+        required: false
+        schema:
+          type: string
+          enum:
+          - customer
+          - internal
+        description: Filter reasons by hold type
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HoldReason'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Denied
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque or JWT per approved Google Auth adapter
+  schemas:
+    Problem:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        requestId:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    FormOption:
+      type: object
+      required:
+      - code
+      - label
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        active:
+          type: boolean
+    CatalogService:
+      type: object
+      required:
+      - uuid
+      - code
+      - name
+      - itemKind
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        itemKind:
+          type: string
+          enum:
+          - service
+        isDigital:
+          type: boolean
+        workflowCode:
+          type: string
+          nullable: true
+    FormField:
+      type: object
+      required:
+      - uuid
+      - code
+      - label
+      - required
+      - options
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        code:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+        required:
+          type: boolean
+        defaultValue:
+          type: string
+          nullable: true
+        validation:
+          type: object
+          additionalProperties: true
+        conditionalRules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormOption'
+    FormDefinition:
+      type: object
+      required:
+      - service
+      - fields
+      properties:
+        service:
+          $ref: '#/components/schemas/CatalogService'
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormField'
+        evidence:
+          type: string
+          description: Indicates whether tenant runtime mapping is verified
+    FormAnswer:
+      type: object
+      required:
+      - fieldCode
+      properties:
+        fieldCode:
+          type: string
+          description: Stable machine code of the form question (from catalog.fields.code)
+        value:
+          description: 'Natural polymorphic answer value for free-form inputs: string
+            (text or ISO date), number, or boolean. Backend validates and maps to
+            appropriate SQL column.'
+          oneOf:
+          - type: string
+          - type: number
+          - type: boolean
+        optionCodes:
+          type: array
+          items:
+            type: string
+          description: 'Unified option codes array for choice-based fields per Section
+            4 Strategy 1: single-select fields supply exactly 1 element e.g. ["FORMLABS_3B"],
+            multi-select fields supply multiple elements e.g. ["UPPER", "LOWER"],
+            and unselected/cleared fields supply [].'
+      description: Form answer model adopting Section 4 Strategy 1 (unified optionCodes
+        array for single-choice and multi-choice fields) and Section 5 Approach A
+        (natural polymorphic value for free-form inputs, eliminating leaked SQL storage
+        columns valueText, valueNumber, valueBoolean, valueDate, and optionCode).
+    CreateServiceItem:
+      type: object
+      required:
+      - sellableItemUuid
+      - answers
+      properties:
+        sellableItemUuid:
+          type: string
+          format: uuid
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormAnswer'
+        isRedo:
+          type: boolean
+          default: false
+        redoOfItemUuid:
+          type: string
+          format: uuid
+        serviceNotes:
+          type: string
+        billedToContactUuid:
+          type: string
+          format: uuid
+          description: Optional selected payer for THIS item; when omitted creation
+            copies order default ONCE. Must be eligible for the specific order and
+            tenant.
+        quantity:
+          type: number
+          minimum: 1
+          default: 1
+          description: Item quantity, strictly positive (numeric(10,3) in DB)
+        isBillable:
+          type: boolean
+          default: true
+          description: Whether the line item is billable or an unbilled internal remake/courtesy
+        zeroChargeReasonCode:
+          type: string
+          description: Mandatory when line_total is zero to satisfy DB constraint
+            ck_order_items__zero_charge_has_reason
+        zeroChargeNote:
+          type: string
+          description: Free-text explanation when line_total is zero
+      additionalProperties: false
+      description: Service-level payer is backed by F07 V204 orders.order_items.billed_to_contact_id.
+        Application resolves billedToContactUuid to crm.contacts.id under tenant-scoped
+        transaction. Omit to select order default once; do not allow client to set
+        provenance. Financial writes require runtime F07 gates.
+    PatchServiceItem:
+      type: object
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormAnswer'
+        isRedo:
+          type: boolean
+        redoOfItemUuid:
+          type: string
+          format: uuid
+        serviceNotes:
+          type: string
+        pendingReason:
+          type: string
+        billedToContactUuid:
+          type: string
+          format: uuid
+          description: Change intended payer for this single service instance only
+            before any financial event; server writes billed_party_origin=user_selected
+            and audits the change.
+        quantity:
+          type: number
+          minimum: 1
+        isBillable:
+          type: boolean
+        holdType:
+          type: string
+          enum:
+          - customer
+          - internal
+          description: Required when setting status to on_hold to satisfy DB constraint
+            ck_order_items__hold_type
+        holdReasonCode:
+          type: string
+          description: Hold reason code from core.lookup_values
+        zeroChargeReasonCode:
+          type: string
+        zeroChargeNote:
+          type: string
+      additionalProperties: false
+      minProperties: 1
+      description: Do not accept caller-supplied billedPartyOrigin. Reject per-item
+        payer changes once a charge, invoice association or invoice line exists. Other
+        monetary changes obey their own permissions and V3 financial locks. Never
+        expose arbitrary status changes instead of configured workflow actions.
+    ServiceItem:
+      type: object
+      required:
+      - uuid
+      - orderUuid
+      - sellableItemUuid
+      - lineNumber
+      - quantity
+      - status
+      - isBillable
+      - answers
+      - billedToContactUuid
+      - billedPartyOrigin
+      - createdAt
+      - updatedAt
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        orderUuid:
+          type: string
+          format: uuid
+        sellableItemUuid:
+          type: string
+          format: uuid
+        lineNumber:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+        isRedo:
+          type: boolean
+        isInvoiced:
+          type: boolean
+        currencyCode:
+          type: string
+          minLength: 3
+          maxLength: 3
+        unitPrice:
+          type: string
+          description: Decimal string, not floating point
+        lineTotal:
+          type: string
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormAnswer'
+        serviceNotes:
+          type: string
+        billedToContactUuid:
+          type: string
+          format: uuid
+          description: Authoritative item-level intended payer (crm.contacts.uuid),
+            not orders.orders.contact_id or charges.contact_id.
+        billedPartyOrigin:
+          $ref: '#/components/schemas/BilledPartyOrigin'
+        canEditBilledParty:
+          type: boolean
+          description: Server-calculated permission and financial-lock hint; backend
+            always enforces mutation rules.
+        quantity:
+          type: number
+          minimum: 1
+          default: 1
+        isBillable:
+          type: boolean
+          default: true
+        redoOfItemUuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: UUID of parent item this line remakes
+        fieldsAmount:
+          type: string
+          description: Sum of answer surcharges recalculated by trigger trg_order_item_field_values__refresh_item
+        discountAmount:
+          type: string
+          description: Applied discount amount
+        voucherAmount:
+          type: string
+          description: Applied voucher amount
+        pendingReason:
+          type: string
+          nullable: true
+          description: Reason the item is pending information
+        holdType:
+          type: string
+          enum:
+          - customer
+          - internal
+          nullable: true
+        holdReasonCode:
+          type: string
+          nullable: true
+        zeroChargeReasonCode:
+          type: string
+          nullable: true
+          description: Code explaining why line_total is zero
+        zeroChargeNote:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      description: Each service instance has independent item-level billed party,
+        form answers, status and history.
+    AvailableTransition:
+      type: object
+      required:
+      - transitionId
+      - fromCode
+      - toCode
+      properties:
+        transitionId:
+          type: integer
+          format: int64
+        fromCode:
+          type: string
+        toCode:
+          type: string
+        label:
+          type: string
+        requiresCapability:
+          type: string
+        guard:
+          type: object
+          additionalProperties: true
+    TransitionRequest:
+      type: object
+      required:
+      - transitionId
+      additionalProperties: false
+      properties:
+        transitionId:
+          type: integer
+          format: int64
+        comment:
+          type: string
+    TransitionResult:
+      type: object
+      required:
+      - serviceItemUuid
+      - fromCode
+      - toCode
+      - changedAt
+      properties:
+        serviceItemUuid:
+          type: string
+          format: uuid
+        fromCode:
+          type: string
+        toCode:
+          type: string
+        changedAt:
+          type: string
+          format: date-time
+        actorUserUuid:
+          type: string
+          format: uuid
+    HistoryEvent:
+      type: object
+      properties:
+        fromCode:
+          type: string
+        toCode:
+          type: string
+        actorUserUuid:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        comment:
+          type: string
+    BilledPartyChoice:
+      type: object
+      additionalProperties: false
+      required:
+      - contactUuid
+      - role
+      - label
+      properties:
+        contactUuid:
+          type: string
+          format: uuid
+          description: Public identifier for crm.contacts; resolve bigint ID on backend
+            only within trusted tenant scope
+        role:
+          type: string
+          enum:
+          - doctor
+          - scanning_center
+          description: Choice role in this specific order, not global contact category
+        label:
+          type: string
+          description: Approved display label; avoid PHI
+      description: Eligible contacts derived from selected order doctor/default contact
+        and scanning center. Not an unrestricted tenant contact list.
+    BilledPartyOrigin:
+      type: string
+      enum:
+      - legacy_explicit
+      - order_default
+      - manual_resolution
+      - user_selected
+      - unresolved_legacy
+      description: Read-only migration/user-action provenance. The unresolved_legacy
+        state is prohibited in authoritative completed ETL.
+    ZeroChargeReason:
+      type: object
+      required:
+      - code
+      - label
+      - active
+      properties:
+        code:
+          type: string
+          description: Unique code in core.lookup_values
+        label:
+          type: string
+          description: Human-readable label (e.g., Redo / Remake, Promotional Courtesy,
+            Voucher Full Coverage)
+        description:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+    HoldReason:
+      type: object
+      required:
+      - code
+      - label
+      - holdType
+      - active
+      properties:
+        code:
+          type: string
+          description: Unique code in core.lookup_values
+        label:
+          type: string
+          description: Human-readable label
+        holdType:
+          type: string
+          enum:
+          - customer
+          - internal
+        active:
+          type: boolean
+x-f07-implementation:
+  status: TARGET_MAPPING_ADOPTED_FOR_CODE_GENERATION; NOT_RUNTIME_CERTIFIED
+  perItemDbColumn: orders.order_items.billed_to_contact_id
+  provenanceDbColumn: orders.order_items.billed_party_origin
+  sourceMigration: references/f07/source/migrations/V204__service_level_billed_party.sql
+  sourceETL: references/f07/source/etl/stage_30_orders.py
+  reconciliation: references/f07/source/etl/stage_90_finalise.py
+  dataRule: Select one eligible Doctor/default or Scanning Center contact for EACH
+    service instance; no order-wide payer inheritance after creation
+  guard: No payer/provenance mutation after any charge or invoice association
+  runtimeGate: Inspect deployed V204 plus actual source-domain policy, stage-90 evidence
+    and safe app-role integration tests
